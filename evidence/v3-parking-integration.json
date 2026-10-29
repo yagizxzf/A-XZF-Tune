@@ -1,0 +1,6 @@
+{
+  "returnValue": "{\"handbrake\":false,\"anchored\":false,\"pass\":true,\"moving\":\"Stopping\",\"slopeSpeed\":0.40652263164520266,\"retained\":true,\"parkSpeed\":0.05481823533773422,\"state\":\"Parked\",\"releasedSpeed\":80.19681549072266}",
+  "message": "Code executed successfully",
+  "success": true,
+  "output": []
+}

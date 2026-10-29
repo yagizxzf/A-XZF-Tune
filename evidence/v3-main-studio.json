@@ -1,0 +1,56 @@
+{
+  "main": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"cars\":[{\"radius\":1.25,\"parkKey\":\"P\",\"torque\":4,\"drive\":\"RWD\",\"tuneBytes\":6068,\"name\":\"AXZF_Prototype\",\"bound\":true,\"roll\":0.2},{\"radius\":1.5,\"parkKey\":\"P\",\"torque\":5,\"drive\":\"FWD\",\"tuneBytes\":6067,\"name\":\"AXZF_ImportedCar\",\"bound\":true,\"roll\":0.2}],\"unit\":{\"failed\":0,\"run\":90,\"passed\":90}}"
+      }
+    ],
+    "isError": false
+  },
+  "parked": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"state\":\"Parked\",\"handbrake\":false,\"park\":true,\"speed\":0.0033653811551630499,\"anchored\":false,\"occupant\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "released": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"state\":\"Drive\",\"speed\":48.36290740966797,\"park\":false}"
+      }
+    ],
+    "isError": false
+  },
+  "exited": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"state\":\"Parked\",\"occupant\":false,\"park\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "HUD": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"handbrake\":\"HB ON\",\"park\":\"PARK ON\",\"gear\":\"P\",\"seatHUD\":false,\"gui\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "optionalPark": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"onSpawn\":true,\"onExit\":false,\"pass\":false,\"seated\":false}"
+      }
+    ],
+    "isError": false
+  }
+}

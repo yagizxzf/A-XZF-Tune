@@ -46,3 +46,10 @@ Başlangıç titreşim ölçümü: 120 PostSimulation örneğinde prototip RMS v
 ## GUI görünmeme düzeltmesi
 
 Uygulama ve Studio doğrulaması tamamlandı: eksik ana sahne aktarımı, korumalı container ve açık editör buffer hataları düzeltildi. Ana sahnede giriş/H/çıkış/ikinci araç/respawn ve75 test geçti. Paketler yenilendi; hotfix50b3fc0 ve Validate40908822445 success.
+
+## 0.3 kullanıcı kapsamı
+
+Sürüyor: P ile el freninden ayrı kalıcı park modu; gerçek araçların içindeki Tune kopyalarında bütün desteklenen alanlar ve kapsamlı Türkçe rehber; tek lisanslı ikon setinden görsel mobil gaz/fren/el freni/park/çıkış/direksiyon; viraj yatışına karşı ayarlanabilir denge ve ölçümlü önce/sonra testi. Ana Studio hedefi korunacak.
+
+
+0.3 uygulama/doğrulama tamamlandı: ayrı park (P/W/P/E, spawn/exit ve8° eğim);49 alanlı rehber gerçek iki ana araç ve4 uyumluluk kaynağının içinde; kullanıcı onaylı9 ikonlu dokunmatik kontrol; ayarlanabilir viraj dengesi. Import tepe yatış8.409→0.457°, prototip10.329→0.879°; dört import jitter geçer.90 Studio/83 headless/56 compile. Telefon7/13 ve iPadA16 landscape giriş/yerleşim kontrolü geçti. Son aşama: GitHub push/CI ve teslim kaydı sürüyor. Fiziksel multitouch/0.3 iki-client park/adverse-network/modern1.7.2/stabil1.0 kapıları önceki açık kapsam olarak korunur.

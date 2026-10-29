@@ -32,7 +32,7 @@ return function(quarantined: Model, at: CFrame?): Model
 		m:SetAttribute("SourceAsset","14215126016") m:SetAttribute("SourceCreator","Roblox Resources")
 		m:SetAttribute("Redistribution","Not included in MIT source; rights unverified")
 		local config=game.ServerStorage.AXZFExamples.VehicleTune:Clone() config.Name="Tune"
-		config.Source=config.Source:gsub("Radius = 1.25,","Radius = 1.5,"):gsub('Drive = "RWD",','Drive = "FWD",'):gsub("Power = 1,","TorqueScale = 5,\n\tPower = 1,")
+		config.Source=config.Source:gsub("Radius = 1.25,","Radius = 1.5,"):gsub('Drive = "RWD",','Drive = "FWD",'):gsub("TorqueScale = 4,","TorqueScale = 5,")
 		config.Parent=m
 		m:PivotTo(at or CFrame.new(12,5,35))
 	end)

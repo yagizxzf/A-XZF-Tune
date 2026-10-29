@@ -4,6 +4,15 @@
 return {
 	stud = "",
 	icons = {
+		["chevron_left"] = "rbxassetid://139643458010755",
+		["chevron_right"] = "rbxassetid://109414773760073",
+		["circle_parking"] = "rbxassetid://137215235121162",
+		["circle_stop"] = "rbxassetid://98793648428351",
+		["gauge"] = "rbxassetid://72438558949106",
+		["hand"] = "rbxassetid://90085653799977",
+		["log_out"] = "rbxassetid://127056024989943",
+		["panel_left_close"] = "rbxassetid://93497424527544",
+		["rotate_ccw"] = "rbxassetid://78691306546761",
 	},
 	art = {
 	},

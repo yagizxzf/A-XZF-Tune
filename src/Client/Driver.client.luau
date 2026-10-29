@@ -9,7 +9,7 @@ local packageRoot=game.ReplicatedStorage:WaitForChild("AXZF")
 local remote=packageRoot:WaitForChild("Control") :: RemoteEvent
 local active: Model?=nil
 local state={Forward=0,Reverse=0,Left=0,Right=0,Brake=0}
-local park=false local stick=0 local sequence=0 local elapsed=0
+local park=false local handbrake=false local stick=0 local sequence=0 local elapsed=0
 local characterConnections={} local lifetime={}
 local nativeTouch: ScreenGui?=nil local nativeEnabled=true
 local function hideNativeTouch()
@@ -20,13 +20,14 @@ local function hideNativeTouch()
 	if nativeTouch then nativeTouch.Enabled=false end
 end
 local cockpit=nil
-local defaults={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Exit="E",HideControls="H"}
-local gamepad={Forward=Enum.KeyCode.ButtonR2,Reverse=Enum.KeyCode.ButtonL2,Brake=Enum.KeyCode.ButtonB,Handbrake=Enum.KeyCode.ButtonA,Exit=Enum.KeyCode.ButtonY}
+local defaults={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Park="P",Exit="E",HideControls="H"}
+local gamepad={Forward=Enum.KeyCode.ButtonR2,Reverse=Enum.KeyCode.ButtonL2,Brake=Enum.KeyCode.ButtonB,Handbrake=Enum.KeyCode.ButtonA,Park=Enum.KeyCode.ButtonX,Exit=Enum.KeyCode.ButtonY}
 local function connect(signal,fn) table.insert(lifetime,signal:Connect(fn)) end
 local function clear() for key in pairs(state) do state[key]=0 end stick=0 end
 local function action(name,down,amount)
 	if not active then return end
-	if name=="Handbrake" then if down then park=not park end
+	if name=="Handbrake" then if down then handbrake=not handbrake end
+	elseif name=="Park" then if down then park=not park end
 	elseif name=="Exit" then if down then local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid") if h then h.Sit=false end end
 	elseif name=="HideControls" then if down and cockpit then cockpit:toggleHelp() end
 	elseif state[name]~=nil then state[name]=if down then amount or 1 else 0 end
@@ -39,18 +40,19 @@ cockpit=require(cockpitModule).new(player,action)
 local function send()
 	if not active then return end sequence+=1
 	if UIS:GetFocusedTextBox() then clear() state.Brake=1 end
-	remote:FireServer(active,{seq=sequence,throttle=state.Forward-state.Reverse,steer=math.clamp(state.Right-state.Left+stick,-1,1),brake=state.Brake,handbrake=park})
+	remote:FireServer(active,{seq=sequence,throttle=state.Forward-state.Reverse,steer=math.clamp(state.Right-state.Left+stick,-1,1),brake=state.Brake,handbrake=handbrake,park=park})
 end
 local function unbind()
 	for id in pairs(defaults) do CAS:UnbindAction("AXZF_"..id) end
-	CAS:UnbindAction("AXZF_stick") clear() park=false
+	CAS:UnbindAction("AXZF_stick") clear() park=false handbrake=false
 	if nativeTouch then nativeTouch.Enabled=nativeEnabled nativeTouch=nil end
 end
 local function setVehicle(model: Model?)
 	if active==model then return end
-	if active then clear() state.Brake=1 park=false send() end
+	if active then clear() state.Brake=1 handbrake=false send() end
 	unbind() active=model sequence=0 cockpit:setVehicle(model)
 	if not model then return end
+	park=model:GetAttribute("AXZF_parkRequested")==true
 	hideNativeTouch()
 	for id,fallback in pairs(defaults) do
 		local key=model:GetAttribute("AXZF_Key"..id) or fallback
@@ -59,7 +61,7 @@ local function setVehicle(model: Model?)
 			if UIS:GetFocusedTextBox() then clear() return Enum.ContextActionResult.Pass end
 			local began=phase==Enum.UserInputState.Begin
 			local ended=phase==Enum.UserInputState.End or phase==Enum.UserInputState.Cancel
-			if id=="Handbrake" or id=="Exit" or id=="HideControls" then if began then action(id,true) end
+			if id=="Handbrake" or id=="Park" or id=="Exit" or id=="HideControls" then if began then action(id,true) end
 			elseif ended then action(id,false)
 			elseif began or phase==Enum.UserInputState.Change then
 				local analog=input.KeyCode==Enum.KeyCode.ButtonR2 or input.KeyCode==Enum.KeyCode.ButtonL2

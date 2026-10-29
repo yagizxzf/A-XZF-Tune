@@ -1,0 +1,6 @@
+{
+  "returnValue": "{\"AXZF_ImportedCar\":{\"trials\":[{\"direction\":-1,\"maxSpeed\":93.03223419189453,\"yawDegrees\":115.4176133701327,\"samples\":181,\"pass\":true,\"maxRollDegrees\":4.969006081174584},{\"direction\":1,\"maxSpeed\":92.44286346435547,\"yawDegrees\":106.93104066496199,\"samples\":180,\"pass\":true,\"maxRollDegrees\":6.1478505528464029}],\"pass\":true},\"AXZF_Prototype\":{\"trials\":[],\"pass\":false,\"error\":\"ServerScriptService.AXZFServer.Rig:5: Vehicle already bound\\nServerScriptService.AXZFServer.Rig:5 function bind\\nServerScriptService.AXZFServer.Vehicle:15 function new\\nWorkspace.__MCPExecLuauPayload:97\\nWorkspace.__MCPExecLuauPayload:96\\nWorkspace.__MCPExecLuauPayload:126 function __mcp_run\\nWorkspace.__MCPExecLuauPayload:190\\n\"}}",
+  "message": "Code executed successfully",
+  "success": true,
+  "output": []
+}

@@ -1,1 +1,11 @@
-{}
+{
+  "gauge": "gauge.png",
+  "circle_stop": "circle-stop.png",
+  "hand": "hand.png",
+  "circle_parking": "circle-pause.png",
+  "log_out": "log-out.png",
+  "rotate_ccw": "rotate-ccw.png",
+  "chevron_left": "chevron-left.png",
+  "chevron_right": "chevron-right.png",
+  "panel_left_close": "panel-left-close.png"
+}

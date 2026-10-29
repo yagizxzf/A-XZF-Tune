@@ -22,7 +22,7 @@
               <ProtectedString name="Source">--!strict
 local Math=require(script.Parent.Math)
 local Guard={}
-local fields={seq=true,throttle=true,steer=true,brake=true,handbrake=true}
+local fields={seq=true,throttle=true,steer=true,brake=true,handbrake=true,park=true}
 function Guard.validate(packet: any, lastSequence: number): boolean
 	if type(packet)~="table" then return false end
 	for key in pairs(packet) do if not fields[key] then return false end end
@@ -31,7 +31,7 @@ function Guard.validate(packet: any, lastSequence: number): boolean
 		local v=packet[key]
 		if not Math.finite(v) or v &gt; 1 or v &lt; (if key=="brake" then 0 else -1) then return false end
 	end
-	return type(packet.handbrake)=="boolean"
+	return type(packet.handbrake)=="boolean" and (packet.park==nil or type(packet.park)=="boolean")
 end
 function Guard.consume(bucket: any, now: number): boolean
 	bucket.tokens=math.min(45,bucket.tokens+math.max(0,now-bucket.time)*30)
@@ -91,6 +91,19 @@ return table.freeze(M)
           </Item>
           <Item class="ModuleScript" referent="AXZF5">
             <Properties>
+              <string name="Name">Parking</string>
+              <ProtectedString name="Source">--!strict
+-- A latched parking request survives input expiry and driver changes.
+local Parking={}
+function Parking.state(requested: boolean,speed: number,engageSpeed: number): string
+	return if not requested then "Drive" elseif speed&gt;engageSpeed then "Stopping" else "Parked"
+end
+return table.freeze(Parking)
+</ProtectedString>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="AXZF6">
+            <Properties>
               <string name="Name">Powertrain</string>
               <ProtectedString name="Source">--!strict
 local Math=require(script.Parent.Math)
@@ -122,7 +135,7 @@ return Powertrain
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF6">
+          <Item class="ModuleScript" referent="AXZF7">
             <Properties>
               <string name="Name">Presets</string>
               <ProtectedString name="Source">--!strict
@@ -136,7 +149,21 @@ return table.freeze({
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF7">
+          <Item class="ModuleScript" referent="AXZF8">
+            <Properties>
+              <string name="Name">Stability</string>
+              <ProtectedString name="Source">--!strict
+local Stability={}
+-- Equal and opposite axle load transfer. Preserve total support and nonnegative loads.
+function Stability.axle(left: number,right: number,compressionDifference: number,stiffness: number,strength: number,cap: number): (number,number)
+	local transfer=math.clamp(compressionDifference*stiffness*strength,math.max(-left,right-cap),math.min(cap-left,right))
+	return left+transfer,right-transfer
+end
+return table.freeze(Stability)
+</ProtectedString>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="AXZF9">
             <Properties>
               <string name="Name">Suspension</string>
               <ProtectedString name="Source">--!strict
@@ -168,7 +195,7 @@ return table.freeze(Suspension)
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF8">
+          <Item class="ModuleScript" referent="AXZF10">
             <Properties>
               <string name="Name">Tune</string>
               <ProtectedString name="Source">--!strict
@@ -186,9 +213,11 @@ local defaults = {
 	Gears={3.2,2.1,1.5,1.12,0.88}, TorqueCurve={{850,95},{2500,150},{4500,175},{7000,110}},
 	TorqueScale=4, InputTimeout=0.35, TelemetryHz=10, SleepAfter=3,
 	AutoRecover=true, RecoverDelay=2, RecoverMaxSpeed=6,
+	RollInfluence=0.2, AntiRoll=0.5, RollDamping=4,
+	ParkBrakeAcceleration=140, ParkEngageSpeed=1.5, ParkOnSpawn=false, AutoParkOnExit=false,
 	Power=1, MaxSpeed=180, Mass=0, VFX=true, VFXIntensity=1,
 	SpeedUnit="STUD/S", SpeedScale=1, ShowControls=true,
-	Controls={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Exit="E",HideControls="H"},
+	Controls={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Park="P",Exit="E",HideControls="H"},
 }
 local ranges = {
 	Radius={0.1,10}, RestLength={0.1,10}, FrequencyHz={1,12}, DampingRatio={0.1,3},
@@ -199,6 +228,7 @@ local ranges = {
 	ShiftTime={0.05,3}, FinalDrive={0.1,15}, ReverseRatio={0.1,10}, TorqueScale={0.1,100},
 	InputTimeout={0.1,2}, TelemetryHz={1,20}, SleepAfter={0,30},
 	RecoverDelay={0.5,15},RecoverMaxSpeed={0.1,15},Power={0.1,5},MaxSpeed={5,600},Mass={0,5000},VFXIntensity={0,2},SpeedScale={0.01,10},
+	RollInfluence={0,1},AntiRoll={0,2},RollDamping={0,20},ParkBrakeAcceleration={1,500},ParkEngageSpeed={0.1,3},
 }
 function Tune.resolve(overrides: any): any
 	assert(overrides == nil or type(overrides) == "table", "Tune must be a table")
@@ -209,7 +239,7 @@ function Tune.resolve(overrides: any): any
 	end
 	assert(result.SchemaVersion == 1, "Unsupported Tune schema")
 	assert(result.Drive == "FWD" or result.Drive == "RWD" or result.Drive == "AWD", "Drive must be FWD/RWD/AWD")
-	for _,key in ipairs({"AutoRecover","VFX","ShowControls"}) do assert(type(result[key])=="boolean","Invalid Tune."..key) end
+	for _,key in ipairs({"AutoRecover","VFX","ShowControls","ParkOnSpawn","AutoParkOnExit"}) do assert(type(result[key])=="boolean","Invalid Tune."..key) end
 	assert(type(result.SpeedUnit)=="string" and #result.SpeedUnit&gt;0 and #result.SpeedUnit&lt;=12,"SpeedUnit must be a short label")
 	local keys={W=true,A=true,S=true,D=true,B=true,E=true,H=true,F=true,G=true,Q=true,R=true,T=true,X=true,Z=true,C=true,V=true,J=true,K=true,L=true,I=true,O=true,P=true,U=true,Y=true,N=true,M=true,Space=true,LeftShift=true,RightShift=true,LeftControl=true,RightControl=true,Up=true,Down=true,Left=true,Right=true,One=true,Two=true,Three=true,Four=true,Five=true}
 	assert(type(result.Controls)=="table","Controls must be a table")
@@ -244,11 +274,11 @@ return table.freeze(Tune)
             </Properties>
           </Item>
         </Item>
-        <Item class="Folder" referent="AXZF24">
+        <Item class="Folder" referent="AXZF27">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="AXZF25">
+          <Item class="ModuleScript" referent="AXZF28">
             <Properties>
               <string name="Name">AssetIds</string>
               <ProtectedString name="Source">-- UI asset ids. Generated by roblox-ui-maker/scripts/assets.py from rbx/out/uploaded.json.
@@ -257,6 +287,15 @@ return table.freeze(Tune)
 return {
 	stud = "",
 	icons = {
+		["chevron_left"] = "rbxassetid://139643458010755",
+		["chevron_right"] = "rbxassetid://109414773760073",
+		["circle_parking"] = "rbxassetid://137215235121162",
+		["circle_stop"] = "rbxassetid://98793648428351",
+		["gauge"] = "rbxassetid://72438558949106",
+		["hand"] = "rbxassetid://90085653799977",
+		["log_out"] = "rbxassetid://127056024989943",
+		["panel_left_close"] = "rbxassetid://93497424527544",
+		["rotate_ccw"] = "rbxassetid://78691306546761",
 	},
 	art = {
 	},
@@ -264,7 +303,7 @@ return {
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF26">
+          <Item class="ModuleScript" referent="AXZF29">
             <Properties>
               <string name="Name">Builder</string>
               <ProtectedString name="Source">--!nocheck
@@ -601,7 +640,7 @@ return Builder
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF27">
+          <Item class="ModuleScript" referent="AXZF30">
             <Properties>
               <string name="Name">Cockpit</string>
               <ProtectedString name="Source">--!strict
@@ -636,7 +675,7 @@ function Cockpit.new(player: Player,action: any): any
 	end
 	wire("Throttle","Forward",false) wire("Reverse","Reverse",false) wire("Brake","Brake",false)
 	wire("SteerLeft","Left",false) wire("SteerRight","Right",false)
-	wire("Handbrake","Handbrake",true) wire("Exit","Exit",true) wire("ToggleControls","HideControls",true)
+	wire("Handbrake","Handbrake",true) wire("Park","Park",true) wire("Exit","Exit",true) wire("ToggleControls","HideControls",true)
 	-- Global release also catches a finger/mouse dragged off its original button.
 	table.insert(self.connections,UIS.InputEnded:Connect(function(input)
 		local released={}
@@ -655,7 +694,7 @@ function Cockpit:setVehicle(model: Model?)
 	self.help=not model or model:GetAttribute("AXZF_ConfigShowControls")~=false
 	if not model then return end
 	local function key(name) return model:GetAttribute("AXZF_Key"..name) or name end
-	local rows={key("Forward").." / "..key("Reverse"),key("Left").." / "..key("Right"),key("Brake"),key("Handbrake"),key("Exit"),key("HideControls")}
+	local rows={key("Forward").." / "..key("Reverse"),key("Left").." / "..key("Right"),key("Brake"),key("Handbrake"),key("Park"),key("Exit"),key("HideControls")}
 	for i,value in ipairs(rows) do set(self.root.HUD.Controls,"Key"..(i-1),value) end
 	set(self.root.HUD.Toggle,"ShowControlsLabel",key("HideControls").."  CONTROLS")
 	self:update()
@@ -673,17 +712,17 @@ function Cockpit:layout()
 	local dashboard=if mobile then self.root.Mobile.DashboardMobile else self.root.HUD.Dashboard
 	dashboard.Position=if mobile then UDim2.new(.5,0,1,-12) else UDim2.new(1,-25,1,-12)
 	self.root.HUD.Controls.Position=UDim2.new(0,25,1,-12)
-	self.root.HUD.Toggle.Position=UDim2.new(0,25,1,if self.help then -300 else -12)
+	self.root.HUD.Toggle.Position=UDim2.new(0,25,1,if self.help then -332 else -12)
 	if mobile then
 		local narrow=viewport.X&lt;700 local portrait=viewport.Y&gt;viewport.X
-		self.dialScale.Scale=.78
-		dashboard.Position=if portrait then UDim2.new(.5,0,1,-180) else UDim2.new(if narrow then .34 else .45,0,1,-12)
+		self.dialScale.Scale=if narrow and self.help and not portrait then .65 else .78
+		dashboard.Position=if portrait then UDim2.new(.5,0,1,-330) else UDim2.new(if narrow then .34 else .45,0,1,-12)
 		self.root.HUD.Controls.Position=UDim2.new(0,25,0,15) self.root.HUD.Controls.AnchorPoint=Vector2.new(0,0)
 		self.root.Mobile.TouchLeft.Position=UDim2.new(0,20,1,-20)
-		self.root.Mobile.TouchLeft.Size=UDim2.fromOffset(if narrow then 130 else 275,if narrow then 164 else 74)
-		self.root.Mobile.TouchLeft.SteerRight.Position=UDim2.fromOffset(if narrow then 0 else 145,if narrow then 90 else 0)
+		self.root.Mobile.TouchLeft.Size=UDim2.fromOffset(if narrow then 130 else 275,if narrow then 195 else 90)
+		self.root.Mobile.TouchLeft.SteerRight.Position=UDim2.fromOffset(if narrow then 0 else 145,if narrow then 105 else 0)
 		self.root.Mobile.TouchRight.Position=UDim2.new(1,-20,1,-20)
-		self.root.Mobile.TouchRight.Size=UDim2.fromOffset(420,149)
+		self.root.Mobile.TouchRight.Size=UDim2.fromOffset(420,300)
 		-- Keep every actual touch hit area at least 48 screen pixels.
 		for _,v in ipairs(self.root.Mobile:GetDescendants()) do if v:IsA("TextButton") then v.Size=UDim2.fromOffset(math.max(v.Size.X.Offset,74),math.max(v.Size.Y.Offset,74)) end end
 	end
@@ -697,9 +736,22 @@ function Cockpit:update()
 	local rpm=m:GetAttribute("AXZF_rpm") or 0 local redline=m:GetAttribute("AXZF_ConfigRedlineRPM") or 7000
 	set(dashboard,"Speed",string.format("%03d",math.floor(speed+.5)))
 	set(dashboard,"Unit",m:GetAttribute("AXZF_ConfigSpeedUnit") or "STUD/S")
-	local gear=m:GetAttribute("AXZF_gear") or 1 set(dashboard,"Gear",if gear==-1 then "R" else gear)
+	local gear=m:GetAttribute("AXZF_gear") or 1
+	local park=m:GetAttribute("AXZF_parkRequested")==true
+	set(dashboard,"Gear",if park then "P" elseif gear==-1 then "R" else gear)
 	set(dashboard,"RPM",string.format("%d RPM",math.floor(rpm/50)*50))
-	local parked=m:GetAttribute("AXZF_handbrake")==true set(dashboard,"ParkStatus",if parked then "PARK ON" else "PARK OFF")
+	set(dashboard,"ParkStatus",if park then (if m:GetAttribute("AXZF_parkState")=="Stopping" then "P · STOPPING" else "PARK ON") else "DRIVE")
+	local handbrake=m:GetAttribute("AXZF_handbrake")==true set(dashboard,"HandbrakeStatus",if handbrake then "HB ON" else "HB OFF")
+	local names={Forward="Throttle",Reverse="Reverse",Brake="Brake",Left="SteerLeft",Right="SteerRight"}
+	local held={} for _,id in pairs(self.pressed) do held[id]=true end
+	for id,name in pairs(names) do
+		local button=self.root.Mobile:FindFirstChild(name,true)
+		if button then button.BackgroundColor3=if held[id] then Color3.fromRGB(119,80,31) else Color3.fromRGB(32,46,54) end
+	end
+	for name,on in pairs({Park=park,Handbrake=handbrake,ToggleControls=self.help}) do
+		local button=self.root.Mobile:FindFirstChild(name,true)
+		if button then button.BackgroundColor3=if on then Color3.fromRGB(119,80,31) else Color3.fromRGB(32,46,54) end
+	end
 	for i=0,40 do
 		local tick=dashboard:FindFirstChild("RPM"..i,true)
 		if tick and tick:IsA("Frame") then tick.BackgroundColor3=if i/40&lt;=rpm/redline then (if i&gt;35 then Color3.fromRGB(255,120,106) else Color3.fromRGB(255,188,99)) else Color3.fromRGB(67,87,98) end
@@ -715,15 +767,15 @@ return Cockpit
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF28">
+          <Item class="ModuleScript" referent="AXZF31">
             <Properties>
               <string name="Name">Data_HUD</string>
               <ProtectedString name="Source">-- generated by roblox-ui-maker/scripts/gen.py from hud.html (do not edit; edit the HTML and re-run)
-return [==[{"c":"Frame","n":"HUD","x":0,"y":0,"w":0,"h":0,"sw":1,"sh":1,"k":[{"c":"Frame","n":"Dashboard","x":-80,"y":-15,"sx":1,"sy":1,"ax":1,"ay":1,"w":330,"h":370,"k":[{"c":"Frame","n":"Cockpit","w":330,"h":370,"k":[{"c":"Frame","n":"DialRing","w":330,"h":330,"bg":[13,20,25],"bt":0.06,"corner":{"s":0.5},"stroke":{"t":2,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"x":0,"y":0},{"c":"Frame","n":"RPM0","w":4,"h":14,"rot":45,"bg":[255,188,99],"bt":0,"x":64.7,"y":256.28},{"c":"Frame","n":"RPM1","w":4,"h":14,"rot":51.75,"bg":[255,188,99],"bt":0,"x":53.83,"y":244.05},{"c":"Frame","n":"RPM2","w":4,"h":14,"rot":58.5,"bg":[255,188,99],"bt":0,"x":44.47,"y":230.62},{"c":"Frame","n":"RPM3","w":4,"h":14,"rot":65.25,"bg":[255,188,99],"bt":0,"x":36.77,"y":216.19},{"c":"Frame","n":"RPM4","w":4,"h":14,"rot":72.0,"bg":[255,188,99],"bt":0,"x":30.8,"y":200.95},{"c":"Frame","n":"RPM5","w":4,"h":14,"rot":78.75,"bg":[255,188,99],"bt":0,"x":26.66,"y":185.11},{"c":"Frame","n":"RPM6","w":4,"h":14,"rot":85.5,"bg":[255,188,99],"bt":0,"x":24.42,"y":168.89},{"c":"Frame","n":"RPM7","w":4,"h":14,"rot":92.25,"bg":[255,188,99],"bt":0,"x":24.09,"y":152.53},{"c":"Frame","n":"RPM8","w":4,"h":14,"rot":99.0,"bg":[255,188,99],"bt":0,"x":25.7,"y":136.25},{"c":"Frame","n":"RPM9","w":4,"h":14,"rot":105.75,"bg":[255,188,99],"bt":0,"x":29.2,"y":120.27},{"c":"Frame","n":"RPM10","w":4,"h":14,"rot":112.5,"bg":[255,188,99],"bt":0,"x":34.58,"y":104.8},{"c":"Frame","n":"RPM11","w":4,"h":14,"rot":119.25,"bg":[255,188,99],"bt":0,"x":41.72,"y":90.08},{"c":"Frame","n":"RPM12","w":4,"h":14,"rot":126.0,"bg":[255,188,99],"bt":0,"x":50.53,"y":76.3},{"c":"Frame","n":"RPM13","w":4,"h":14,"rot":132.75,"bg":[255,188,99],"bt":0,"x":60.92,"y":63.64},{"c":"Frame","n":"RPM14","w":4,"h":14,"rot":139.5,"bg":[255,188,99],"bt":0,"x":72.72,"y":52.3},{"c":"Frame","n":"RPM15","w":4,"h":14,"rot":146.25,"bg":[255,188,99],"bt":0,"x":85.77,"y":42.42},{"c":"Frame","n":"RPM16","w":4,"h":14,"rot":153.0,"bg":[255,188,99],"bt":0,"x":99.89,"y":34.14},{"c":"Frame","n":"RPM17","w":4,"h":14,"rot":159.75,"bg":[255,188,99],"bt":0,"x":114.88,"y":27.58},{"c":"Frame","n":"RPM18","w":4,"h":14,"rot":166.5,"bg":[255,188,99],"bt":0,"x":130.55,"y":22.83},{"c":"Frame","n":"RPM19","w":4,"h":14,"rot":173.25,"bg":[255,188,99],"bt":0,"x":146.66,"y":19.95},{"c":"Frame","n":"RPM20","w":4,"h":14,"rot":180,"bg":[255,188,99],"bt":0,"x":163,"y":19},{"c":"Frame","n":"RPM21","w":4,"h":14,"rot":-173.25,"bg":[255,188,99],"bt":0,"x":179.33,"y":19.95},{"c":"Frame","n":"RPM22","w":4,"h":14,"rot":-166.5,"bg":[255,188,99],"bt":0,"x":195.44,"y":22.83},{"c":"Frame","n":"RPM23","w":4,"h":14,"rot":-159.75,"bg":[255,188,99],"bt":0,"x":211.11,"y":27.58},{"c":"Frame","n":"RPM24","w":4,"h":14,"rot":-153.0,"bg":[255,188,99],"bt":0,"x":226.09,"y":34.14},{"c":"Frame","n":"RPM25","w":4,"h":14,"rot":-146.25,"bg":[255,188,99],"bt":0,"x":240.22,"y":42.42},{"c":"Frame","n":"RPM26","w":4,"h":14,"rot":-139.5,"bg":[255,188,99],"bt":0,"x":253.27,"y":52.3},{"c":"Frame","n":"RPM27","w":4,"h":14,"rot":-132.75,"bg":[255,188,99],"bt":0,"x":265.06,"y":63.64},{"c":"Frame","n":"RPM28","w":4,"h":14,"rot":-126.0,"bg":[67,87,98],"bt":0,"x":275.45,"y":76.3},{"c":"Frame","n":"RPM29","w":4,"h":14,"rot":-119.25,"bg":[67,87,98],"bt":0,"x":284.27,"y":90.08},{"c":"Frame","n":"RPM30","w":4,"h":14,"rot":-112.5,"bg":[67,87,98],"bt":0,"x":291.41,"y":104.8},{"c":"Frame","n":"RPM31","w":4,"h":14,"rot":-105.75,"bg":[67,87,98],"bt":0,"x":296.78,"y":120.27},{"c":"Frame","n":"RPM32","w":4,"h":14,"rot":-99.0,"bg":[67,87,98],"bt":0,"x":300.28,"y":136.25},{"c":"Frame","n":"RPM33","w":4,"h":14,"rot":-92.25,"bg":[67,87,98],"bt":0,"x":301.89,"y":152.53},{"c":"Frame","n":"RPM34","w":4,"h":14,"rot":-85.5,"bg":[67,87,98],"bt":0,"x":301.56,"y":168.89},{"c":"Frame","n":"RPM35","w":4,"h":14,"rot":-78.75,"bg":[67,87,98],"bt":0,"x":299.33,"y":185.11},{"c":"Frame","n":"RPM36","w":4,"h":14,"rot":-72.0,"bg":[255,120,106],"bt":0,"x":295.19,"y":200.95},{"c":"Frame","n":"RPM37","w":4,"h":14,"rot":-65.25,"bg":[255,120,106],"bt":0,"x":289.22,"y":216.19},{"c":"Frame","n":"RPM38","w":4,"h":14,"rot":-58.5,"bg":[255,120,106],"bt":0,"x":281.52,"y":230.62},{"c":"Frame","n":"RPM39","w":4,"h":14,"rot":-51.75,"bg":[255,120,106],"bt":0,"x":272.16,"y":244.05},{"c":"Frame","n":"RPM40","w":4,"h":14,"rot":-45,"bg":[255,120,106],"bt":0,"x":261.28,"y":256.28},{"c":"Frame","n":"Tick0","w":22,"h":25,"k":[{"c":"TextLabel","txt":"0","font":"Arial","wt":700,"xa":"L","n":"T_0","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":75.8,"y":234.19},{"c":"Frame","n":"Tick1","w":22,"h":25,"k":[{"c":"TextLabel","txt":"1","font":"Arial","wt":700,"xa":"L","n":"T_1","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":45.14,"y":176.84},{"c":"Frame","n":"Tick2","w":22,"h":25,"k":[{"c":"TextLabel","txt":"2","font":"Arial","wt":700,"xa":"L","n":"T_2","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":51.52,"y":112.12},{"c":"Frame","n":"Tick3","w":22,"h":25,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":92.77,"y":61.88},{"c":"Frame","n":"Tick4","w":22,"h":25,"k":[{"c":"TextLabel","txt":"4","font":"Arial","wt":700,"xa":"L","n":"T_4","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0,"y":-0.83}],"x":155,"y":43},{"c":"Frame","n":"Tick5","w":22,"h":25,"k":[{"c":"TextLabel","txt":"5","font":"Arial","wt":700,"xa":"L","n":"T_5","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":217.22,"y":61.88},{"c":"Frame","n":"Tick6","w":22,"h":25,"k":[{"c":"TextLabel","txt":"6","font":"Arial","wt":700,"xa":"L","n":"T_6","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":258.47,"y":112.12},{"c":"Frame","n":"Tick7","w":22,"h":25,"k":[{"c":"TextLabel","txt":"7","font":"Arial","wt":700,"xa":"L","n":"T_7","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":264.84,"y":176.84},{"c":"Frame","n":"Tick8","w":22,"h":25,"k":[{"c":"TextLabel","txt":"8","font":"Arial","wt":700,"xa":"L","n":"T_8","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":234.19,"y":234.19},{"c":"Frame","n":"Brand","w":150,"h":24,"k":[{"c":"TextLabel","txt":"A-XZF-TUNE","font":"Arial","wt":700,"xa":"L","n":"T_AXzfTune","w":101.98,"h":20.66,"ts":20.66,"tc":[167,186,196],"x":0,"y":-0.83}],"x":97,"y":85},{"c":"Frame","n":"Speed","w":148,"h":74,"k":[{"c":"TextLabel","txt":"084","font":"Arial","wt":700,"xa":"L","n":"T_084","w":103.45,"h":75.33,"ts":75.33,"tc":[245,245,240],"x":0,"y":-1.16}],"x":102,"y":120},{"c":"Frame","n":"Unit","w":110,"h":23,"k":[{"c":"TextLabel","txt":"STUD/S","font":"Arial","wt":400,"xa":"L","n":"T_StudS","w":58.67,"h":19.44,"ts":19.44,"tc":[167,186,196],"x":0,"y":-0.22}],"x":132,"y":196},{"c":"Frame","n":"Gear","w":45,"h":40,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":17.25,"h":37.66,"ts":37.66,"tc":[255,188,99],"x":0,"y":-0.33}],"x":151,"y":225},{"c":"Frame","n":"RPM","w":150,"h":23,"k":[{"c":"TextLabel","txt":"4 850 RPM","font":"Arial","wt":400,"xa":"L","n":"T_4850Rpm","w":90.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":113,"y":273},{"c":"Frame","n":"ParkStatus","w":180,"h":25,"k":[{"c":"TextLabel","txt":"PARK OFF","font":"Arial","wt":700,"xa":"L","n":"T_ParkOff","w":90.67,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":110,"y":338}],"x":0,"y":0}],"attrs":{"Anchor":"BR"}},{"c":"Frame","n":"Controls","x":50,"y":-70,"sx":0,"sy":1,"ax":0,"ay":1,"w":335,"h":270,"k":[{"c":"Frame","n":"ControlPanel","w":335,"h":270,"bg":[13,20,25],"bt":0.06,"corner":{"o":8},"stroke":{"t":1,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ControlsTitle","w":230,"h":24,"k":[{"c":"TextLabel","txt":"DRIVING CONTROLS","font":"Arial","wt":700,"xa":"L","n":"T_DrivingControls","w":181.02,"h":21.87,"ts":21.87,"tc":[255,188,99],"x":0,"y":-0.93}],"x":21,"y":17},{"c":"Frame","n":"Key0","w":85,"h":27,"k":[{"c":"TextLabel","txt":"W / S","font":"Arial","wt":700,"xa":"L","n":"T_WS","w":41.56,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":57},{"c":"Frame","n":"Control0","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Drive / reverse","font":"Arial","wt":400,"xa":"L","n":"T_DriveReverse","w":117.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":57},{"c":"Frame","n":"Key1","w":85,"h":27,"k":[{"c":"TextLabel","txt":"A / D","font":"Arial","wt":700,"xa":"L","n":"T_AD","w":38.09,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":89},{"c":"Frame","n":"Control1","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Steer","font":"Arial","wt":400,"xa":"L","n":"T_Steer","w":43.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":89},{"c":"Frame","n":"Key2","w":85,"h":27,"k":[{"c":"TextLabel","txt":"B","font":"Arial","wt":700,"xa":"L","n":"T_B","w":12.28,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":121},{"c":"Frame","n":"Control2","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Brake","font":"Arial","wt":400,"xa":"L","n":"T_Brake","w":47.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":121},{"c":"Frame","n":"Key3","w":85,"h":27,"k":[{"c":"TextLabel","txt":"SPACE","font":"Arial","wt":700,"xa":"L","n":"T_Space","w":57.31,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":153},{"c":"Frame","n":"Control3","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Toggle handbrake","font":"Arial","wt":400,"xa":"L","n":"T_ToggleHandbrake","w":143.12,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":153},{"c":"Frame","n":"Key4","w":85,"h":27,"k":[{"c":"TextLabel","txt":"E","font":"Arial","wt":700,"xa":"L","n":"T_E","w":11.34,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":185},{"c":"Frame","n":"Control4","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Exit vehicle","font":"Arial","wt":400,"xa":"L","n":"T_ExitVehicle","w":91.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":185},{"c":"Frame","n":"Key5","w":85,"h":27,"k":[{"c":"TextLabel","txt":"H","font":"Arial","wt":700,"xa":"L","n":"T_H","w":12.28,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":217},{"c":"Frame","n":"Control5","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Hide controls","font":"Arial","wt":400,"xa":"L","n":"T_HideControls","w":105.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":217}],"x":0,"y":0}],"attrs":{"Anchor":"BL"}},{"c":"Frame","n":"Toggle","x":50,"y":-362,"sx":0,"sy":1,"ax":0,"ay":1,"w":185,"h":58,"k":[{"c":"TextButton","n":"ShowControls","w":185,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ShowControlsLabel","w":165,"h":28,"k":[{"c":"TextLabel","txt":"H CONTROLS","font":"Arial","wt":700,"xa":"L","n":"T_HControls","w":132.22,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":0,"y":0}],"attrs":{"Anchor":"BL"}}],"visible":true,"attrs":{"Dim":0}}]==]
+return [==[{"c":"Frame","n":"HUD","x":0,"y":0,"w":0,"h":0,"sw":1,"sh":1,"k":[{"c":"Frame","n":"Dashboard","x":-80,"y":-15,"sx":1,"sy":1,"ax":1,"ay":1,"w":330,"h":370,"k":[{"c":"Frame","n":"Cockpit","w":330,"h":370,"k":[{"c":"Frame","n":"DialRing","w":330,"h":330,"bg":[13,20,25],"bt":0.06,"corner":{"s":0.5},"stroke":{"t":2,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"x":0,"y":0},{"c":"Frame","n":"RPM0","w":4,"h":14,"rot":45,"bg":[255,188,99],"bt":0,"x":64.7,"y":256.28},{"c":"Frame","n":"RPM1","w":4,"h":14,"rot":51.75,"bg":[255,188,99],"bt":0,"x":53.83,"y":244.05},{"c":"Frame","n":"RPM2","w":4,"h":14,"rot":58.5,"bg":[255,188,99],"bt":0,"x":44.47,"y":230.62},{"c":"Frame","n":"RPM3","w":4,"h":14,"rot":65.25,"bg":[255,188,99],"bt":0,"x":36.77,"y":216.19},{"c":"Frame","n":"RPM4","w":4,"h":14,"rot":72.0,"bg":[255,188,99],"bt":0,"x":30.8,"y":200.95},{"c":"Frame","n":"RPM5","w":4,"h":14,"rot":78.75,"bg":[255,188,99],"bt":0,"x":26.66,"y":185.11},{"c":"Frame","n":"RPM6","w":4,"h":14,"rot":85.5,"bg":[255,188,99],"bt":0,"x":24.42,"y":168.89},{"c":"Frame","n":"RPM7","w":4,"h":14,"rot":92.25,"bg":[255,188,99],"bt":0,"x":24.09,"y":152.53},{"c":"Frame","n":"RPM8","w":4,"h":14,"rot":99.0,"bg":[255,188,99],"bt":0,"x":25.7,"y":136.25},{"c":"Frame","n":"RPM9","w":4,"h":14,"rot":105.75,"bg":[255,188,99],"bt":0,"x":29.2,"y":120.27},{"c":"Frame","n":"RPM10","w":4,"h":14,"rot":112.5,"bg":[255,188,99],"bt":0,"x":34.58,"y":104.8},{"c":"Frame","n":"RPM11","w":4,"h":14,"rot":119.25,"bg":[255,188,99],"bt":0,"x":41.72,"y":90.08},{"c":"Frame","n":"RPM12","w":4,"h":14,"rot":126.0,"bg":[255,188,99],"bt":0,"x":50.53,"y":76.3},{"c":"Frame","n":"RPM13","w":4,"h":14,"rot":132.75,"bg":[255,188,99],"bt":0,"x":60.92,"y":63.64},{"c":"Frame","n":"RPM14","w":4,"h":14,"rot":139.5,"bg":[255,188,99],"bt":0,"x":72.72,"y":52.3},{"c":"Frame","n":"RPM15","w":4,"h":14,"rot":146.25,"bg":[255,188,99],"bt":0,"x":85.77,"y":42.42},{"c":"Frame","n":"RPM16","w":4,"h":14,"rot":153.0,"bg":[255,188,99],"bt":0,"x":99.89,"y":34.14},{"c":"Frame","n":"RPM17","w":4,"h":14,"rot":159.75,"bg":[255,188,99],"bt":0,"x":114.88,"y":27.58},{"c":"Frame","n":"RPM18","w":4,"h":14,"rot":166.5,"bg":[255,188,99],"bt":0,"x":130.55,"y":22.83},{"c":"Frame","n":"RPM19","w":4,"h":14,"rot":173.25,"bg":[255,188,99],"bt":0,"x":146.66,"y":19.95},{"c":"Frame","n":"RPM20","w":4,"h":14,"rot":180,"bg":[255,188,99],"bt":0,"x":163,"y":19},{"c":"Frame","n":"RPM21","w":4,"h":14,"rot":-173.25,"bg":[255,188,99],"bt":0,"x":179.33,"y":19.95},{"c":"Frame","n":"RPM22","w":4,"h":14,"rot":-166.5,"bg":[255,188,99],"bt":0,"x":195.44,"y":22.83},{"c":"Frame","n":"RPM23","w":4,"h":14,"rot":-159.75,"bg":[255,188,99],"bt":0,"x":211.11,"y":27.58},{"c":"Frame","n":"RPM24","w":4,"h":14,"rot":-153.0,"bg":[255,188,99],"bt":0,"x":226.09,"y":34.14},{"c":"Frame","n":"RPM25","w":4,"h":14,"rot":-146.25,"bg":[255,188,99],"bt":0,"x":240.22,"y":42.42},{"c":"Frame","n":"RPM26","w":4,"h":14,"rot":-139.5,"bg":[255,188,99],"bt":0,"x":253.27,"y":52.3},{"c":"Frame","n":"RPM27","w":4,"h":14,"rot":-132.75,"bg":[255,188,99],"bt":0,"x":265.06,"y":63.64},{"c":"Frame","n":"RPM28","w":4,"h":14,"rot":-126.0,"bg":[67,87,98],"bt":0,"x":275.45,"y":76.3},{"c":"Frame","n":"RPM29","w":4,"h":14,"rot":-119.25,"bg":[67,87,98],"bt":0,"x":284.27,"y":90.08},{"c":"Frame","n":"RPM30","w":4,"h":14,"rot":-112.5,"bg":[67,87,98],"bt":0,"x":291.41,"y":104.8},{"c":"Frame","n":"RPM31","w":4,"h":14,"rot":-105.75,"bg":[67,87,98],"bt":0,"x":296.78,"y":120.27},{"c":"Frame","n":"RPM32","w":4,"h":14,"rot":-99.0,"bg":[67,87,98],"bt":0,"x":300.28,"y":136.25},{"c":"Frame","n":"RPM33","w":4,"h":14,"rot":-92.25,"bg":[67,87,98],"bt":0,"x":301.89,"y":152.53},{"c":"Frame","n":"RPM34","w":4,"h":14,"rot":-85.5,"bg":[67,87,98],"bt":0,"x":301.56,"y":168.89},{"c":"Frame","n":"RPM35","w":4,"h":14,"rot":-78.75,"bg":[67,87,98],"bt":0,"x":299.33,"y":185.11},{"c":"Frame","n":"RPM36","w":4,"h":14,"rot":-72.0,"bg":[255,120,106],"bt":0,"x":295.19,"y":200.95},{"c":"Frame","n":"RPM37","w":4,"h":14,"rot":-65.25,"bg":[255,120,106],"bt":0,"x":289.22,"y":216.19},{"c":"Frame","n":"RPM38","w":4,"h":14,"rot":-58.5,"bg":[255,120,106],"bt":0,"x":281.52,"y":230.62},{"c":"Frame","n":"RPM39","w":4,"h":14,"rot":-51.75,"bg":[255,120,106],"bt":0,"x":272.16,"y":244.05},{"c":"Frame","n":"RPM40","w":4,"h":14,"rot":-45,"bg":[255,120,106],"bt":0,"x":261.28,"y":256.28},{"c":"Frame","n":"Tick0","w":22,"h":25,"k":[{"c":"TextLabel","txt":"0","font":"Arial","wt":700,"xa":"L","n":"T_0","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":75.8,"y":234.19},{"c":"Frame","n":"Tick1","w":22,"h":25,"k":[{"c":"TextLabel","txt":"1","font":"Arial","wt":700,"xa":"L","n":"T_1","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":45.14,"y":176.84},{"c":"Frame","n":"Tick2","w":22,"h":25,"k":[{"c":"TextLabel","txt":"2","font":"Arial","wt":700,"xa":"L","n":"T_2","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":51.52,"y":112.12},{"c":"Frame","n":"Tick3","w":22,"h":25,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":92.77,"y":61.88},{"c":"Frame","n":"Tick4","w":22,"h":25,"k":[{"c":"TextLabel","txt":"4","font":"Arial","wt":700,"xa":"L","n":"T_4","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0,"y":-0.83}],"x":155,"y":43},{"c":"Frame","n":"Tick5","w":22,"h":25,"k":[{"c":"TextLabel","txt":"5","font":"Arial","wt":700,"xa":"L","n":"T_5","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":217.22,"y":61.88},{"c":"Frame","n":"Tick6","w":22,"h":25,"k":[{"c":"TextLabel","txt":"6","font":"Arial","wt":700,"xa":"L","n":"T_6","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":258.47,"y":112.12},{"c":"Frame","n":"Tick7","w":22,"h":25,"k":[{"c":"TextLabel","txt":"7","font":"Arial","wt":700,"xa":"L","n":"T_7","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":264.84,"y":176.84},{"c":"Frame","n":"Tick8","w":22,"h":25,"k":[{"c":"TextLabel","txt":"8","font":"Arial","wt":700,"xa":"L","n":"T_8","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":234.19,"y":234.19},{"c":"Frame","n":"Brand","w":150,"h":24,"k":[{"c":"TextLabel","txt":"A-XZF-TUNE","font":"Arial","wt":700,"xa":"L","n":"T_AXzfTune","w":101.98,"h":20.66,"ts":20.66,"tc":[167,186,196],"x":0,"y":-0.83}],"x":97,"y":85},{"c":"Frame","n":"Speed","w":148,"h":74,"k":[{"c":"TextLabel","txt":"084","font":"Arial","wt":700,"xa":"L","n":"T_084","w":103.45,"h":75.33,"ts":75.33,"tc":[245,245,240],"x":0,"y":-1.16}],"x":102,"y":120},{"c":"Frame","n":"Unit","w":110,"h":23,"k":[{"c":"TextLabel","txt":"STUD/S","font":"Arial","wt":400,"xa":"L","n":"T_StudS","w":58.67,"h":19.44,"ts":19.44,"tc":[167,186,196],"x":0,"y":-0.22}],"x":132,"y":196},{"c":"Frame","n":"Gear","w":45,"h":40,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":17.25,"h":37.66,"ts":37.66,"tc":[255,188,99],"x":0,"y":-0.33}],"x":151,"y":225},{"c":"Frame","n":"RPM","w":150,"h":23,"k":[{"c":"TextLabel","txt":"4 850 RPM","font":"Arial","wt":400,"xa":"L","n":"T_4850Rpm","w":90.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":113,"y":273},{"c":"Frame","n":"ParkStatus","w":130,"h":25,"k":[{"c":"TextLabel","txt":"DRIVE","font":"Arial","wt":700,"xa":"L","n":"T_Drive","w":55.02,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":35,"y":338},{"c":"Frame","n":"HandbrakeStatus","w":130,"h":25,"k":[{"c":"TextLabel","txt":"HB OFF","font":"Arial","wt":700,"xa":"L","n":"T_HbOff","w":67,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":185,"y":338}],"x":0,"y":0}],"attrs":{"Anchor":"BR"}},{"c":"Frame","n":"Controls","x":50,"y":-70,"sx":0,"sy":1,"ax":0,"ay":1,"w":335,"h":302,"k":[{"c":"Frame","n":"ControlPanel","w":335,"h":302,"bg":[13,20,25],"bt":0.06,"corner":{"o":8},"stroke":{"t":1,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ControlsTitle","w":230,"h":24,"k":[{"c":"TextLabel","txt":"DRIVING CONTROLS","font":"Arial","wt":700,"xa":"L","n":"T_DrivingControls","w":181.02,"h":21.87,"ts":21.87,"tc":[255,188,99],"x":0,"y":-0.93}],"x":21,"y":17},{"c":"Frame","n":"Key0","w":85,"h":27,"k":[{"c":"TextLabel","txt":"W / S","font":"Arial","wt":700,"xa":"L","n":"T_WS","w":41.56,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":57},{"c":"Frame","n":"Control0","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Drive / reverse","font":"Arial","wt":400,"xa":"L","n":"T_DriveReverse","w":117.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":57},{"c":"Frame","n":"Key1","w":85,"h":27,"k":[{"c":"TextLabel","txt":"A / D","font":"Arial","wt":700,"xa":"L","n":"T_AD","w":38.09,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":89},{"c":"Frame","n":"Control1","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Steer","font":"Arial","wt":400,"xa":"L","n":"T_Steer","w":43.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":89},{"c":"Frame","n":"Key2","w":85,"h":27,"k":[{"c":"TextLabel","txt":"B","font":"Arial","wt":700,"xa":"L","n":"T_B","w":12.28,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":121},{"c":"Frame","n":"Control2","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Brake","font":"Arial","wt":400,"xa":"L","n":"T_Brake","w":47.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":121},{"c":"Frame","n":"Key3","w":85,"h":27,"k":[{"c":"TextLabel","txt":"SPACE","font":"Arial","wt":700,"xa":"L","n":"T_Space","w":57.31,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":153},{"c":"Frame","n":"Control3","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Toggle handbrake","font":"Arial","wt":400,"xa":"L","n":"T_ToggleHandbrake","w":143.12,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":153},{"c":"Frame","n":"Key4","w":85,"h":27,"k":[{"c":"TextLabel","txt":"P","font":"Arial","wt":700,"xa":"L","n":"T_P","w":11.34,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":185},{"c":"Frame","n":"Control4","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Park / drive","font":"Arial","wt":400,"xa":"L","n":"T_ParkDrive","w":91.03,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":185},{"c":"Frame","n":"Key5","w":85,"h":27,"k":[{"c":"TextLabel","txt":"E","font":"Arial","wt":700,"xa":"L","n":"T_E","w":11.34,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":217},{"c":"Frame","n":"Control5","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Exit vehicle","font":"Arial","wt":400,"xa":"L","n":"T_ExitVehicle","w":91.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":217},{"c":"Frame","n":"Key6","w":85,"h":27,"k":[{"c":"TextLabel","txt":"H","font":"Arial","wt":700,"xa":"L","n":"T_H","w":12.28,"h":20.66,"ts":20.66,"tc":[245,245,240],"x":0,"y":-0.83}],"x":21,"y":249},{"c":"Frame","n":"Control6","w":190,"h":27,"k":[{"c":"TextLabel","txt":"Hide controls","font":"Arial","wt":400,"xa":"L","n":"T_HideControls","w":105.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":116,"y":249}],"x":0,"y":0}],"attrs":{"Anchor":"BL"}},{"c":"Frame","n":"Toggle","x":50,"y":-394,"sx":0,"sy":1,"ax":0,"ay":1,"w":185,"h":58,"k":[{"c":"TextButton","n":"ShowControls","w":185,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ShowControlsLabel","w":165,"h":28,"k":[{"c":"TextLabel","txt":"H CONTROLS","font":"Arial","wt":700,"xa":"L","n":"T_HControls","w":132.22,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":0,"y":0}],"attrs":{"Anchor":"BL"}}],"visible":true,"attrs":{"Dim":0}}]==]
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF29">
+          <Item class="ModuleScript" referent="AXZF32">
             <Properties>
               <string name="Name">Data_Manifest</string>
               <ProtectedString name="Source">-- generated by roblox-ui-maker/scripts/gen.py from rbx.json (do not edit; edit the HTML and re-run)
@@ -731,15 +783,15 @@ return [==[{"gui":"AXZFCockpit","templates":null,"design":[1920,1080],"screens":
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF30">
+          <Item class="ModuleScript" referent="AXZF33">
             <Properties>
               <string name="Name">Data_Mobile</string>
               <ProtectedString name="Source">-- generated by roblox-ui-maker/scripts/gen.py from hud_phone.html (do not edit; edit the HTML and re-run)
-return [==[{"c":"Frame","n":"Mobile","x":0,"y":0,"w":0,"h":0,"sw":1,"sh":1,"k":[{"c":"Frame","n":"DashboardMobile","x":-5.0,"y":-15,"sx":0.5,"sy":1,"ax":0.5,"ay":1,"w":330,"h":370,"k":[{"c":"Frame","n":"Cockpit","w":330,"h":370,"k":[{"c":"Frame","n":"DialRing","w":330,"h":330,"bg":[13,20,25],"bt":0.06,"corner":{"s":0.5},"stroke":{"t":2,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"x":0,"y":0},{"c":"Frame","n":"RPM0","w":4,"h":14,"rot":45,"bg":[255,188,99],"bt":0,"x":64.7,"y":256.28},{"c":"Frame","n":"RPM1","w":4,"h":14,"rot":51.75,"bg":[255,188,99],"bt":0,"x":53.83,"y":244.05},{"c":"Frame","n":"RPM2","w":4,"h":14,"rot":58.5,"bg":[255,188,99],"bt":0,"x":44.47,"y":230.62},{"c":"Frame","n":"RPM3","w":4,"h":14,"rot":65.25,"bg":[255,188,99],"bt":0,"x":36.77,"y":216.19},{"c":"Frame","n":"RPM4","w":4,"h":14,"rot":72.0,"bg":[255,188,99],"bt":0,"x":30.8,"y":200.95},{"c":"Frame","n":"RPM5","w":4,"h":14,"rot":78.75,"bg":[255,188,99],"bt":0,"x":26.66,"y":185.11},{"c":"Frame","n":"RPM6","w":4,"h":14,"rot":85.5,"bg":[255,188,99],"bt":0,"x":24.42,"y":168.89},{"c":"Frame","n":"RPM7","w":4,"h":14,"rot":92.25,"bg":[255,188,99],"bt":0,"x":24.09,"y":152.53},{"c":"Frame","n":"RPM8","w":4,"h":14,"rot":99.0,"bg":[255,188,99],"bt":0,"x":25.7,"y":136.25},{"c":"Frame","n":"RPM9","w":4,"h":14,"rot":105.75,"bg":[255,188,99],"bt":0,"x":29.2,"y":120.27},{"c":"Frame","n":"RPM10","w":4,"h":14,"rot":112.5,"bg":[255,188,99],"bt":0,"x":34.58,"y":104.8},{"c":"Frame","n":"RPM11","w":4,"h":14,"rot":119.25,"bg":[255,188,99],"bt":0,"x":41.72,"y":90.08},{"c":"Frame","n":"RPM12","w":4,"h":14,"rot":126.0,"bg":[255,188,99],"bt":0,"x":50.53,"y":76.3},{"c":"Frame","n":"RPM13","w":4,"h":14,"rot":132.75,"bg":[255,188,99],"bt":0,"x":60.92,"y":63.64},{"c":"Frame","n":"RPM14","w":4,"h":14,"rot":139.5,"bg":[255,188,99],"bt":0,"x":72.72,"y":52.3},{"c":"Frame","n":"RPM15","w":4,"h":14,"rot":146.25,"bg":[255,188,99],"bt":0,"x":85.77,"y":42.42},{"c":"Frame","n":"RPM16","w":4,"h":14,"rot":153.0,"bg":[255,188,99],"bt":0,"x":99.89,"y":34.14},{"c":"Frame","n":"RPM17","w":4,"h":14,"rot":159.75,"bg":[255,188,99],"bt":0,"x":114.88,"y":27.58},{"c":"Frame","n":"RPM18","w":4,"h":14,"rot":166.5,"bg":[255,188,99],"bt":0,"x":130.55,"y":22.83},{"c":"Frame","n":"RPM19","w":4,"h":14,"rot":173.25,"bg":[255,188,99],"bt":0,"x":146.66,"y":19.95},{"c":"Frame","n":"RPM20","w":4,"h":14,"rot":180,"bg":[255,188,99],"bt":0,"x":163,"y":19},{"c":"Frame","n":"RPM21","w":4,"h":14,"rot":-173.25,"bg":[255,188,99],"bt":0,"x":179.33,"y":19.95},{"c":"Frame","n":"RPM22","w":4,"h":14,"rot":-166.5,"bg":[255,188,99],"bt":0,"x":195.44,"y":22.83},{"c":"Frame","n":"RPM23","w":4,"h":14,"rot":-159.75,"bg":[255,188,99],"bt":0,"x":211.11,"y":27.58},{"c":"Frame","n":"RPM24","w":4,"h":14,"rot":-153.0,"bg":[255,188,99],"bt":0,"x":226.09,"y":34.14},{"c":"Frame","n":"RPM25","w":4,"h":14,"rot":-146.25,"bg":[255,188,99],"bt":0,"x":240.22,"y":42.42},{"c":"Frame","n":"RPM26","w":4,"h":14,"rot":-139.5,"bg":[255,188,99],"bt":0,"x":253.27,"y":52.3},{"c":"Frame","n":"RPM27","w":4,"h":14,"rot":-132.75,"bg":[255,188,99],"bt":0,"x":265.06,"y":63.64},{"c":"Frame","n":"RPM28","w":4,"h":14,"rot":-126.0,"bg":[67,87,98],"bt":0,"x":275.45,"y":76.3},{"c":"Frame","n":"RPM29","w":4,"h":14,"rot":-119.25,"bg":[67,87,98],"bt":0,"x":284.27,"y":90.08},{"c":"Frame","n":"RPM30","w":4,"h":14,"rot":-112.5,"bg":[67,87,98],"bt":0,"x":291.41,"y":104.8},{"c":"Frame","n":"RPM31","w":4,"h":14,"rot":-105.75,"bg":[67,87,98],"bt":0,"x":296.78,"y":120.27},{"c":"Frame","n":"RPM32","w":4,"h":14,"rot":-99.0,"bg":[67,87,98],"bt":0,"x":300.28,"y":136.25},{"c":"Frame","n":"RPM33","w":4,"h":14,"rot":-92.25,"bg":[67,87,98],"bt":0,"x":301.89,"y":152.53},{"c":"Frame","n":"RPM34","w":4,"h":14,"rot":-85.5,"bg":[67,87,98],"bt":0,"x":301.56,"y":168.89},{"c":"Frame","n":"RPM35","w":4,"h":14,"rot":-78.75,"bg":[67,87,98],"bt":0,"x":299.33,"y":185.11},{"c":"Frame","n":"RPM36","w":4,"h":14,"rot":-72.0,"bg":[255,120,106],"bt":0,"x":295.19,"y":200.95},{"c":"Frame","n":"RPM37","w":4,"h":14,"rot":-65.25,"bg":[255,120,106],"bt":0,"x":289.22,"y":216.19},{"c":"Frame","n":"RPM38","w":4,"h":14,"rot":-58.5,"bg":[255,120,106],"bt":0,"x":281.52,"y":230.62},{"c":"Frame","n":"RPM39","w":4,"h":14,"rot":-51.75,"bg":[255,120,106],"bt":0,"x":272.16,"y":244.05},{"c":"Frame","n":"RPM40","w":4,"h":14,"rot":-45,"bg":[255,120,106],"bt":0,"x":261.28,"y":256.28},{"c":"Frame","n":"Tick0","w":22,"h":25,"k":[{"c":"TextLabel","txt":"0","font":"Arial","wt":700,"xa":"L","n":"T_0","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":75.8,"y":234.19},{"c":"Frame","n":"Tick1","w":22,"h":25,"k":[{"c":"TextLabel","txt":"1","font":"Arial","wt":700,"xa":"L","n":"T_1","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":45.14,"y":176.84},{"c":"Frame","n":"Tick2","w":22,"h":25,"k":[{"c":"TextLabel","txt":"2","font":"Arial","wt":700,"xa":"L","n":"T_2","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":51.52,"y":112.12},{"c":"Frame","n":"Tick3","w":22,"h":25,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":92.77,"y":61.88},{"c":"Frame","n":"Tick4","w":22,"h":25,"k":[{"c":"TextLabel","txt":"4","font":"Arial","wt":700,"xa":"L","n":"T_4","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0,"y":-0.83}],"x":155,"y":43},{"c":"Frame","n":"Tick5","w":22,"h":25,"k":[{"c":"TextLabel","txt":"5","font":"Arial","wt":700,"xa":"L","n":"T_5","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":217.22,"y":61.88},{"c":"Frame","n":"Tick6","w":22,"h":25,"k":[{"c":"TextLabel","txt":"6","font":"Arial","wt":700,"xa":"L","n":"T_6","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":258.47,"y":112.12},{"c":"Frame","n":"Tick7","w":22,"h":25,"k":[{"c":"TextLabel","txt":"7","font":"Arial","wt":700,"xa":"L","n":"T_7","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":264.84,"y":176.84},{"c":"Frame","n":"Tick8","w":22,"h":25,"k":[{"c":"TextLabel","txt":"8","font":"Arial","wt":700,"xa":"L","n":"T_8","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":234.19,"y":234.19},{"c":"Frame","n":"Brand","w":150,"h":24,"k":[{"c":"TextLabel","txt":"A-XZF-TUNE","font":"Arial","wt":700,"xa":"L","n":"T_AXzfTune","w":101.98,"h":20.66,"ts":20.66,"tc":[167,186,196],"x":0,"y":-0.83}],"x":97,"y":85},{"c":"Frame","n":"Speed","w":148,"h":74,"k":[{"c":"TextLabel","txt":"084","font":"Arial","wt":700,"xa":"L","n":"T_084","w":103.45,"h":75.33,"ts":75.33,"tc":[245,245,240],"x":0,"y":-1.16}],"x":102,"y":120},{"c":"Frame","n":"Unit","w":110,"h":23,"k":[{"c":"TextLabel","txt":"STUD/S","font":"Arial","wt":400,"xa":"L","n":"T_StudS","w":58.67,"h":19.44,"ts":19.44,"tc":[167,186,196],"x":0,"y":-0.22}],"x":132,"y":196},{"c":"Frame","n":"Gear","w":45,"h":40,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":17.25,"h":37.66,"ts":37.66,"tc":[255,188,99],"x":0,"y":-0.33}],"x":151,"y":225},{"c":"Frame","n":"RPM","w":150,"h":23,"k":[{"c":"TextLabel","txt":"4 850 RPM","font":"Arial","wt":400,"xa":"L","n":"T_4850Rpm","w":90.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":113,"y":273},{"c":"Frame","n":"ParkStatus","w":180,"h":25,"k":[{"c":"TextLabel","txt":"PARK OFF","font":"Arial","wt":700,"xa":"L","n":"T_ParkOff","w":90.67,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":110,"y":338}],"x":0,"y":0}],"attrs":{"Anchor":"B"}},{"c":"Frame","n":"TouchLeft","x":50,"y":-102,"sx":0,"sy":1,"ax":0,"ay":1,"w":275,"h":58,"k":[{"c":"TextButton","n":"SteerLeft","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"SteerLeftLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"LEFT","font":"Arial","wt":700,"xa":"L","n":"T_Left","w":50,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":0,"y":0},{"c":"TextButton","n":"SteerRight","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"SteerRightLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"RIGHT","font":"Arial","wt":700,"xa":"L","n":"T_Right","w":62.22,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":145,"y":0}],"attrs":{"Anchor":"BL"}},{"c":"Frame","n":"TouchRight","x":-100,"y":-102,"sx":1,"sy":1,"ax":1,"ay":1,"w":420,"h":133,"k":[{"c":"TextButton","n":"Throttle","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ThrottleLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"GO","font":"Arial","wt":700,"xa":"L","n":"T_Go","w":31.12,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":290,"y":0},{"c":"TextButton","n":"Reverse","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ReverseLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"REVERSE","font":"Arial","wt":700,"xa":"L","n":"T_Reverse","w":95.59,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":290,"y":75},{"c":"TextButton","n":"Brake","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"BrakeLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"BRAKE","font":"Arial","wt":700,"xa":"L","n":"T_Brake","w":71.12,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":145,"y":75},{"c":"TextButton","n":"Handbrake","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"HandbrakeLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"PARK","font":"Arial","wt":700,"xa":"L","n":"T_Park","w":55.19,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":0,"y":75},{"c":"TextButton","n":"Exit","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ExitLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"EXIT","font":"Arial","wt":700,"xa":"L","n":"T_Exit","w":44.45,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":145,"y":0},{"c":"TextButton","n":"ToggleControls","w":130,"h":58,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"Frame","n":"ToggleControlsLabel","w":110,"h":28,"k":[{"c":"TextLabel","txt":"KEYS","font":"Arial","wt":700,"xa":"L","n":"T_Keys","w":54.47,"h":24.3,"ts":24.3,"tc":[245,245,240],"x":0,"y":-0.15}],"x":13,"y":18}],"x":0,"y":0}],"attrs":{"Anchor":"BR"}}],"visible":false,"attrs":{"Dim":0}}]==]
+return [==[{"c":"Frame","n":"Mobile","x":0,"y":0,"w":0,"h":0,"sw":1,"sh":1,"k":[{"c":"Frame","n":"DashboardMobile","x":-5.0,"y":-15,"sx":0.5,"sy":1,"ax":0.5,"ay":1,"w":330,"h":370,"k":[{"c":"Frame","n":"Cockpit","w":330,"h":370,"k":[{"c":"Frame","n":"DialRing","w":330,"h":330,"bg":[13,20,25],"bt":0.06,"corner":{"s":0.5},"stroke":{"t":2,"c":[58,75,85],"tr":0,"pos":"Inner","mode":"Border"},"x":0,"y":0},{"c":"Frame","n":"RPM0","w":4,"h":14,"rot":45,"bg":[255,188,99],"bt":0,"x":64.7,"y":256.28},{"c":"Frame","n":"RPM1","w":4,"h":14,"rot":51.75,"bg":[255,188,99],"bt":0,"x":53.83,"y":244.05},{"c":"Frame","n":"RPM2","w":4,"h":14,"rot":58.5,"bg":[255,188,99],"bt":0,"x":44.47,"y":230.62},{"c":"Frame","n":"RPM3","w":4,"h":14,"rot":65.25,"bg":[255,188,99],"bt":0,"x":36.77,"y":216.19},{"c":"Frame","n":"RPM4","w":4,"h":14,"rot":72.0,"bg":[255,188,99],"bt":0,"x":30.8,"y":200.95},{"c":"Frame","n":"RPM5","w":4,"h":14,"rot":78.75,"bg":[255,188,99],"bt":0,"x":26.66,"y":185.11},{"c":"Frame","n":"RPM6","w":4,"h":14,"rot":85.5,"bg":[255,188,99],"bt":0,"x":24.42,"y":168.89},{"c":"Frame","n":"RPM7","w":4,"h":14,"rot":92.25,"bg":[255,188,99],"bt":0,"x":24.09,"y":152.53},{"c":"Frame","n":"RPM8","w":4,"h":14,"rot":99.0,"bg":[255,188,99],"bt":0,"x":25.7,"y":136.25},{"c":"Frame","n":"RPM9","w":4,"h":14,"rot":105.75,"bg":[255,188,99],"bt":0,"x":29.2,"y":120.27},{"c":"Frame","n":"RPM10","w":4,"h":14,"rot":112.5,"bg":[255,188,99],"bt":0,"x":34.58,"y":104.8},{"c":"Frame","n":"RPM11","w":4,"h":14,"rot":119.25,"bg":[255,188,99],"bt":0,"x":41.72,"y":90.08},{"c":"Frame","n":"RPM12","w":4,"h":14,"rot":126.0,"bg":[255,188,99],"bt":0,"x":50.53,"y":76.3},{"c":"Frame","n":"RPM13","w":4,"h":14,"rot":132.75,"bg":[255,188,99],"bt":0,"x":60.92,"y":63.64},{"c":"Frame","n":"RPM14","w":4,"h":14,"rot":139.5,"bg":[255,188,99],"bt":0,"x":72.72,"y":52.3},{"c":"Frame","n":"RPM15","w":4,"h":14,"rot":146.25,"bg":[255,188,99],"bt":0,"x":85.77,"y":42.42},{"c":"Frame","n":"RPM16","w":4,"h":14,"rot":153.0,"bg":[255,188,99],"bt":0,"x":99.89,"y":34.14},{"c":"Frame","n":"RPM17","w":4,"h":14,"rot":159.75,"bg":[255,188,99],"bt":0,"x":114.88,"y":27.58},{"c":"Frame","n":"RPM18","w":4,"h":14,"rot":166.5,"bg":[255,188,99],"bt":0,"x":130.55,"y":22.83},{"c":"Frame","n":"RPM19","w":4,"h":14,"rot":173.25,"bg":[255,188,99],"bt":0,"x":146.66,"y":19.95},{"c":"Frame","n":"RPM20","w":4,"h":14,"rot":180,"bg":[255,188,99],"bt":0,"x":163,"y":19},{"c":"Frame","n":"RPM21","w":4,"h":14,"rot":-173.25,"bg":[255,188,99],"bt":0,"x":179.33,"y":19.95},{"c":"Frame","n":"RPM22","w":4,"h":14,"rot":-166.5,"bg":[255,188,99],"bt":0,"x":195.44,"y":22.83},{"c":"Frame","n":"RPM23","w":4,"h":14,"rot":-159.75,"bg":[255,188,99],"bt":0,"x":211.11,"y":27.58},{"c":"Frame","n":"RPM24","w":4,"h":14,"rot":-153.0,"bg":[255,188,99],"bt":0,"x":226.09,"y":34.14},{"c":"Frame","n":"RPM25","w":4,"h":14,"rot":-146.25,"bg":[255,188,99],"bt":0,"x":240.22,"y":42.42},{"c":"Frame","n":"RPM26","w":4,"h":14,"rot":-139.5,"bg":[255,188,99],"bt":0,"x":253.27,"y":52.3},{"c":"Frame","n":"RPM27","w":4,"h":14,"rot":-132.75,"bg":[255,188,99],"bt":0,"x":265.06,"y":63.64},{"c":"Frame","n":"RPM28","w":4,"h":14,"rot":-126.0,"bg":[67,87,98],"bt":0,"x":275.45,"y":76.3},{"c":"Frame","n":"RPM29","w":4,"h":14,"rot":-119.25,"bg":[67,87,98],"bt":0,"x":284.27,"y":90.08},{"c":"Frame","n":"RPM30","w":4,"h":14,"rot":-112.5,"bg":[67,87,98],"bt":0,"x":291.41,"y":104.8},{"c":"Frame","n":"RPM31","w":4,"h":14,"rot":-105.75,"bg":[67,87,98],"bt":0,"x":296.78,"y":120.27},{"c":"Frame","n":"RPM32","w":4,"h":14,"rot":-99.0,"bg":[67,87,98],"bt":0,"x":300.28,"y":136.25},{"c":"Frame","n":"RPM33","w":4,"h":14,"rot":-92.25,"bg":[67,87,98],"bt":0,"x":301.89,"y":152.53},{"c":"Frame","n":"RPM34","w":4,"h":14,"rot":-85.5,"bg":[67,87,98],"bt":0,"x":301.56,"y":168.89},{"c":"Frame","n":"RPM35","w":4,"h":14,"rot":-78.75,"bg":[67,87,98],"bt":0,"x":299.33,"y":185.11},{"c":"Frame","n":"RPM36","w":4,"h":14,"rot":-72.0,"bg":[255,120,106],"bt":0,"x":295.19,"y":200.95},{"c":"Frame","n":"RPM37","w":4,"h":14,"rot":-65.25,"bg":[255,120,106],"bt":0,"x":289.22,"y":216.19},{"c":"Frame","n":"RPM38","w":4,"h":14,"rot":-58.5,"bg":[255,120,106],"bt":0,"x":281.52,"y":230.62},{"c":"Frame","n":"RPM39","w":4,"h":14,"rot":-51.75,"bg":[255,120,106],"bt":0,"x":272.16,"y":244.05},{"c":"Frame","n":"RPM40","w":4,"h":14,"rot":-45,"bg":[255,120,106],"bt":0,"x":261.28,"y":256.28},{"c":"Frame","n":"Tick0","w":22,"h":25,"k":[{"c":"TextLabel","txt":"0","font":"Arial","wt":700,"xa":"L","n":"T_0","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":75.8,"y":234.19},{"c":"Frame","n":"Tick1","w":22,"h":25,"k":[{"c":"TextLabel","txt":"1","font":"Arial","wt":700,"xa":"L","n":"T_1","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":45.14,"y":176.84},{"c":"Frame","n":"Tick2","w":22,"h":25,"k":[{"c":"TextLabel","txt":"2","font":"Arial","wt":700,"xa":"L","n":"T_2","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":51.52,"y":112.12},{"c":"Frame","n":"Tick3","w":22,"h":25,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":92.77,"y":61.88},{"c":"Frame","n":"Tick4","w":22,"h":25,"k":[{"c":"TextLabel","txt":"4","font":"Arial","wt":700,"xa":"L","n":"T_4","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0,"y":-0.83}],"x":155,"y":43},{"c":"Frame","n":"Tick5","w":22,"h":25,"k":[{"c":"TextLabel","txt":"5","font":"Arial","wt":700,"xa":"L","n":"T_5","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":217.22,"y":61.88},{"c":"Frame","n":"Tick6","w":22,"h":25,"k":[{"c":"TextLabel","txt":"6","font":"Arial","wt":700,"xa":"L","n":"T_6","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":258.47,"y":112.12},{"c":"Frame","n":"Tick7","w":22,"h":25,"k":[{"c":"TextLabel","txt":"7","font":"Arial","wt":700,"xa":"L","n":"T_7","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":264.84,"y":176.84},{"c":"Frame","n":"Tick8","w":22,"h":25,"k":[{"c":"TextLabel","txt":"8","font":"Arial","wt":700,"xa":"L","n":"T_8","w":9.47,"h":20.66,"ts":20.66,"tc":[189,203,210],"x":0.0,"y":-0.83}],"x":234.19,"y":234.19},{"c":"Frame","n":"Brand","w":150,"h":24,"k":[{"c":"TextLabel","txt":"A-XZF-TUNE","font":"Arial","wt":700,"xa":"L","n":"T_AXzfTune","w":101.98,"h":20.66,"ts":20.66,"tc":[167,186,196],"x":0,"y":-0.83}],"x":97,"y":85},{"c":"Frame","n":"Speed","w":148,"h":74,"k":[{"c":"TextLabel","txt":"084","font":"Arial","wt":700,"xa":"L","n":"T_084","w":103.45,"h":75.33,"ts":75.33,"tc":[245,245,240],"x":0,"y":-1.16}],"x":102,"y":120},{"c":"Frame","n":"Unit","w":110,"h":23,"k":[{"c":"TextLabel","txt":"STUD/S","font":"Arial","wt":400,"xa":"L","n":"T_StudS","w":58.67,"h":19.44,"ts":19.44,"tc":[167,186,196],"x":0,"y":-0.22}],"x":132,"y":196},{"c":"Frame","n":"Gear","w":45,"h":40,"k":[{"c":"TextLabel","txt":"3","font":"Arial","wt":700,"xa":"L","n":"T_3","w":17.25,"h":37.66,"ts":37.66,"tc":[255,188,99],"x":0,"y":-0.33}],"x":151,"y":225},{"c":"Frame","n":"RPM","w":150,"h":23,"k":[{"c":"TextLabel","txt":"4 850 RPM","font":"Arial","wt":400,"xa":"L","n":"T_4850Rpm","w":90.05,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":113,"y":273},{"c":"Frame","n":"ParkStatus","w":130,"h":25,"k":[{"c":"TextLabel","txt":"DRIVE","font":"Arial","wt":700,"xa":"L","n":"T_Drive","w":55.02,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":35,"y":338},{"c":"Frame","n":"HandbrakeStatus","w":130,"h":25,"k":[{"c":"TextLabel","txt":"HB OFF","font":"Arial","wt":700,"xa":"L","n":"T_HbOff","w":67,"h":21.87,"ts":21.87,"tc":[182,197,205],"x":0,"y":-0.93}],"x":185,"y":338}],"x":0,"y":0}],"attrs":{"Anchor":"B"}},{"c":"Frame","n":"TouchLeft","x":50,"y":-70,"sx":0,"sy":1,"ax":0,"ay":1,"w":275,"h":90,"k":[{"c":"TextButton","n":"SteerLeft","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"SteerLeftIcon","w":40,"h":40,"img":"icon:chevron_left","st":"Fit","x":46,"y":9},{"c":"Frame","n":"SteerLeftLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"SOL","font":"Arial","wt":700,"xa":"L","n":"T_Sol","w":45.23,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":0,"y":0},{"c":"TextButton","n":"SteerRight","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"SteerRightIcon","w":40,"h":40,"img":"icon:chevron_right","st":"Fit","x":46,"y":9},{"c":"Frame","n":"SteerRightLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"SA\u011e","font":"Arial","wt":700,"xa":"L","n":"T_Sa","w":47.69,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":145,"y":0}],"attrs":{"Anchor":"BL"}},{"c":"Frame","n":"TouchRight","x":-100,"y":-70,"sx":1,"sy":1,"ax":1,"ay":1,"w":420,"h":300,"k":[{"c":"TextButton","n":"Throttle","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"ThrottleIcon","w":40,"h":40,"img":"icon:gauge","st":"Fit","x":46,"y":9},{"c":"Frame","n":"ThrottleLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"GAZ","font":"Arial","wt":700,"xa":"L","n":"T_Gaz","w":46.45,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":290,"y":210},{"c":"TextButton","n":"Brake","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"BrakeIcon","w":40,"h":40,"img":"icon:circle_stop","st":"Fit","x":46,"y":9},{"c":"Frame","n":"BrakeLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"FREN","font":"Arial","wt":700,"xa":"L","n":"T_Fren","w":59.89,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":145,"y":210},{"c":"TextButton","n":"Handbrake","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"HandbrakeIcon","w":40,"h":40,"img":"icon:hand","st":"Fit","x":46,"y":9},{"c":"Frame","n":"HandbrakeLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"EL FREN\u0130","font":"Arial","wt":700,"xa":"L","n":"T_ElFren","w":99.83,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":0,"y":210},{"c":"TextButton","n":"Reverse","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"ReverseIcon","w":40,"h":40,"img":"icon:rotate_ccw","st":"Fit","x":46,"y":9},{"c":"Frame","n":"ReverseLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"GER\u0130","font":"Arial","wt":700,"xa":"L","n":"T_Ger","w":53.8,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":290,"y":105},{"c":"TextButton","n":"Park","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"ParkIcon","w":40,"h":40,"img":"icon:circle_parking","st":"Fit","x":46,"y":9},{"c":"Frame","n":"ParkLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"PARK","font":"Arial","wt":700,"xa":"L","n":"T_Park","w":60.72,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":145,"y":105},{"c":"TextButton","n":"Exit","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"ExitIcon","w":40,"h":40,"img":"icon:log_out","st":"Fit","x":46,"y":9},{"c":"Frame","n":"ExitLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"\u00c7IKI\u015e","font":"Arial","wt":700,"xa":"L","n":"T_Iki","w":58.69,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":0,"y":105},{"c":"TextButton","n":"ToggleControls","w":130,"h":90,"attrs":{"Button":true},"bg":[32,46,54],"bt":0,"corner":{"o":6},"stroke":{"t":1,"c":[82,97,106],"tr":0,"pos":"Inner","mode":"Border"},"k":[{"c":"ImageLabel","n":"ToggleControlsIcon","w":40,"h":40,"img":"icon:panel_left_close","st":"Fit","x":46,"y":9},{"c":"Frame","n":"ToggleControlsLabel","w":122,"h":27,"k":[{"c":"TextLabel","txt":"TU\u015eLAR","font":"Arial","wt":700,"xa":"L","n":"T_TuLar","w":89.22,"h":26.73,"ts":26.73,"tc":[245,245,240],"x":0,"y":-0.87}],"x":5,"y":58}],"x":0,"y":0}],"attrs":{"Anchor":"BR"}}],"visible":false,"attrs":{"Dim":0}}]==]
 </ProtectedString>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="AXZF31">
+          <Item class="ModuleScript" referent="AXZF34">
             <Properties>
               <string name="Name">Data_Recovery</string>
               <ProtectedString name="Source">-- generated by roblox-ui-maker/scripts/gen.py from states.html (do not edit; edit the HTML and re-run)
@@ -749,11 +801,11 @@ return [==[{"c":"Frame","n":"Recovery","x":0,"y":0,"w":0,"h":0,"sw":1,"sh":1,"k"
           </Item>
         </Item>
       </Item>
-      <Item class="Folder" referent="AXZF32">
+      <Item class="Folder" referent="AXZF35">
         <Properties>
           <string name="Name">VFX</string>
         </Properties>
-        <Item class="ModuleScript" referent="AXZF33">
+        <Item class="ModuleScript" referent="AXZF36">
           <Properties>
             <string name="Name">Build</string>
             <ProtectedString name="Source">-- roblox-vfx skill: Build. Turns a list of steps (Lua tables, or the same thing
@@ -1127,7 +1179,7 @@ return Build
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF34">
+        <Item class="ModuleScript" referent="AXZF37">
           <Properties>
             <string name="Name">Emit</string>
             <ProtectedString name="Source">-- roblox-vfx skill: Emit, adapted from Roqer's roblox-animation-vfx emit.lua (MIT, TabooHarmony; see LICENSE-ROQER-SKILLS.txt).
@@ -1528,7 +1580,7 @@ return VFX
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF35">
+        <Item class="ModuleScript" referent="AXZF38">
           <Properties>
             <string name="Name">VehicleRecipes</string>
             <ProtectedString name="Source">-- Generated from vfx/vehicle/recipes.py; edit recipe source, then regenerate.
@@ -2012,15 +2064,15 @@ return [==[{
         </Item>
       </Item>
     </Item>
-    <Item class="Folder" referent="AXZF9">
+    <Item class="Folder" referent="AXZF11">
       <Properties>
         <string name="Name">ServerScriptService</string>
       </Properties>
-      <Item class="Folder" referent="AXZF10">
+      <Item class="Folder" referent="AXZF12">
         <Properties>
           <string name="Name">AXZFServer</string>
         </Properties>
-        <Item class="ModuleScript" referent="AXZF11">
+        <Item class="ModuleScript" referent="AXZF13">
           <Properties>
             <string name="Name">Adapter</string>
             <ProtectedString name="Source">--!strict
@@ -2060,7 +2112,7 @@ return Adapter
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="Script" referent="AXZF12">
+        <Item class="Script" referent="AXZF14">
           <Properties>
             <string name="Name">Bootstrap</string>
             <ProtectedString name="Source">--!strict
@@ -2069,7 +2121,7 @@ game:BindToClose(function() fleet:stop() end)
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF13">
+        <Item class="ModuleScript" referent="AXZF15">
           <Properties>
             <string name="Name">Doctor</string>
             <ProtectedString name="Source">--!strict
@@ -2122,7 +2174,7 @@ return Doctor
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF14">
+        <Item class="ModuleScript" referent="AXZF16">
           <Properties>
             <string name="Name">Fleet</string>
             <ProtectedString name="Source">--!strict
@@ -2178,6 +2230,7 @@ function Fleet.start(options: any): any
 		local entry={vehicle=vehicle,lastSequence=0,driver=nil,connections={}}
 		self.vehicles[model]=entry
 		local function occupantChanged()
+			if entry.driver and not vehicle.rig.seat.Occupant and vehicle.tune.AutoParkOnExit then vehicle:setPark(true) end
 			entry.lastSequence=0 entry.vehicle:clearInput()
 			local humanoid=vehicle.rig.seat.Occupant
 			entry.driver=if humanoid then Players:GetPlayerFromCharacter(humanoid.Parent) else nil
@@ -2238,7 +2291,7 @@ return Fleet
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF15">
+        <Item class="ModuleScript" referent="AXZF17">
           <Properties>
             <string name="Name">Migration</string>
             <ProtectedString name="Source">--!strict
@@ -2349,7 +2402,7 @@ return Migration
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF16">
+        <Item class="ModuleScript" referent="AXZF18">
           <Properties>
             <string name="Name">Recovery</string>
             <ProtectedString name="Source">--!strict
@@ -2399,7 +2452,7 @@ return Recovery
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF17">
+        <Item class="ModuleScript" referent="AXZF19">
           <Properties>
             <string name="Name">Rig</string>
             <ProtectedString name="Source">--!strict
@@ -2472,7 +2525,50 @@ return Rig
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF18">
+        <Item class="ModuleScript" referent="AXZF20">
+          <Properties>
+            <string name="Name">TuneEditor</string>
+            <ProtectedString name="Source">--!strict
+-- Edit-only documented Tune creation/upgrade. Never evaluates an existing ModuleScript.
+local Tune=require(game.ReplicatedStorage.AXZF.Shared.Tune)
+local Editor={}
+local function literal(value): string
+	if type(value)=="string" then return string.format("%q",value) end
+	if type(value)=="table" then
+		local entries={} for _,v in ipairs(value) do table.insert(entries,literal(v)) end
+		return "{"..table.concat(entries,",").."}"
+	end
+	return tostring(value)
+end
+function Editor.install(model: Model,overrides: any): ModuleScript
+	assert(not game:GetService("RunService"):IsRunning(),"Stop Play before editing Tune")
+	assert(model:IsA("Model"),"Expected vehicle Model")
+	local existing=model:FindFirstChild("Tune")
+	assert(not existing or overrides~=nil,"Pass current AXZF overrides explicitly to preserve existing Tune values")
+	local resolved=Tune.resolve(overrides)
+	local editor=game:GetService("ScriptEditorService")
+	local text=editor:GetEditorSource(game.ServerStorage.AXZFExamples.VehicleTune)
+	for key,value in pairs(resolved) do
+		if key~="Controls" then
+			local count
+			text,count=string.gsub(text,"(\n\t"..key.." = )([^\n]+)",function(prefix,old)
+				return prefix..literal(value)..","..(string.match(old," %-%-.*$") or "")
+			end,1)
+			assert(count==1,"Template missing "..key)
+		end
+	end
+	local controls={} for key,value in pairs(resolved.Controls) do table.insert(controls,"\t\t"..key.." = "..literal(value)..",") end table.sort(controls)
+	text=string.gsub(text,"\n\tControls = {.-\n\t},","\n\tControls = {\n"..table.concat(controls,"\n").."\n\t},",1)
+	local config=existing or Instance.new("ModuleScript")
+	assert(config:IsA("ModuleScript"),"Tune path collision") config.Name="Tune" config.Parent=model
+	editor:UpdateSourceAsync(config,function() return text end)
+	return config
+end
+return Editor
+</ProtectedString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="AXZF21">
           <Properties>
             <string name="Name">VFXService</string>
             <ProtectedString name="Source">--!strict
@@ -2504,7 +2600,7 @@ return VFXService
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="AXZF19">
+        <Item class="ModuleScript" referent="AXZF22">
           <Properties>
             <string name="Name">Vehicle</string>
             <ProtectedString name="Source">--!strict
@@ -2514,6 +2610,8 @@ local Tune=require(Shared.Tune)
 local Powertrain=require(Shared.Powertrain)
 local Rig=require(script.Parent.Rig)
 local Suspension=require(Shared.Suspension)
+local Parking=require(Shared.Parking)
+local Stability=require(Shared.Stability)
 local Recovery=require(script.Parent.Recovery)
 local Vehicle={}
 Vehicle.__index=Vehicle
@@ -2526,6 +2624,8 @@ function Vehicle.new(model: Model, overrides: any): any
 	params.FilterDescendantsInstances={model} params.RespectCanCollide=true
 	local self=setmetatable({rig=rig,tune=tune,powertrain=Powertrain.new(tune),input=neutral,inputAge=0,steer=0,telemetryAge=0,idleTime=0,destroyed=false,sleeping=false,lastStepMs=0},Vehicle)
 	self.recovery=Recovery.new(rig,tune)
+	self.parkRequested=tune.ParkOnSpawn
+	rig.model:SetAttribute("AXZF_parkRequested",self.parkRequested)
 	self.originalPhysics=rig.root.CustomPhysicalProperties
 	if tune.Mass&gt;0 then
 		local volume=rig.root.Size.X*rig.root.Size.Y*rig.root.Size.Z
@@ -2539,14 +2639,21 @@ function Vehicle.new(model: Model, overrides: any): any
 end
 -- Server integration / NPC seam; callers must supply a validated intent table.
 function Vehicle:setInput(packet: any)
+	if packet.park~=nil then self:setPark(packet.park) end
 	self.input={throttle=packet.throttle,steer=packet.steer,brake=packet.brake,handbrake=packet.handbrake}
 	self.inputAge=0 self.idleTime=0 self.sleeping=false
+end
+function Vehicle:setPark(requested: boolean)
+	assert(type(requested)=="boolean","park must be boolean")
+	self.parkRequested=requested
+	self.rig.model:SetAttribute("AXZF_parkRequested",requested)
 end
 function Vehicle:clearInput()
 	self.input=neutral self.inputAge=0 self.idleTime=0 self.sleeping=false
 end
 function Vehicle:getTelemetry(): any
-	return {speed=self.rig.root.AssemblyLinearVelocity.Magnitude,rpm=self.powertrain.rpm,gear=if self.powertrain.direction&lt;0 then -1 else self.powertrain.gear,sleeping=self.sleeping,stepMs=self.lastStepMs,handbrake=self.input.handbrake}
+	local speed=self.rig.root.AssemblyLinearVelocity.Magnitude
+	return {speed=speed,rpm=self.powertrain.rpm,gear=if self.powertrain.direction&lt;0 then -1 else self.powertrain.gear,sleeping=self.sleeping,stepMs=self.lastStepMs,handbrake=self.input.handbrake,parkRequested=self.parkRequested,parkState=Parking.state(self.parkRequested,speed,self.tune.ParkEngageSpeed)}
 end
 function Vehicle:step(rawDt: number)
 	if self.destroyed or not self.rig.model:IsDescendantOf(workspace) then return end
@@ -2562,7 +2669,8 @@ function Vehicle:step(rawDt: number)
 	-- Sleep only reduces telemetry/visual work; physics contact solving stays correct.
 	self.sleeping=self.idleTime&gt;t.SleepAfter
 	local up=cf.UpVector local speed=velocity:Dot(cf.LookVector)
-	local force,reverseBrake=self.powertrain:step(speed,input.throttle,dt)
+	local force,reverseBrake=self.powertrain:step(speed,if self.parkRequested then 0 else input.throttle,dt)
+	if self.parkRequested then force=0 end
 	force*=t.Power
 	if speed*math.sign(force)&gt;t.MaxSpeed then force=0 end
 	local fade=math.max(t.MinSteerFraction,1-math.abs(speed)/t.SteerFadeSpeed)
@@ -2593,6 +2701,11 @@ function Vehicle:step(rawDt: number)
 		for j,b in ipairs(contacts) do a.mobility[j]=a.normal:Dot(b.normal)/assemblyMass+a.normal:Dot(b.angularResponse:Cross(a.arm)) end
 	end
 	local loads=Suspension.solve(contacts,mass,workspace.Gravity,t.FrequencyHz,t.DampingRatio,t.MaxLoad,dt)
+	local byId={} for i,c in ipairs(contacts) do byId[c.wheel.id]=i end
+	for _,axle in ipairs({{"FL","FR"},{"RL","RR"}}) do
+		local l,r=byId[axle[1]],byId[axle[2]]
+		if l and r then loads[l],loads[r]=Stability.axle(loads[l],loads[r],contacts[l].compression-contacts[r].compression,mass*(2*math.pi*t.FrequencyHz)^2,t.AntiRoll,mass*workspace.Gravity*t.MaxLoad) end
+	end
 	local linearImpulse,angularImpulse=Vector3.zero,Vector3.zero
 	for i,contact in ipairs(contacts) do
 		local wheel=contact.wheel local hit=contact.hit local normal=contact.normal local pointVelocity=contact.pointVelocity
@@ -2606,10 +2719,17 @@ function Vehicle:step(rawDt: number)
 				local front=wheel.id=="FL" or wheel.id=="FR"
 				local driven=t.Drive=="AWD" or (t.Drive=="FWD" and front) or (t.Drive=="RWD" and not front)
 				local brake=math.max(input.brake,reverseBrake)*t.BrakeAcceleration
+				if self.parkRequested then brake=math.max(brake,t.ParkBrakeAcceleration) end
 				if input.handbrake and not front then brake=math.max(brake,t.HandbrakeAcceleration) end
 				local longitudinal=(if driven then force/(if t.Drive=="AWD" then 4 else 2) else 0)+Math.braking(longitudinalSpeed,brake*mass,mass,dt)
 				longitudinal+=Math.braking(longitudinalSpeed,load*t.RollingResistance,mass,dt)
 				local lateral=-pointVelocity:Dot(side)*mass*t.LateralResponse
+				-- Static parking traction also balances downhill gravity. Velocity-only
+				-- brakes otherwise need continual creep to produce their holding force.
+				if self.parkRequested and pointVelocity.Magnitude&lt;t.ParkEngageSpeed then
+					longitudinal=math.clamp(longitudinal+forward.Y*mass*workspace.Gravity,-brake*mass,brake*mass)
+					lateral+=side.Y*mass*workspace.Gravity
+				end
 				local surface=hit.Instance:GetAttribute("Grip")
 				local grip=if Math.finite(surface) then math.clamp(surface,0.05,3) else 1
 				local longForce,sideForce=Math.friction(longitudinal,lateral,load*t.Grip*grip)
@@ -2622,14 +2742,24 @@ function Vehicle:step(rawDt: number)
 						self.onEffect(if dusty then "AXZFSurfaceDust" else "AXZFTyreSmoke",at,math.clamp((slip+math.abs(speed)*.12)/12,.2,1)*t.VFXIntensity)
 					end
 				end
-				local impulse=(normal*load+forward*longForce+side*sideForce)*dt
-				linearImpulse+=impulse angularImpulse+=contact.arm:Cross(impulse)
+				local support=normal*load*dt local tyre=(forward*longForce+side*sideForce)*dt
+				-- Keep yaw leverage, reduce the tyre's vertical roll/pitch lever arm.
+				local tyreArm=contact.arm-up*(contact.arm:Dot(up)*(1-t.RollInfluence))
+				linearImpulse+=support+tyre
+				angularImpulse+=contact.arm:Cross(support)+tyreArm:Cross(tyre)
 			end
 	end
 	-- Persistent world-space actuators let the engine apply support at its own
 	-- substeps. Per-frame impulse bursts caused visible gravity/velocity jitter.
 	rig.force.Force=linearImpulse/dt-velocity*velocity.Magnitude*t.Drag
 	rig.torque.Torque=angularImpulse/dt
+	if #contacts&gt;=2 and t.RollDamping&gt;0 then
+		local axis=cf.LookVector local inverseInertia=root:TorqueToAngularAcceleration(axis):Dot(axis)
+		if inverseInertia&gt;1e-8 then
+			local acceleration=math.clamp(-angular:Dot(axis)*t.RollDamping,-50,50)
+			rig.torque.Torque+=axis*(acceleration/inverseInertia)
+		end
+	end
 	for _,wheel in ipairs(rig.wheels) do
 		wheel.spin=(wheel.spin+speed/t.Radius*dt)%(2*math.pi)
 		if not self.sleeping then
@@ -2648,7 +2778,7 @@ end
 function Vehicle:destroy()
 	if self.destroyed then return end self.destroyed=true self.rig:destroy()
 	if self.rig.root.Parent then self.rig.root.CustomPhysicalProperties=self.originalPhysics end
-	for _,key in ipairs({"speed","rpm","gear","sleeping","stepMs","handbrake","recovery","recoveryCount"}) do self.rig.model:SetAttribute("AXZF_"..key,nil) end
+	for _,key in ipairs({"speed","rpm","gear","sleeping","stepMs","handbrake","parkRequested","parkState","recovery","recoveryCount"}) do self.rig.model:SetAttribute("AXZF_"..key,nil) end
 end
 return Vehicle
 </ProtectedString>
@@ -2656,15 +2786,15 @@ return Vehicle
         </Item>
       </Item>
     </Item>
-    <Item class="Folder" referent="AXZF20">
+    <Item class="Folder" referent="AXZF23">
       <Properties>
         <string name="Name">StarterPlayer</string>
       </Properties>
-      <Item class="Folder" referent="AXZF21">
+      <Item class="Folder" referent="AXZF24">
         <Properties>
           <string name="Name">StarterPlayerScripts</string>
         </Properties>
-        <Item class="LocalScript" referent="AXZF22">
+        <Item class="LocalScript" referent="AXZF25">
           <Properties>
             <string name="Name">Driver</string>
             <ProtectedString name="Source">--!strict
@@ -2678,7 +2808,7 @@ local packageRoot=game.ReplicatedStorage:WaitForChild("AXZF")
 local remote=packageRoot:WaitForChild("Control") :: RemoteEvent
 local active: Model?=nil
 local state={Forward=0,Reverse=0,Left=0,Right=0,Brake=0}
-local park=false local stick=0 local sequence=0 local elapsed=0
+local park=false local handbrake=false local stick=0 local sequence=0 local elapsed=0
 local characterConnections={} local lifetime={}
 local nativeTouch: ScreenGui?=nil local nativeEnabled=true
 local function hideNativeTouch()
@@ -2689,13 +2819,14 @@ local function hideNativeTouch()
 	if nativeTouch then nativeTouch.Enabled=false end
 end
 local cockpit=nil
-local defaults={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Exit="E",HideControls="H"}
-local gamepad={Forward=Enum.KeyCode.ButtonR2,Reverse=Enum.KeyCode.ButtonL2,Brake=Enum.KeyCode.ButtonB,Handbrake=Enum.KeyCode.ButtonA,Exit=Enum.KeyCode.ButtonY}
+local defaults={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Park="P",Exit="E",HideControls="H"}
+local gamepad={Forward=Enum.KeyCode.ButtonR2,Reverse=Enum.KeyCode.ButtonL2,Brake=Enum.KeyCode.ButtonB,Handbrake=Enum.KeyCode.ButtonA,Park=Enum.KeyCode.ButtonX,Exit=Enum.KeyCode.ButtonY}
 local function connect(signal,fn) table.insert(lifetime,signal:Connect(fn)) end
 local function clear() for key in pairs(state) do state[key]=0 end stick=0 end
 local function action(name,down,amount)
 	if not active then return end
-	if name=="Handbrake" then if down then park=not park end
+	if name=="Handbrake" then if down then handbrake=not handbrake end
+	elseif name=="Park" then if down then park=not park end
 	elseif name=="Exit" then if down then local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid") if h then h.Sit=false end end
 	elseif name=="HideControls" then if down and cockpit then cockpit:toggleHelp() end
 	elseif state[name]~=nil then state[name]=if down then amount or 1 else 0 end
@@ -2708,18 +2839,19 @@ cockpit=require(cockpitModule).new(player,action)
 local function send()
 	if not active then return end sequence+=1
 	if UIS:GetFocusedTextBox() then clear() state.Brake=1 end
-	remote:FireServer(active,{seq=sequence,throttle=state.Forward-state.Reverse,steer=math.clamp(state.Right-state.Left+stick,-1,1),brake=state.Brake,handbrake=park})
+	remote:FireServer(active,{seq=sequence,throttle=state.Forward-state.Reverse,steer=math.clamp(state.Right-state.Left+stick,-1,1),brake=state.Brake,handbrake=handbrake,park=park})
 end
 local function unbind()
 	for id in pairs(defaults) do CAS:UnbindAction("AXZF_"..id) end
-	CAS:UnbindAction("AXZF_stick") clear() park=false
+	CAS:UnbindAction("AXZF_stick") clear() park=false handbrake=false
 	if nativeTouch then nativeTouch.Enabled=nativeEnabled nativeTouch=nil end
 end
 local function setVehicle(model: Model?)
 	if active==model then return end
-	if active then clear() state.Brake=1 park=false send() end
+	if active then clear() state.Brake=1 handbrake=false send() end
 	unbind() active=model sequence=0 cockpit:setVehicle(model)
 	if not model then return end
+	park=model:GetAttribute("AXZF_parkRequested")==true
 	hideNativeTouch()
 	for id,fallback in pairs(defaults) do
 		local key=model:GetAttribute("AXZF_Key"..id) or fallback
@@ -2728,7 +2860,7 @@ local function setVehicle(model: Model?)
 			if UIS:GetFocusedTextBox() then clear() return Enum.ContextActionResult.Pass end
 			local began=phase==Enum.UserInputState.Begin
 			local ended=phase==Enum.UserInputState.End or phase==Enum.UserInputState.Cancel
-			if id=="Handbrake" or id=="Exit" or id=="HideControls" then if began then action(id,true) end
+			if id=="Handbrake" or id=="Park" or id=="Exit" or id=="HideControls" then if began then action(id,true) end
 			elseif ended then action(id,false)
 			elseif began or phase==Enum.UserInputState.Change then
 				local analog=input.KeyCode==Enum.KeyCode.ButtonR2 or input.KeyCode==Enum.KeyCode.ButtonL2
@@ -2769,7 +2901,7 @@ end)
 </ProtectedString>
           </Properties>
         </Item>
-        <Item class="LocalScript" referent="AXZF23">
+        <Item class="LocalScript" referent="AXZF26">
           <Properties>
             <string name="Name">VehicleEffects</string>
             <ProtectedString name="Source">--!strict
@@ -2805,55 +2937,107 @@ script.Destroying:Connect(function() event:Disconnect() step:Disconnect() pcall(
         </Item>
       </Item>
     </Item>
-    <Item class="Folder" referent="AXZF36">
+    <Item class="Folder" referent="AXZF39">
       <Properties>
         <string name="Name">ServerStorage</string>
       </Properties>
-      <Item class="Folder" referent="AXZF37">
+      <Item class="Folder" referent="AXZF40">
         <Properties>
           <string name="Name">AXZFExamples</string>
         </Properties>
-        <Item class="ModuleScript" referent="AXZF38">
+        <Item class="ModuleScript" referent="AXZF41">
           <Properties>
             <string name="Name">VehicleTune</string>
             <ProtectedString name="Source">--!strict
--- A-XZF-Tune / kısa başlangıç rehberi
--- 1. Bu ModuleScript aracın içinde kalır; ayarları buradan değiştirin.
--- 2. Play'i durdurun, bir değeri değiştirin, tekrar Play ile deneyin.
--- 3. Yeni ayar hatalıysa aracın AXZFError attribute'u sebebi gösterir.
--- Birimler: stud, saniye ve Roblox kütlesi. Power bir çarpandır; gerçek HP değildir.
--- Gövde/tekerlek yerlerini değiştirirken docs/MODEL-INTEGRATION.md'yi okuyun.
+-- A-XZF-Tune | ARAÇ İÇİ AYAR REHBERİ (0.3)
+-- Bu ModuleScript aracın doğrudan altında, adı Tune olacak şekilde kalır.
+-- BAŞLANGIÇ: Play'i durdur &gt; tek değeri küçük adımlarla değiştir &gt; Play &gt; DriveSeat'e otur.
+-- Yanlış değer/isim aracın AXZFError attribute'unda görünür; Output'u da kontrol edin.
+-- Örnek: Power=1.2 %20 fazla motor kuvveti; MaxSpeed=120 daha düşük motor hız sınırı.
+-- Örnek: Controls.Park="O" park tuşunu O yapar. Her işlem farklı tuş kullanmalı.
+-- Birimler Roblox stud / saniye / kütledir; kg, metre veya gerçek beygir gücü değildir.
+-- Power/TorqueScale HP değildir; oyun motor kuvvetine uygulanan çarpanlardır.
+-- Geometri/mount/Wheels rehberi: docs/MODEL-INTEGRATION.md; ayrıntılar: docs/TUNING.md.
+-- Desteklenen bütün alanlar aşağıda. Bilinmeyen A-Chassis alanları kabul edilmez.
 return {
-	SchemaVersion = 1,
-	-- MOTOR / SÜRÜŞ: gücü önce küçük adımlarla artırın.
-	Power = 1, -- 0.1..5; örn. 1.2 = varsayılan motor kuvvetinin %120'si
-	MaxSpeed = 180, -- stud/s; bu hızdan sonra motor itişi kesilir, yokuş hızını zorla sınırlamaz
-	Drive = "RWD", -- "FWD" önden, "RWD" arkadan, "AWD" dört tekerlekten
-	Mass = 0, -- 0 = Chassis'in mevcut kütlesi; &gt;0 = Roblox kütlesi, kg değildir
-	-- TEKER / SÜSPANSİYON: Radius gerçek teker yarıçapına uymalıdır.
-	Radius = 1.25,
-	RestLength = 1.6, -- spring top ile tam açık teker merkezi arası
-	FrequencyHz = 3.5, -- sertlik; artırınca daha sert, azaltınca daha yumuşak
-	DampingRatio = 0.85, -- sönümleme; aşırı değerler sürüşü sertleştirir
-	Grip = 1.2, -- tutuş; 0.8 daha kaygan, 1.4 daha tutucu bir başlangıçtır
-	BrakeAcceleration = 90,
-	SteerDegrees = 32, -- düşük hızdaki direksiyon açısı
-	-- KURTARMA: yalnızca ters dönmüş, yavaş ve zemine yakın araçta çalışır.
-	AutoRecover = true,
-	RecoverDelay = 2, -- saniye; boş yer yoksa bekler, diğer araçların içine taşımaz
-	RecoverMaxSpeed = 6,
-	-- GÖRÜNÜM / EFEKTLER
-	VFX = true,
-	VFXIntensity = 1, -- 0..2; client tarafındaki lastik dumanı/toz bütçesi
-	SpeedScale = 1, -- gösterilen sayı = stud/s * SpeedScale; fiziksel hız değişmez
-	SpeedUnit = "STUD/S", -- kendi oyun ölçeğiniz varsa etiketi ve çarpanı birlikte değiştirin
-	ShowControls = true, -- H ile gizlenebilen klavye yardımının başlangıç durumu
-	-- TUŞLAR: Enum.KeyCode yazmayın, aşağıdaki gibi tuşun adını string girin.
-	-- Her işlem farklı bir tuş kullanmalı. Örn. Handbrake = "P" yapılabilir.
-	-- Gamepad ve dokunmatik düğmeler klavye düzeninden bağımsız çalışır.
+	SchemaVersion = 1, -- şema sürümü; değiştirmeyin
+
+	-- 1 / MOTOR VE AKTARMA
+	Drive = "RWD", -- FWD: ön / RWD: arka / AWD: dört teker çekiş
+	Power = 1, -- 0.1..5; kuvvet çarpanı, 1.2 = %120
+	TorqueScale = 4, -- 0.1..100; TorqueCurve kuvvet ölçeği; Power ile birlikte çarpılır
+	MaxSpeed = 180, -- 5..600 stud/s; üstünde motor itişi kesilir; yokuş hızını kilitlemez
+	Mass = 0, -- 0..5000; 0 mevcut Chassis kütlesi, &gt;0 kökün hedef Roblox kütlesi
+	-- Yolcu ayrıca eklenir. Kütle / Chassis hacmi yoğunluğu 0.01..100 içinde olmalı.
+	IdleRPM = 850, -- 100..5000; rölanti devri
+	RedlineRPM = 7000, -- 1000..20000; devir üst sınırı ve HUD ölçeği
+	ShiftDownRPM = 2100, -- 100..10000; vites küçültme eşiği
+	ShiftUpRPM = 6100, -- 500..20000; vites büyütme eşiği
+	-- Şart: IdleRPM &lt; ShiftDownRPM &lt; ShiftUpRPM &lt; RedlineRPM.
+	ShiftTime = 0.3, -- 0.05..3 saniye; vites değişiminde çekişin %35'e düşme süresi
+	FinalDrive = 3.7, -- 0.1..15; artırınca teker kuvveti/devir artar, vitesler kısalır
+	ReverseRatio = 3.1, -- 0.1..10; geri vites oranı
+	Gears = {3.2,2.1,1.5,1.12,0.88}, -- 1..10 pozitif oran; büyükten küçüğe
+	TorqueCurve = {{850,95},{2500,150},{4500,175},{7000,110}}, -- {RPM,oyun torku}; 2..32 nokta
+	-- RPM noktaları kesin artmalı; tork 0..100000; aralarında doğrusal geçiş.
+
+	-- 2 / TEKER, SÜSPANSİYON VE VİRAJ DENGESİ
+	Radius = 1.25, -- 0.1..10 stud; gerçek teker yarıçapına eşleştirin
+	RestLength = 1.6, -- 0.1..10 stud; mount ile tam açık teker merkezi arası
+	FrequencyHz = 3.5, -- 1..12; artarsa yay sertleşir ve statik çökme azalır
+	DampingRatio = 0.85, -- 0.1..3; artarsa zıplama daha hızlı söner; aşırısı sertleştirir
+	MaxLoad = 4, -- 1..10; teker başına statik ağırlığın azami katı
+	-- RestLength &gt; Gravity/(2*pi*FrequencyHz)^2 + 0.1 olmalı; aksi durumda bind reddedilir.
+	RollInfluence = 0.2, -- 0..1; lastik kuvvetinin dikey kolu; düşürmek yatmayı azaltır
+	AntiRoll = 0.5, -- 0..2; aynı aksın yayları arası denge; artarsa yatış azalır
+	RollDamping = 4, -- 0..20 /s; roll hızını söndürür; havada yönü kilitlemez
+	-- Eski yatış: RollInfluence=1, AntiRoll=0, RollDamping=0.
+	-- Önce Radius/mount/kütle doğru olsun. Fazla Grip ve yüksek yolcu merkezi devirme riskini artırır.
+
+	-- 3 / LASTİK, FREN VE DİREKSİYON
+	Grip = 1.2, -- 0.05..3; zemin Grip attribute'u ile çarpılan lastik tutuşu
+	LateralResponse = 12, -- 0.1..40 /s; yan kaymayı düzeltme; artarsa daha keskin tutar
+	BrakeAcceleration = 90, -- 1..500 stud/s^2; B / mobil fren dört tekeri frenler
+	HandbrakeAcceleration = 110, -- 1..500; Space yalnızca arka tekerleri frenler
+	RollingResistance = 0.015, -- 0..0.2; gazsız yuvarlanma direnci
+	Drag = 0.025, -- 0..2; hızın karesiyle direnç; artırmak son hızı düşürür
+	SteerDegrees = 32, -- 1..60 derece; düşük hız direksiyon açısı
+	SteerResponse = 7, -- 0.1..30 /s; artarsa direksiyon daha çabuk döner
+	SteerFadeSpeed = 100, -- 1..500 stud/s; hızla direksiyon azaltma ölçeği
+	MinSteerFraction = 0.28, -- 0.05..1; yüksek hızda kalan açı oranı
+
+	-- 4 / PARK VE KURTARMA
+	ParkOnSpawn = false, -- true: araç ilk oluştuğunda park modunda başlar
+	AutoParkOnExit = false, -- true: sürücü ayrılınca otomatik park isteği
+	ParkBrakeAcceleration = 140, -- 1..500; P modunda dört teker fren kuvveti
+	ParkEngageSpeed = 1.5, -- 0.1..3 stud/s; Stopping -&gt; Parked gösterge eşiği
+	-- P: gaz kesilir, yavaşlayıp park eder. Tekrar P: sürüş serbest.
+	-- Park isteği araçtan inince/zaman aşımında korunur. Araç Anchored olmaz; tutuş sınırı vardır.
+	-- Space el freni bağımsızdır; HB durumu ayrıca görünür.
+	AutoRecover = true, -- ters, yavaş, zemine yakın ve boş alan varsa düzelt
+	RecoverDelay = 2, -- 0.5..15 saniye; devrik bekleme süresi
+	RecoverMaxSpeed = 6, -- 0.1..15 stud/s; üstünde düzeltme bekler
+
+	-- 5 / GÖSTERGE VE GÖRSEL EFEKTLER
+	VFX = true, -- istemcide lastik dumanı / zemin tozu
+	VFXIntensity = 1, -- 0..2; efekt yoğunluğu; 0 üretimi durdurur
+	SpeedScale = 1, -- 0.01..10; görünen hız = stud/s * bu çarpan
+	SpeedUnit = "STUD/S", -- 1..12 karakter; oyun ölçeğinize uygun etiket
+	ShowControls = true, -- klavye yardımının ilk durumu; H ile gizlenebilir
+
+	-- 6 / AĞ VE GÜNCELLEME
+	InputTimeout = 0.35, -- 0.1..2 saniye; girdi kesilince gaz bırakılır ve fren uygulanır
+	TelemetryHz = 10, -- 1..20 /s; HUD attribute sıklığı; fizik hızı değildir
+	SleepAfter = 3, -- 0..30 saniye; boş/durgun araçta görsel işi azaltır; yay desteği sürer
+
+	-- 7 / KLAVYE (Enum.KeyCode yerine string tuş adları)
+	-- Harfler, Space, oklar, Left/RightShift, Left/RightControl, One..Five desteklenir.
+	-- Her tuş benzersiz: Handbrake="P" isterseniz Park="O" gibi farklı tuş da verin.
+	-- Mobil resimli düğmeler aynı işlemleri çağırır; klavye tuşlarından bağımsızdır.
+	-- Gamepad: R2 gaz, L2 geri, B fren, A el freni, X park, Y çıkış, sol çubuk direksiyon.
 	Controls = {
 		Forward = "W", Reverse = "S", Left = "A", Right = "D",
-		Brake = "B", Handbrake = "Space", Exit = "E", HideControls = "H",
+		Brake = "B", Handbrake = "Space", Park = "P", Exit = "E", HideControls = "H",
 	},
 }
 </ProtectedString>

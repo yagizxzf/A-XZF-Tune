@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-rc.1 — 2026-10-29
+
+- Separate P parking mode, all-wheel braking, low-speed slope hold, persistent request and P/HB telemetry.
+- Complete 49-field Turkish Tune tutorial installed in the actual original cars; Edit-only preservation-aware TuneEditor.
+- Approved Lucide image buttons for mobile driving, park/handbrake/exit/help, press feedback and small-phone layout fix.
+- Adjustable tyre roll lever, bounded axle anti-roll and grounded roll damping; measured occupied-mass turn comparison.
+- 56 Luau compile, 83 headless and 90 Studio unit checks; park, touch input and imported-car jitter regressions.
+
 ## 0.2.0-rc.2 — GUI startup hotfix
 
 - Default Fleet.start now creates the cockpit for both standard and custom bootstraps.

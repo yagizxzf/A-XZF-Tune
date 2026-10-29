@@ -34,3 +34,7 @@ All three generated rigs passed Doctor with zero errors and zero retained legacy
 Their legacy layouts were A-Chassis 6.81T/older model conventions. **A modern v1.7.2 model was not tested.** Models with other wheel names, mirrored axes, no wheel PrimaryPart, multiple nested cars, unusual wheel topology or wheel animation/plugins may need manual adaptation. Check visual wheel radius and mounts after migration. Four identical radii are assumed.
 
 External art remains local and is excluded from public MIT packages. The police model's listing requests credit; retain Ravenhasabird57 credit if using it. Listing provenance is not proof of broader redistribution rights. See [assets](ASSETS.md), [migration](MIGRATION.md) and [raw results](../evidence/v2-studio-results.json).
+
+## 0.3 follow-up
+
+The same four sanitized external source cars now carry the full49-field commented Tune template. Their stationary-jitter regression passed with the new stability defaults (evidence/v3-jitter-regression.json). The original imported FWD car and prototype also ran paired left/right55/90stud/s occupied-mass turn trials: worst roll8.409→0.457° and10.329→0.879°. This version's turn comparison does not extend that result to every migrated model. Source art remains outside Git and legacy code was not executed. The public kit retains the expanded template through PrototypeCar, CreatorCarAdapter and Migration.convert.

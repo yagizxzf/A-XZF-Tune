@@ -19,10 +19,12 @@ end
 | Adapter.prepare(model, root, seat, wheelMap, restLength) | Editor geometry normalization; returns Doctor report; see model contract |
 | Tune.resolve(overrides?) | New immutable resolved config; raises on invalid config |
 | Vehicle.new(model, overrides?) | Validates, binds and returns vehicle; raises and rolls back on bind failure |
-| vehicle:setInput(intent) | **Trusted server/NPC API**; intent has throttle/steer/brake/handbrake; refresh at < InputTimeout interval |
-| vehicle:clearInput() | Reset to parked/braking intent; clear steering command age |
+| vehicle:setInput(intent) | **Trusted server/NPC API**; intent has throttle/steer/brake/handbrake and optional boolean park; refresh at < InputTimeout interval |
+| vehicle:clearInput() | Reset held controls to service braking; preserve latched parking request |
+| vehicle:setPark(boolean) | Trusted server API; latch/release parking independently of held input |
+| TuneEditor.install(model, overrides?) | Edit-only documented Tune creation/update; existing Tune requires explicit overrides |
 | vehicle:step(dt) | Advance once before physics; Fleet already calls this; do not double-step |
-| vehicle:getTelemetry() | `{speed,rpm,gear,sleeping,stepMs,handbrake}`; reverse gear = -1 |
+| vehicle:getTelemetry() | `{speed,rpm,gear,sleeping,stepMs,handbrake,parkRequested,parkState}`; reverse gear = -1 |
 | vehicle:destroy() | Idempotent; stops control, unseats occupant, removes owned joints, restores geometry/ownership |
 | Fleet.start(options?) | One dispatcher. Optional `{tag,remoteName}` allows isolated server-owned test fleets |
 | fleet:add(model) / remove(model) / get(model) | Normal use follows tag and Workspace ancestry automatically |
@@ -45,6 +47,7 @@ Control:FireServer(model, {
     steer = 0, -- -1..1; positive = right
     brake = 0, -- 0..1
     handbrake = false,
+    park = false, -- optional; omission preserves the current parking request
 })
 ```
 
@@ -57,3 +60,5 @@ A runtime step exception quarantines that vehicle, cleans it up, records AXZFErr
 ## Migration and client presentation
 
 Edit-only Migration.inspect/convert/fromSelection are documented in MIGRATION.md. Fleet publishes AXZF_Key<Action> and AXZF_Config<DisplayField> from validated Tune values. Telemetry adds AXZF_handbrake, AXZF_recovery and AXZF_recoveryCount. Recovery waits for clear space, slow grounded inversion and a continuous delay; it has a 5-second cooldown. VFX uses only server-decided allowed names/CFrames/intensity; clients render nearby bursts. See HUD.md/VFX.md.
+
+0.3 attributes: `AXZF_parkRequested` is updated immediately; `AXZF_parkState` is Drive/Stopping/Parked at telemetry frequency. Numeric gear is preserved for API consumers; the cockpit displays P when parking is requested. Parking request survives input expiry and driver changes; clearInput does not release it.

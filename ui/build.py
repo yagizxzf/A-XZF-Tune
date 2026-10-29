@@ -1,4 +1,4 @@
-"""Original A-XZF cockpit UI. Native panels/text; no third-party icons or art."""
+"""A-XZF cockpit. Lucide icons: licenses/Lucide-LICENSE.txt (ISC / Feather MIT)."""
 from pathlib import Path
 import html
 import math
@@ -11,8 +11,12 @@ def text(name,label,x,y,w,h,size=24,color='#f5f5f0',weight=400):
 def group(name,inner,anchor): return f"<div class='abs fill grp' data-g='{name}' data-a='{anchor}'>{inner}</div>"
 def button(name,label,x,y,w=130,h=58):
     return box(name,x,y,w,h,'button',text(name+'Label',label,12,17,w-20,28,20,weight=700),True)
+
+def touch_button(name,label,icon,x,y,active=False):
+    image=f"<img data-n='{name}Icon' src='icons/{icon.replace('-', '_')}.png' style='position:absolute;left:45px;top:8px;width:40px;height:40px'>"
+    return box(name,x,y,130,90,'button',image+text(name+'Label',label,4,57,122,27,22,'#ffbc63' if active else '#f5f5f0',700),True)
 def page(name,body):
-    (ROOT/(name+'.html')).write_text(f"<!doctype html><meta charset='utf-8'><title>A-XZF Tune / {name}</title><style>{CSS}</style><div id='stage'><div class='world'><div class='road'></div></div><div class='cap'>A-XZF-TUNE · COCKPIT PREVIEW / SAMPLE VALUES</div>{body}</div><script>window.checkOverflow=()=>({{overflow:[],broken:[]}});if(!location.search.includes('raw')){{document.getElementById('stage').style.transformOrigin='top left';document.getElementById('stage').style.transform='scale('+Math.min(innerWidth/1920,innerHeight/1080)+')';}}</script>",encoding='utf-8')
+    (ROOT/(name+'.html')).write_text(f"<!doctype html><meta charset='utf-8'><title>A-XZF Tune / {name}</title><style>{CSS}</style><div id='stage'><div class='world'><div class='road'></div></div><div class='cap'>A-XZF-TUNE · COCKPIT PREVIEW / SAMPLE VALUES</div>{body}</div><script>window.checkOverflow=()=>({{overflow:[...document.querySelectorAll('span[data-n]')].filter(e=>e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1).map(e=>e.dataset.n),broken:[...document.images].filter(e=>!e.complete||!e.naturalWidth).map(e=>e.src)}});if(!location.search.includes('raw')){{document.getElementById('stage').style.transformOrigin='top left';document.getElementById('stage').style.transform='scale('+Math.min(innerWidth/1920,innerHeight/1080)+')';}}</script>",encoding='utf-8')
 def dashboard(park=False,mobile=False):
     x,y=(790,695) if mobile else (1510,695)
     inner=box('DialRing',0,0,330,330,'dial',inner='')
@@ -27,22 +31,24 @@ def dashboard(park=False,mobile=False):
         inner+=text('Tick'+str(i),str(i),bx-10,by-10,22,25,17,'#bdcbd2',700)
     inner+=text('Brand','A-XZF-TUNE',97,85,150,24,17,'#a7bac4',700)
     inner+=text('Speed','084',102,120,148,74,62,weight=700)+text('Unit','STUD/S',132,196,110,23,16,'#a7bac4')
-    inner+=text('Gear','3',151,225,45,40,31,'#ffbc63',700)
+    inner+=text('Gear','P' if park else '3',151,225,45,40,31,'#ffbc63',700)
     inner+=text('RPM','4 850 RPM',113,273,150,23,18,'#b6c5cd')
-    inner+=text('ParkStatus','PARK ON' if park else 'PARK OFF',110,338,180,25,18,'#ffbc63' if park else '#b6c5cd',700)
+    inner+=text('ParkStatus','PARK ON' if park else 'DRIVE',35,338,130,25,18,'#ffbc63' if park else '#b6c5cd',700)
+    inner+=text('HandbrakeStatus','HB ON' if park else 'HB OFF',185,338,130,25,18,'#ffbc63' if park else '#b6c5cd',700)
     return group('DashboardMobile' if mobile else 'Dashboard',box('Cockpit',x,y,330,370,'',inner=inner),'B' if mobile else 'BR')
 def controls():
     inner=text('ControlsTitle','DRIVING CONTROLS',20,16,230,24,18,'#ffbc63',700)
-    for i,(key,label) in enumerate([('W / S','Drive / reverse'),('A / D','Steer'),('B','Brake'),('SPACE','Toggle handbrake'),('E','Exit vehicle'),('H','Hide controls')]):
+    for i,(key,label) in enumerate([('W / S','Drive / reverse'),('A / D','Steer'),('B','Brake'),('SPACE','Toggle handbrake'),('P','Park / drive'),('E','Exit vehicle'),('H','Hide controls')]):
         inner+=text('Key'+str(i),key,20,56+i*32,85,27,17,'#f5f5f0',700)+text('Control'+str(i),label,115,56+i*32,190,27,18,'#b6c5cd')
-    return group('Controls',box('ControlPanel',50,740,335,270,inner=inner),'BL')
+    return group('Controls',box('ControlPanel',50,708,335,302,inner=inner),'BL')
 def touch():
-    left=button('SteerLeft','LEFT',50,920)+button('SteerRight','RIGHT',195,920)
-    right=button('Throttle','GO',1690,845)+button('Reverse','REVERSE',1690,920)
-    right+=button('Brake','BRAKE',1545,920)+button('Handbrake','PARK',1400,920)
-    right+=button('Exit','EXIT',1545,845)+button('ToggleControls','KEYS',1400,845)
+    left=touch_button('SteerLeft','SOL','chevron-left',50,920)+touch_button('SteerRight','SAĞ','chevron-right',195,920)
+    right=touch_button('Throttle','GAZ','gauge',1690,920)+touch_button('Brake','FREN','circle-stop',1545,920)
+    right+=touch_button('Handbrake','EL FRENİ','hand',1400,920)
+    right+=touch_button('Reverse','GERİ','rotate-ccw',1690,815)+touch_button('Park','PARK','circle-parking',1545,815)
+    right+=touch_button('Exit','ÇIKIŞ','log-out',1400,815)+touch_button('ToggleControls','TUŞLAR','panel-left-close',1400,710)
     return group('TouchLeft',left,'BL')+group('TouchRight',right,'BR')
-toggle=group('Toggle',button('ShowControls','H  CONTROLS',50,660,185),'BL')
+toggle=group('Toggle',button('ShowControls','H  CONTROLS',50,628,185),'BL')
 status=group('Recovery',box('RecoveryPanel',710,120,500,68,inner=text('RecoveryText','AUTO RECOVERY · CHECKING CLEARANCE',20,22,460,27,20,'#ffbc63',700)),'T')
 page('hud',dashboard()+controls()+toggle)
 page('hud_phone',dashboard(mobile=True)+touch())

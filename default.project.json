@@ -86,6 +86,18 @@
         },
         "DelayedTune": {
           "$path": "tests/DelayedTune.luau"
+        },
+        "Parking_Test": {
+          "$path": "tests/Parking_Test.luau"
+        },
+        "Stability_Test": {
+          "$path": "tests/Stability_Test.luau"
+        },
+        "RollTest": {
+          "$path": "tests/RollTest.luau"
+        },
+        "ParkingTest": {
+          "$path": "tests/ParkingTest.luau"
         }
       }
     },

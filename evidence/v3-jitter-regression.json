@@ -1,0 +1,6 @@
+{
+  "returnValue": "{\"AXZF_AC_SUV\":{\"rmsAngular\":0.04891706451278257,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.0000010152810742803313},\"AXZF_ImportedCar\":{\"rmsAngular\":0.0031009806432392118,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.0000023789784609710627},\"AXZF_AC_Police\":{\"rmsAngular\":0.03209239677648325,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.0000022665378556629487},\"AXZF_AC_Sedan\":{\"rmsAngular\":0.0025965075390564269,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.000002205455717734207}}",
+  "message": "Code executed successfully",
+  "success": true,
+  "output": []
+}

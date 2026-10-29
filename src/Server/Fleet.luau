@@ -51,6 +51,7 @@ function Fleet.start(options: any): any
 		local entry={vehicle=vehicle,lastSequence=0,driver=nil,connections={}}
 		self.vehicles[model]=entry
 		local function occupantChanged()
+			if entry.driver and not vehicle.rig.seat.Occupant and vehicle.tune.AutoParkOnExit then vehicle:setPark(true) end
 			entry.lastSequence=0 entry.vehicle:clearInput()
 			local humanoid=vehicle.rig.seat.Occupant
 			entry.driver=if humanoid then Players:GetPlayerFromCharacter(humanoid.Parent) else nil

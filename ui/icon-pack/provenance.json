@@ -1,0 +1,20 @@
+{
+  "project": "Lucide",
+  "source": "https://github.com/lucide-icons/lucide",
+  "license": "../../licenses/Lucide-LICENSE.txt",
+  "retrieved": "2026-10-29",
+  "icons": [
+    "gauge",
+    "circle-stop",
+    "hand",
+    "circle-pause",
+    "log-out",
+    "rotate-ccw",
+    "chevron-left",
+    "chevron-right",
+    "panel-left-close"
+  ],
+  "aliases": {
+    "circle_parking": "circle-pause (park/pause action)"
+  }
+}

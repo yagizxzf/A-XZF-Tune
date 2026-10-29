@@ -80,7 +80,7 @@ Speed measurements use total assembly speed, and tests use synthetic repeated se
 
 ## Reproduction
 
-Build and check commands are in README. Headless execution uses the **same four shared test modules**, translating only engine require paths into temporary relative CLI paths. It does not emulate physics or replace expected values. Temporary files are removed after execution. `tools/check.py` also compares generated package bytes with the committed artifacts.
+Build and check commands are in README. Headless execution uses the **same seven shared test modules**, translating only engine require paths into temporary relative CLI paths. It does not emulate physics or replace expected values. Temporary files are removed after execution. `tools/check.py` also compares generated package bytes with the committed artifacts.
 
 For Studio, open the demo, start Play and run on Server:
 
@@ -129,3 +129,39 @@ Final disk verification: the rebuilt build/A-XZF-CompatibilityDemo.rbxl was inde
 Final cancellation regression: DelayedTune fixture exercises remove/re-add while configuration is loading; pendingCancelRebind and all lifecycle flags passed. Latest source compiles49 Luau files;68 headless and75 Studio units pass. Raw: evidence/v2-final-regression.json.
 
 Cross-platform packaging correction: the first 0.2 remote run compiled49 files and passed68 cases but failed byte reproducibility. Windows Path ordering differed from Linux for VFXService/Vehicle. tools/build.py now sorts filename strings explicitly; regenerated packages pass local checks. Final successful remote run is recorded in HANDOVER.md after verification.
+
+## 0.3 validation
+
+2026-10-29: 56 Luau files compiled, 83 headless and 90 Studio units passed. Both the lab and the actual original place72435697524161 ran the 90-unit suite. Compile is syntax validation, not a Roblox-aware type analysis.
+
+| Check | Observed result |
+|---|---|
+| Occupied-mass import turn, 55/90 stud/s entries, both directions | peak body roll 8.409° before → 0.457° after |
+| Same prototype turn | peak body roll 10.329° before → 0.879° after |
+| Parking while commanding full throttle | Stopping → Parked; 0.0552 stud/s, no anchoring, HB false |
+| Parking request after input clear | retained; second request false accelerates to81.51 stud/s in1s |
+| Parking on8° slope | 0.0589 stud/s after low-speed gravity compensation; threshold<0.1 |
+| Actual main P/W/P/E input | parked0.0034 stud/s despite W; release48.36; exit keeps P |
+| Optional ParkOnSpawn / AutoParkOnExit | both true after actual human entry/exit |
+| Actual per-car configuration | prototype and import each expose49 top-level fields; import Radius1.5/FWD/TorqueScale5 preserved |
+| TuneEditor custom values | AWD, Power1.7, Radius1.8, ParkO, custom curve and tutorial preserved |
+| Imported-car stationary jitter | all four sources pass: angular RMS0.00260/0.03209/0.04892/0.00310rad/s; height range0 |
+| Existing handling regression | airborne horizontal speed0, Grip response, handbrake, reverse and8° service-brake slope pass |
+| Mobile icon controls | all9 images loaded; gas/brake/steer/reverse/handbrake/park/help/exit and drag-out release pass |
+| Device layout | iPhone7/13 and iPadA16 landscape; no overlap; smallest hit84.5×58.5logical px |
+| Main original HUD | single cockpit, P/PARK ON and HB ON independently; native seat HUD false |
+
+RollTest uses a deterministic24-Roblox-mass seated-rider surrogate after binding. For each vehicle, it settles2s, starts at55 or90stud/s, then holds throttle0.35/steer±0.65 for2.5s, sampling PostSimulation. Predeclared thresholds: roll<12°, yaw>5° and final up.Y>0.9; all8 revised trials pass. Before/after peak reduction is>90%; peak speed/yaw differ modestly due to changed contact response. This is a measured flat-road handling comparison, not a claim of real-car accuracy, zero roll under every load, or no rollover at arbitrary speed.
+
+Reproduce using **unbound** source models:
+
+```lua
+local model = game.ServerStorage.AXZFCompatibilitySources.AXZF_ImportedCar
+local tune = require(model.Tune) -- only our authored AXZF Tune
+print(game:GetService("HttpService"):JSONEncode(require(game.ServerStorage.AXZFTests.RollTest)(model,tune)))
+print(game:GetService("HttpService"):JSONEncode(require(game.ServerStorage.AXZFTests.ParkingTest)(model,tune)))
+```
+
+Evidence: evidence/v3-*.json and ui/shots/v3-studio-*.png. Initial v3-roll-before.json contains a failed bound-prototype-clone attempt; corrected baseline uses a fresh factory model in v3-roll-before-prototype.json. The first optional exit test failed its seating setup; v3-autopark-retest.json unseats/repositions the human first and passes. No failures are counted as passes. The earlier0.4065stud/s parking slope observation is superseded by v3-parking-static-hold.json after gravity compensation.
+
+Physical multitouch/gamepad, new0.3 two-client park/adverse-network tests and portrait0.3 are not claimed. Existing two-client authority checks are historical0.2 results; the same ownership gates remain and park type/legacy-packet checks now run headlessly. The tested place is LandscapeSensor. All started Play sessions and device simulation were stopped after testing.

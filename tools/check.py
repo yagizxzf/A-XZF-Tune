@@ -21,7 +21,7 @@ def check(compiler, runtime):
                 source = path.read_text(encoding="utf-8")
                 source = re.sub(r"require\(script.Parent.(\w+)\)", r'require("./\1")', source)
                 (temp/path.name).write_text(source, encoding="utf-8")
-            names = ["Math_Test", "Tune_Test", "InputGuard_Test", "Powertrain_Test", "Suspension_Test"]
+            names = ["Math_Test", "Tune_Test", "InputGuard_Test", "Powertrain_Test", "Suspension_Test", "Parking_Test", "Stability_Test"]
             for name in names:
                 source = (ROOT/f"tests/{name}.luau").read_text(encoding="utf-8")
                 source = re.sub(r"require\(game.ReplicatedStorage.AXZF.Shared.(\w+)\)", r'require("./\1")', source)

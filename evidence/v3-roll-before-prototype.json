@@ -1,0 +1,6 @@
+{
+  "returnValue": "{\"trials\":[{\"direction\":-1,\"entrySpeed\":55,\"maxSpeed\":76.71502685546875,\"yawDegrees\":161.01276609733515,\"samples\":150,\"pass\":true,\"maxRollDegrees\":8.217353586748878},{\"direction\":1,\"entrySpeed\":55,\"maxSpeed\":80.0838851928711,\"yawDegrees\":130.91789874690503,\"samples\":151,\"pass\":true,\"maxRollDegrees\":8.390944376589652},{\"direction\":-1,\"entrySpeed\":90,\"maxSpeed\":91.23666381835938,\"yawDegrees\":154.3304711462076,\"samples\":150,\"pass\":true,\"maxRollDegrees\":10.329466701473324},{\"direction\":1,\"entrySpeed\":90,\"maxSpeed\":90.021728515625,\"yawDegrees\":149.10771320517089,\"samples\":151,\"pass\":true,\"maxRollDegrees\":10.277477595013832}],\"pass\":true}",
+  "message": "Code executed successfully",
+  "success": true,
+  "output": []
+}

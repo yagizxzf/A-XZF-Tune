@@ -1,6 +1,6 @@
 # A-XZF-Tune
 
-An independently authored, modular Roblox vehicle kit. MIT licensed. **0.2.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
+An independently authored, modular Roblox vehicle kit. MIT licensed. **0.3.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
 
 [Türkçe](README.tr.md) · [Quick start](docs/INSTALLATION.md) · [Bring your own car](docs/MODEL-INTEGRATION.md) · [Tune reference](docs/TUNING.md) · [API](docs/API.md) · [Tests](docs/TESTING.md)
 
@@ -47,3 +47,7 @@ Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.m
 ## 0.2 evaluation update
 
 Circular speed/RPM cockpit, hideable/remappable key help, separate mobile controls, automatic safe-space recovery, coupled implicit suspension, client-only tire smoke/dust and a commented per-car Tune are included. The editor migration helper converts selected legacy geometry in one call. Three real A-Chassis vehicles passed drive and stationary-jitter tests: [compatibility matrix](docs/COMPATIBILITY.md), [migration](docs/MIGRATION.md), [HUD](docs/HUD.md), [VFX](docs/VFX.md). The latest 12-car script measurement is 0.781 ms mean / 1.109 ms p95.
+
+## 0.3 driving update
+
+P now selects a distinct latched park mode; Space remains the rear handbrake. All supported settings are exposed in the commented Turkish in-car Tune template. Icon-based mobile controls, configurable anti-roll/load transfer/roll damping and low-speed parking hold are included. See [tuning](docs/TUNING.md), [controls](docs/HUD.md) and [measured tests](docs/TESTING.md#03-validation).

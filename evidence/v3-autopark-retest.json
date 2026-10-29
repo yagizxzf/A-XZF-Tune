@@ -1,0 +1,9 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"onSpawn\":true,\"onExit\":true,\"pass\":true,\"seated\":true}"
+    }
+  ],
+  "isError": false
+}

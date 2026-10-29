@@ -3,7 +3,11 @@ return function(t)
 	local T=require(game.ReplicatedStorage.AXZF.Shared.Tune) local e=t.expect
 	-- Versioned configuration rejects typos instead of silently using defaults.
 	t.test("default tune resolves",function() e.equal(T.resolve(nil).SchemaVersion,1) end)
-	t.test("custom keyboard binding resolves",function() e.equal(T.resolve({Controls={Handbrake="P"}}).Controls.Handbrake,"P") end)
+	t.test("custom keyboard binding resolves",function() e.equal(T.resolve({Controls={Handbrake="F"}}).Controls.Handbrake,"F") end)
+	t.test("park has a separate default key",function() e.equal(T.resolve(nil).Controls.Park,"P") e.equal(T.resolve(nil).Controls.Handbrake,"Space") end)
+	t.test("park braking bounded",function() e.throws(function() T.resolve({ParkBrakeAcceleration=0}) end) end)
+	t.test("roll influence bounded",function() e.throws(function() T.resolve({RollInfluence=2}) end) end)
+	t.test("park flags require booleans",function() e.throws(function() T.resolve({ParkOnSpawn=1}) end) end)
 	t.test("duplicate keyboard bindings rejected",function() e.throws(function() T.resolve({Controls={Brake="W"}}) end) end)
 	t.test("unknown keyboard key rejected",function() e.throws(function() T.resolve({Controls={Brake="UnknownKey"}}) end) end)
 	t.test("control maps cannot mutate after resolution",function() e.throws(function() T.resolve(nil).Controls.Brake="P" end) end)
