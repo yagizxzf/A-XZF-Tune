@@ -1,5 +1,6 @@
 --!strict
 local Math=require(script.Parent.Math)
+local WheelMotion=require(script.Parent.WheelMotion)
 local Powertrain={}
 Powertrain.__index=Powertrain
 function Powertrain.new(tune: any): any
@@ -12,7 +13,7 @@ function Powertrain:step(speed: number, throttle: number, dt: number): (number, 
 	if math.abs(throttle)>0.01 and speed*direction < -2 then return 0,math.abs(throttle) end
 	if math.abs(throttle)>0.01 and direction~=self.direction then self.direction=direction self.gear=1 end
 	local ratio=if self.direction<0 then t.ReverseRatio else t.Gears[self.gear]
-	local wheelRPM=math.abs(speed)/t.Radius*60/(2*math.pi)
+	local wheelRPM=WheelMotion.rpm(speed,t.Radius)
 	self.rpm=math.clamp(wheelRPM*ratio*t.FinalDrive,t.IdleRPM,t.RedlineRPM)
 	if self.direction>0 and self.cooldown==0 then
 		if self.rpm>t.ShiftUpRPM and self.gear<#t.Gears then self.gear+=1 self.cooldown=t.ShiftTime

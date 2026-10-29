@@ -55,3 +55,10 @@ Sürüyor: P ile el freninden ayrı kalıcı park modu; gerçek araçların içi
 0.3 uygulama/doğrulama tamamlandı: ayrı park (P/W/P/E, spawn/exit ve8° eğim);49 alanlı rehber gerçek iki ana araç ve4 uyumluluk kaynağının içinde; kullanıcı onaylı9 ikonlu dokunmatik kontrol; ayarlanabilir viraj dengesi. Import tepe yatış8.409→0.457°, prototip10.329→0.879°; dört import jitter geçer.90 Studio/83 headless/56 compile. Telefon7/13 ve iPadA16 landscape giriş/yerleşim kontrolü geçti. Son aşama: GitHub push/CI ve teslim kaydı sürüyor. Fiziksel multitouch/0.3 iki-client park/adverse-network/modern1.7.2/stabil1.0 kapıları önceki açık kapsam olarak korunur.
 
 0.3 GitHub teslimi tamamlandı: kaynak098e2a527dadbab933608f24e01fa72c2d525f14, Validate40927928835 completed/success. Son devir notu ayrı docs commit'idir; mevcut0.3 kullanıcı işlerinde bekleyen uygulama yok. Stabil1.0 açık kapıları yukarıda korunur.
+
+## 0.4 kullanıcı kapsamı — 2026-10-29
+
+Sürüyor: mobilde düz yazı/Lucide yerine özgün pedal ve el freni gibi fiziksel kontrol görselleri; direksiyon/pedal/yardımcı kontrollerin ayrı gruplarda yerleşimi; mobil araba oyunu referans incelemesi; teker dönüş yönü/hızı/RPM ilişkisinin ölçülmesi ve görsel akıcılık düzeltmesi. HTML önizleme, kullanıcı onayı, gerçek main Studio aktarımı, cihaz/girdi/teker regresyonu ve paket/belge/GitHub teslimi kapsamda.
+
+
+0.4 uygulama ve doğrulama tamamlandı: özgün physical pedal/HB, kullanıcının son talebine göre temalı sol/sağ; üst bar altına taşınmış yardımcı grup, preload/fallback ve hideablehelp; doğru yön/tam dt/client wheel roll, hub axes veHB/park lock. Main100 unit + liveimportwheel/P/E;93 headless/61 compile; iPhone7/13/iPadA16 landscape input/layout/fallback/exit; Drive/Fleet ve4 import jitter geçti. Public/native paket güncel,5-car demo100 geçti. Sürüyor: GitHub commit/push/CI ve son teslim kaydı. Fiziksel multitouch, kötü ağ/streaming/soak/typing/modern1.7.2 ve stabil1.0 kapıları açık kalır.

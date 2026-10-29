@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-rc.1 — 2026-10-29
+
+- Approved original physical pedal/handbrake art, then user-requested matching left/right keys; four mobile control groups replace the icon grid.
+- Critical image preload, native loading fallback and safe utility placement below the Roblox top bar.
+- Correct forward/reverse wheel spin, full visual dt, client Motor6D.Transform animation and imported-hub axes; rear handbrake/park locks.
+- Shared road-speed RPM helper reused by Powertrain; no physics force or ownership moves to the client.
+- 61 compile/93 headless/100 Studio tests; live forward/reverse/import/idle/handbrake, mobile input, drive/fleet and four-car jitter regressions.
+
 ## 0.3.0-rc.1 — 2026-10-29
 
 - Separate P parking mode, all-wheel braking, low-speed slope hold, persistent request and P/HB telemetry.

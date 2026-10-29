@@ -7,7 +7,7 @@ Audit: 2026-10-29, Europe/Istanbul. Scope is an open-source vehicle kit and eval
 | Domain | Status | Evidence / remaining condition |
 |---|---|---|
 | Source/build | PASS | Original modules, reproducible Python XML packages, fresh Studio demo boot |
-| Automated contracts | PASS | 83 headless + 90 Studio units; parse/compile checks |
+| Automated contracts | PASS | 93 headless + 100 Studio units; parse/compile checks |
 | Critical driving | PASS | Original and external multi-part rigs: accelerate/brake/steer/watchdog/rebind |
 | Driver authority | PASS within tested scope | Real two-client cross-driver/malformed/replay/valid tests; server ownership |
 | Lifecycle | PASS within tested scope | Tag, ancestry, duplicate add, repeated cleanup; occupied exit |
@@ -20,7 +20,7 @@ Audit: 2026-10-29, Europe/Istanbul. Scope is an open-source vehicle kit and eval
 | Art portability | CONCERN | Original example MIT; external car tested, provenance recorded, no MIT redistribution |
 | Persistence/economy/payments | NOT APPLICABLE | None implemented or touched |
 | Analytics/privacy | NOT APPLICABLE for stored data | No telemetry upload, identity log, datastore or analytics service; transient driver state only |
-| Publishing/Creator Dashboard | NOT CHECKED | No live place publish; two original VFX textures and nine licensed UI icons uploaded; destination experience permissions still require adoption checks |
+| Publishing/Creator Dashboard | NOT CHECKED | No live place publish; two original VFX textures and nine legacy licensed UI icons and five new original control graphics uploaded; destination experience permissions still require adoption checks |
 | Runtime error environment | CONCERN | Kit checks passed; pre-existing external Studio plugins emit unrelated errors |
 | Rollback | PASS for source/model scope | Stop fleet/remove tags; restore prior runtime and model revision; no data migration |
 
@@ -35,3 +35,5 @@ Four-ray tire contact, road-speed RPM, lack of clutch/differential/wheel inertia
 Keep previous package and vehicle geometry in version control. Unregister the fleet for a local kill switch, then roll back the whole source/model revision. Bind-time errors are visible on AXZFError. Diagnose one minimal rig first; do not hot-patch mystery Toolbox scripts or grant network ownership to clients as an unexplained fix. No production database repair, monetization config or external dashboard rollout is required by the kit itself.
 
 0.3 validation adds separate parking, complete in-car configuration, licensed image controls, turn-roll measurements and four-rig jitter regression. Device input remains simulator evidence. The new parking packet has not had a fresh two-client adverse-network run; no stable-release claim is added.
+
+0.4 adds physical mobile controls and local wheel visuals with100 unit cases and live wheel/input regressions. It introduces an additional client script that must be installed with the package. Previous physical-device/adverse-network/streaming/soak/typing gates remain open; no stable1.0 claim is made.

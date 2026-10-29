@@ -98,6 +98,9 @@
         },
         "ParkingTest": {
           "$path": "tests/ParkingTest.luau"
+        },
+        "WheelMotion_Test": {
+          "$path": "tests/WheelMotion_Test.luau"
         }
       }
     },
@@ -108,6 +111,9 @@
         },
         "Multiplayer": {
           "$path": "tests/Multiplayer.client.luau"
+        },
+        "WheelVisuals": {
+          "$path": "src/Client/WheelVisuals.client.luau"
         }
       }
     }

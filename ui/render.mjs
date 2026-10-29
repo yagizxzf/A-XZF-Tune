@@ -14,5 +14,5 @@ try {
     if(checks[page].overflow.length||checks[page].broken.length)throw Error(JSON.stringify(checks[page]));
     await browser.shot(`ui/shots/${name}.png`,{x:0,y:0,width:1920,height:1080},1);
   }
-  writeFileSync('evidence/v3-html-checks.json',JSON.stringify(checks,null,2)+'\n');
+  writeFileSync(process.env.AXZF_UI_CHECK_RECORD ?? 'evidence/ui-html-checks.json',JSON.stringify(checks,null,2)+'\n');
 }finally{browser.close();}

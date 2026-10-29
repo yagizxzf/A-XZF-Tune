@@ -1,6 +1,6 @@
 # A-XZF-Tune
 
-An independently authored, modular Roblox vehicle kit. MIT licensed. **0.3.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
+An independently authored, modular Roblox vehicle kit. MIT licensed. **0.4.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
 
 [Türkçe](README.tr.md) · [Quick start](docs/INSTALLATION.md) · [Bring your own car](docs/MODEL-INTEGRATION.md) · [Tune reference](docs/TUNING.md) · [API](docs/API.md) · [Tests](docs/TESTING.md)
 
@@ -51,3 +51,7 @@ Circular speed/RPM cockpit, hideable/remappable key help, separate mobile contro
 ## 0.3 driving update
 
 P now selects a distinct latched park mode; Space remains the rear handbrake. All supported settings are exposed in the commented Turkish in-car Tune template. Icon-based mobile controls, configurable anti-roll/load transfer/roll damping and low-speed parking hold are included. See [tuning](docs/TUNING.md), [controls](docs/HUD.md) and [measured tests](docs/TESTING.md#03-validation).
+
+## 0.4 visual controls and wheel motion
+
+Physical gas/brake pedals, a separate handbrake and themed left/right keys replace the mobile icon grid. Controls are grouped for driving, with hideable help and asynchronous image loading/fallback. Wheels roll smoothly on the client with correct forward/reverse direction, per-wheel speed/radius and handbrake locks; engine RPM remains gear-reduced rather than1:1 with the tyre. See [controls](docs/HUD.md) and [validation](docs/TESTING.md#04-validation).

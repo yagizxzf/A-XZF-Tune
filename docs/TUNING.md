@@ -111,3 +111,9 @@ Upgrade note: P now defaults to **Park**. If a 0.2 car remapped Handbrake to P, 
 P cuts engine thrust and brakes all four wheels. Moving requests report `Stopping`; below ParkEngageSpeed they report `Parked`. Repeating P releases parking. The request survives driver exit and input timeout; Space remains independent. Gravity compensation at low speed reduces slope creep, within configured brake/tyre grip limits. No anchoring or position/velocity teleport is used. Ice, very steep slopes and external collisions can still move a parked vehicle.
 
 RollInfluence reduces the vertical tyre-force lever arm while preserving its yaw lever arm. AntiRoll transfers bounded, equal/opposite normal loads across grounded axle pairs. RollDamping damps angular roll velocity without imposing a world-up orientation. Set `RollInfluence=1, AntiRoll=0, RollDamping=0` for the older body-roll response. First fix wheel radius/mount geometry and excessive centre-of-mass height; raising Grip alone is not a roll fix.
+
+## Wheel animation and RPM (0.4)
+
+Visual rolling speed uses `wheelRPM = abs(longitudinalSpeed) / (2*pi*Radius) * 60`. Engine RPM is wheelRPM times the selected gear and FinalDrive, within idle/redline limits. A shift changes engine RPM without discontinuously changing road-speed wheel rotation. Idle engine RPM does not spin a stationary car's wheels. Radius must match the authored wheel size; it is not an arbitrary visual RPM multiplier.
+
+The server owns forces, suspension and steering. WheelVisuals computes per-wheel forward point velocity and applies cosmetic rolling locally with Motor6D.Transform, including imported hub orientation. Left/right turn path speeds may differ. Rear handbrake wheels freeze; parked wheels hold. This remains a road-speed cosmetic model, not independent wheel angular inertia, tyre slip ratio or a clutch/burnout simulation. High-speed repeated rim patterns can still show sampling/strobe effects.

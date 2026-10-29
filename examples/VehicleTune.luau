@@ -32,6 +32,8 @@ return {
 	-- RPM noktaları kesin artmalı; tork 0..100000; aralarında doğrusal geçiş.
 
 	-- 2 / TEKER, SÜSPANSİYON VE VİRAJ DENGESİ
+	-- Teker RPM = |yol hızı| / (2*pi*Radius) * 60; motor devri vites/final oranıyla farklıdır.
+	-- Rölantide araç dururken tekerler durur; yalnızca görsel dönüş istemcide akıcıdır.
 	Radius = 1.25, -- 0.1..10 stud; gerçek teker yarıçapına eşleştirin
 	RestLength = 1.6, -- 0.1..10 stud; mount ile tam açık teker merkezi arası
 	FrequencyHz = 3.5, -- 1..12; artarsa yay sertleşir ve statik çökme azalır

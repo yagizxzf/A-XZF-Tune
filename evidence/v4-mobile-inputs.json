@@ -1,0 +1,50 @@
+{
+  "ParkOn": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":false,\"park\":true,\"brake\":0,\"seq\":740,\"steer\":0},\"handbrake\":false,\"park\":true}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "ParkOff": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":false,\"park\":false,\"brake\":0,\"seq\":746,\"steer\":0},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "Throttle": {
+    "returnValue": "{\"packet\":{\"throttle\":1,\"handbrake\":false,\"park\":false,\"brake\":0,\"seq\":752,\"steer\":0},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "Brake": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":false,\"park\":false,\"brake\":1,\"seq\":760,\"steer\":0},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "SteerLeft": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":false,\"park\":false,\"brake\":0,\"seq\":768,\"steer\":-1},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "SteerRight": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":false,\"park\":false,\"brake\":0,\"seq\":776,\"steer\":1},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "Reverse": {
+    "returnValue": "{\"packet\":{\"throttle\":-1,\"handbrake\":false,\"park\":false,\"brake\":0,\"seq\":784,\"steer\":0},\"handbrake\":false,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "Handbrake": {
+    "returnValue": "{\"packet\":{\"throttle\":0,\"handbrake\":true,\"park\":false,\"brake\":0,\"seq\":794,\"steer\":0},\"handbrake\":true,\"park\":false}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  }
+}

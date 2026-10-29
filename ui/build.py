@@ -1,9 +1,9 @@
-"""A-XZF cockpit. Lucide icons: licenses/Lucide-LICENSE.txt (ISC / Feather MIT)."""
+"""A-XZF cockpit. Original generated physical controls: art/v4/provenance.json."""
 from pathlib import Path
 import html
 import math
 ROOT=Path(__file__).resolve().parent
-CSS=''' .dial{background:rgba(13,20,25,.94);border:2px solid #3a4b55;border-radius:50%} *{box-sizing:border-box}html,body{margin:0;background:#161d22;font-family:Arial,sans-serif;color:#f5f5f0}#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(160deg,#364d58,#161d22 60%)}.abs{position:absolute}.fill{inset:0}.world{position:absolute;inset:0;background:linear-gradient(170deg,transparent 58%,#414648 58%,#20272b 100%)}.road{position:absolute;left:51%;top:62%;height:450px;width:8px;background:#c6c8bd;transform:rotate(19deg)}.cap{position:absolute;left:54px;top:48px;font-size:22px;color:#b3c2c8}.panel{background:rgba(13,20,25,.94);border:1px solid #3a4b55;border-radius:8px}.text{position:absolute;display:block;white-space:nowrap;line-height:1.2}.button{background:#202e36;border:1px solid #52616a;border-radius:6px}.amber{color:#ffbc63}.hint{color:#b6c5cd}.bar{background:#33434d;border-radius:2px}.hid{opacity:0}.grp{pointer-events:none}.grp [data-btn]{pointer-events:auto;cursor:pointer}.review{padding:32px;max-width:1200px;margin:auto}.review a{color:#ffbc63}'''
+CSS=''' .dial{background:rgba(13,20,25,.94);border:2px solid #3a4b55;border-radius:50%} *{box-sizing:border-box}html,body{margin:0;background:#161d22;font-family:Arial,sans-serif;color:#f5f5f0}#stage{position:relative;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(160deg,#364d58,#161d22 60%)}.abs{position:absolute}.fill{inset:0}.world{position:absolute;inset:0;background:linear-gradient(170deg,transparent 58%,#414648 58%,#20272b 100%)}.road{position:absolute;left:51%;top:62%;height:450px;width:8px;background:#c6c8bd;transform:rotate(19deg)}.cap{position:absolute;left:54px;top:48px;font-size:22px;color:#b3c2c8}.panel{background:rgba(13,20,25,.94);border:1px solid #3a4b55;border-radius:8px}.text{position:absolute;display:block;white-space:nowrap;line-height:1.2}.button{background:#202e36;border:1px solid #52616a;border-radius:6px}.amber{color:#ffbc63}.hint{color:#b6c5cd}.bar{background:#33434d;border-radius:2px}.hid{opacity:0}.grp{pointer-events:none}.grp [data-btn]{pointer-events:auto;cursor:pointer}.physical{background:transparent;border:1px solid transparent;border-radius:12px}.physical:active{background:rgba(255,188,99,.12);border-color:#ffbc63}.physical:active [data-n$=Art]{filter:brightness(1.15)}.utility{background:rgba(13,20,25,.78);border:1px solid #52616a;border-radius:12px}.review{padding:32px;max-width:1200px;margin:auto}.review a{color:#ffbc63}'''
 def box(name,x,y,w,h,cls='panel',inner='',btn=False):
     return f"<div class='abs {cls}' data-n='{name}' {'data-btn=1' if btn else ''} style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'>{inner}</div>"
 def text(name,label,x,y,w,h,size=24,color='#f5f5f0',weight=400):
@@ -12,9 +12,15 @@ def group(name,inner,anchor): return f"<div class='abs fill grp' data-g='{name}'
 def button(name,label,x,y,w=130,h=58):
     return box(name,x,y,w,h,'button',text(name+'Label',label,12,17,w-20,28,20,weight=700),True)
 
-def touch_button(name,label,icon,x,y,active=False):
-    image=f"<img data-n='{name}Icon' src='icons/{icon.replace('-', '_')}.png' style='position:absolute;left:45px;top:8px;width:40px;height:40px'>"
-    return box(name,x,y,130,90,'button',image+text(name+'Label',label,4,57,122,27,22,'#ffbc63' if active else '#f5f5f0',700),True)
+def prop(name,col,row,x,y,size):
+    return f"<div class='abs' data-n='{name}' style='left:{x}px;top:{y}px;width:{size}px;height:{size}px;background-image:url(art/v4/control-atlas.png);background-size:200% 200%;background-position:{col*100}% {row*100}%'></div>"
+
+def physical_button(name,col,row,x,y,w,h,size):
+    art=prop(name+'Art',col,row,(w-size)/2,(h-size)/2,size)
+    fallback=text(name+'Fallback',{'Throttle':'GAZ','Brake':'FREN','Handbrake':'EL FRENİ'}[name],8,h/2-16,w-16,32,24,weight=700).replace("class='text'","class='text hid'")
+    return box(name,x,y,w,h,'physical',art+fallback,True)
+
+
 def page(name,body):
     (ROOT/(name+'.html')).write_text(f"<!doctype html><meta charset='utf-8'><title>A-XZF Tune / {name}</title><style>{CSS}</style><div id='stage'><div class='world'><div class='road'></div></div><div class='cap'>A-XZF-TUNE · COCKPIT PREVIEW / SAMPLE VALUES</div>{body}</div><script>window.checkOverflow=()=>({{overflow:[...document.querySelectorAll('span[data-n]')].filter(e=>e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1).map(e=>e.dataset.n),broken:[...document.images].filter(e=>!e.complete||!e.naturalWidth).map(e=>e.src)}});if(!location.search.includes('raw')){{document.getElementById('stage').style.transformOrigin='top left';document.getElementById('stage').style.transform='scale('+Math.min(innerWidth/1920,innerHeight/1080)+')';}}</script>",encoding='utf-8')
 def dashboard(park=False,mobile=False):
@@ -41,19 +47,26 @@ def controls():
     for i,(key,label) in enumerate([('W / S','Drive / reverse'),('A / D','Steer'),('B','Brake'),('SPACE','Toggle handbrake'),('P','Park / drive'),('E','Exit vehicle'),('H','Hide controls')]):
         inner+=text('Key'+str(i),key,20,56+i*32,85,27,17,'#f5f5f0',700)+text('Control'+str(i),label,115,56+i*32,190,27,18,'#b6c5cd')
     return group('Controls',box('ControlPanel',50,708,335,302,inner=inner),'BL')
-def touch():
-    left=touch_button('SteerLeft','SOL','chevron-left',50,920)+touch_button('SteerRight','SAĞ','chevron-right',195,920)
-    right=touch_button('Throttle','GAZ','gauge',1690,920)+touch_button('Brake','FREN','circle-stop',1545,920)
-    right+=touch_button('Handbrake','EL FRENİ','hand',1400,920)
-    right+=touch_button('Reverse','GERİ','rotate-ccw',1690,815)+touch_button('Park','PARK','circle-parking',1545,815)
-    right+=touch_button('Exit','ÇIKIŞ','log-out',1400,815)+touch_button('ToggleControls','TUŞLAR','panel-left-close',1400,710)
-    return group('TouchLeft',left,'BL')+group('TouchRight',right,'BR')
+def touch(active=False):
+    steering=''
+    for i,name in enumerate(['SteerLeft','SteerRight']):
+        art=f"<div class='abs' data-n='{name}Art' style='left:0;top:0;width:145px;height:200px;background-image:url(art/v4/steering-buttons.png);background-size:200% auto;background-position:{i*100}% 50%'></div>"
+        fallback=text(name+'Fallback','SOL' if i==0 else 'SAĞ',15,84,115,32,24,weight=700).replace("class='text'","class='text hid'")
+        steering+=box(name,50+i*165,810,145,200,'physical',art+fallback,True)
+    pedals=physical_button('Brake',1,0,1490,785,190,220,220)
+    pedals+=physical_button('Throttle',0,0,1700,720,150,285,285)
+    hand=physical_button('Handbrake',0,1,1670,490,180,180,180)
+    utility=button('Park','P',50,150,90,78)+button('Reverse','R',160,150,90,78)
+    utility+=button('ToggleControls','TUŞ',50,244,90,78)+button('Exit','ÇIK',160,244,90,78)
+    return group('TouchLeft',steering,'BL')+group('TouchPedals',pedals,'BR')+group('TouchHandbrake',hand,'BR')+group('TouchUtility',utility,'TL')
+
 toggle=group('Toggle',button('ShowControls','H  CONTROLS',50,628,185),'BL')
 status=group('Recovery',box('RecoveryPanel',710,120,500,68,inner=text('RecoveryText','AUTO RECOVERY · CHECKING CLEARANCE',20,22,460,27,20,'#ffbc63',700)),'T')
 page('hud',dashboard()+controls()+toggle)
 page('hud_phone',dashboard(mobile=True)+touch())
 page('states',dashboard(True)+controls()+toggle+status)
 page('templates',touch()+status)
-(ROOT/'style.html').write_text(f"<meta charset='utf-8'><style>{CSS}</style><div class='review'><h1>A-XZF circular cockpit</h1><p>Original circular instrument inspired by A-Chassis: speed in the center, RPM around the dial, amber gear and parking state. No reused upstream UI code, images or icons.</p><p>Hidden controls keep the driving gauges visible. Mobile buttons remain usable when the keyboard help is hidden.</p><p>Sample speed is in studs/second, not a claimed real-world unit conversion.</p><p><a href='hud.html'>Desktop</a> · <a href='hud_phone.html'>Mobile</a> · <a href='states.html'>Parking / recovery states</a></p><div style='height:60px;background:#0d1419;border:1px solid #3a4b55;padding:18px;color:#ffbc63'>INK #0D1419 · AMBER #FFBC63 · TEXT #F5F5F0</div></div>",encoding='utf-8')
+page('mobile_states',dashboard(True,mobile=True)+touch(True))
+(ROOT/'style.html').write_text(f"<meta charset='utf-8'><style>{CSS}</style><div class='review'><h1>A-XZF circular cockpit</h1><p>Original circular instrument inspired by A-Chassis: speed in the center, RPM around the dial, amber gear and parking state. Original physical pedal, handbrake and steering artwork; mobile racing references inform grouping only.</p><p>Hidden controls keep the driving gauges visible. Mobile buttons remain usable when the keyboard help is hidden.</p><p>Sample speed is in studs/second, not a claimed real-world unit conversion.</p><p><a href='hud.html'>Desktop</a> · <a href='hud_phone.html'>Mobile</a> · <a href='states.html'>Parking / recovery states</a></p><div style='height:60px;background:#0d1419;border:1px solid #3a4b55;padding:18px;color:#ffbc63'>INK #0D1419 · AMBER #FFBC63 · TEXT #F5F5F0</div></div>",encoding='utf-8')
 (ROOT/'index.html').write_text("<meta charset='utf-8'><title>A-XZF cockpit review</title><style>body{background:#111b22;color:white;font:20px Arial;padding:40px}a{color:#ffbc63;display:block;margin:20px}</style><h1>A-XZF driving UI</h1><a href='style.html'>Style and behavior</a><a href='hud.html'>Desktop cockpit</a><a href='hud_phone.html'>Mobile controls</a><a href='states.html'>Parking / automatic recovery</a>",encoding='utf-8')
 print('Built cockpit review pages')

@@ -30,6 +30,13 @@ function Vehicle.new(model: Model, overrides: any): any
 	self.params=params
 	self.wheelbase=math.abs(rig.root.FL.Position.Z-rig.root.RL.Position.Z)
 	self.track=math.abs(rig.root.FL.Position.X-rig.root.FR.Position.X)
+	for _,wheel in ipairs(rig.wheels) do
+		wheel.motor:SetAttribute("AXZF_Radius",tune.Radius)
+		wheel.motor:SetAttribute("AXZF_RollAxis",wheel.rotation:VectorToObjectSpace(Vector3.xAxis))
+		wheel.motor:SetAttribute("AXZF_ForwardAxis",wheel.rotation:VectorToObjectSpace(Vector3.new(0,0,-1)))
+		wheel.motor:SetAttribute("AXZF_Rear",wheel.id=="RL" or wheel.id=="RR")
+		game:GetService("CollectionService"):AddTag(wheel.motor,"AXZFWheelVisual")
+	end
 	return self
 end
 -- Server integration / NPC seam; callers must supply a validated intent table.
@@ -48,7 +55,7 @@ function Vehicle:clearInput()
 end
 function Vehicle:getTelemetry(): any
 	local speed=self.rig.root.AssemblyLinearVelocity.Magnitude
-	return {speed=speed,rpm=self.powertrain.rpm,gear=if self.powertrain.direction<0 then -1 else self.powertrain.gear,sleeping=self.sleeping,stepMs=self.lastStepMs,handbrake=self.input.handbrake,parkRequested=self.parkRequested,parkState=Parking.state(self.parkRequested,speed,self.tune.ParkEngageSpeed)}
+	return {speed=speed,rpm=self.powertrain.rpm,gear=if self.powertrain.direction<0 then -1 else self.powertrain.gear,sleeping=self.sleeping,stepMs=self.lastStepMs,handbrake=self.handbrakeActive==true,parkRequested=self.parkRequested,parkState=Parking.state(self.parkRequested,speed,self.tune.ParkEngageSpeed)}
 end
 function Vehicle:step(rawDt: number)
 	if self.destroyed or not self.rig.model:IsDescendantOf(workspace) then return end
@@ -56,6 +63,7 @@ function Vehicle:step(rawDt: number)
 	local dt=math.clamp(rawDt,0,1/30) if dt==0 then return end
 	self.inputAge+=rawDt
 	local input=if self.inputAge>self.tune.InputTimeout then neutral else self.input
+	self.handbrakeActive=input.handbrake
 	local rig,t=self.rig,self.tune
 	local root=rig.root local cf=root.CFrame local velocity=root.AssemblyLinearVelocity
 	if self.recovery:step(rawDt) then self:clearInput() return end
@@ -156,10 +164,10 @@ function Vehicle:step(rawDt: number)
 		end
 	end
 	for _,wheel in ipairs(rig.wheels) do
-		wheel.spin=(wheel.spin+speed/t.Radius*dt)%(2*math.pi)
 		if not self.sleeping then
 			local angle=if wheel.id=="FL" then left elseif wheel.id=="FR" then right else 0
-			wheel.motor.C0=CFrame.new(wheel.mount.Position-Vector3.new(0,wheel.length,0))*CFrame.Angles(0,-angle,0)*CFrame.Angles(wheel.spin,0,0)*wheel.rotation
+			-- Server owns suspension/steering. Client Transform owns rolling spin.
+			wheel.motor.C0=CFrame.new(wheel.mount.Position-Vector3.new(0,wheel.length,0))*CFrame.Angles(0,-angle,0)*wheel.rotation
 		end
 	end
 	self.telemetryAge+=rawDt

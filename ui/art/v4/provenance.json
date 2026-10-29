@@ -1,0 +1,94 @@
+{
+  "key": "ui.mobile.physical-controls",
+  "category": "textures",
+  "subcategory": "HUD control sprites",
+  "assetType": "Image",
+  "status": "approved",
+  "source": {
+    "kind": "generated",
+    "tool": "built-in image_gen",
+    "date": "2026-10-29",
+    "file": "control-atlas.png",
+    "description": "Original four-cell gas/brake/handbrake/steering object art; no game artwork copied"
+  },
+  "references": [
+    {
+      "url": "https://play.google.com/store/apps/details?id=com.carxtech.sr",
+      "use": "layout observation only"
+    },
+    {
+      "url": "https://play.google.com/store/apps/details?id=com.olzhas.carparking.multyplayer2",
+      "use": "layout observation only"
+    }
+  ],
+  "dimensions": [
+    1254,
+    1254
+  ],
+  "alpha": true,
+  "layout": "2x2 cells, 627px each",
+  "security": {
+    "scripts": 0
+  },
+  "rights": {
+    "source": "Generated specifically for the user project; separate from prior Lucide pack",
+    "intendedUse": "HUD sprites and repository distribution",
+    "thirdPartyGameArtworkIncluded": false
+  },
+  "integration": {
+    "consumers": [
+      "ui/build.py",
+      "ui/runtime/Cockpit.luau"
+    ],
+    "uploads": {
+      "http://127.0.0.1:8870/rbx/out/upload/a3df5ad79d6.png": "rbxassetid://123584403619529",
+      "http://127.0.0.1:8870/rbx/out/upload/a4cb4869c0b.png": "rbxassetid://100668449590705",
+      "http://127.0.0.1:8870/rbx/out/upload/a930620bbf2.png": "rbxassetid://118096181524058",
+      "http://127.0.0.1:8870/rbx/out/upload/a72875eebef.png": "rbxassetid://123399833903709",
+      "http://127.0.0.1:8870/rbx/out/upload/a47922417c7.png": "rbxassetid://87490249709669",
+      "http://127.0.0.1:8870/rbx/out/upload/a83c4cefba7.png": "rbxassetid://100668449590705"
+    },
+    "aliases": {
+      "a83c4cefba7": "a4cb4869c0b; 360x360 RGBA, mean abs pixel difference 0.000007716, max1/255"
+    }
+  },
+  "review": {
+    "visualPreview": "User approved physical controls and then explicitly requested applying matching left/right replacement",
+    "Studio": "All five images loaded in iPhone7/13 and iPadA16 landscape; inputs, help, fallback and exit verified; main Studio source installed"
+  },
+  "steeringReplacement": {
+    "file": "steering-buttons.png",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "source": "built-in image_gen",
+    "brief": "Two original physical left/right rubber arrow push-buttons with brushed silver bezel, amber rim, transparent background",
+    "userInstruction": "Apply themed left/right buttons instead of steering wheel"
+  },
+  "usedCells": {
+    "control-atlas.png": [
+      "gas (top left)",
+      "brake (top right)",
+      "handbrake (bottom left)"
+    ],
+    "steering-buttons.png": [
+      "left",
+      "right"
+    ]
+  },
+  "unusedCell": "The original steering-wheel cell is retained in the source atlas but is not used by the final HUD.",
+  "destination": {
+    "placeId": "72435697524161",
+    "account": "current authenticated Studio upload account",
+    "creatorId": "not separately recorded"
+  },
+  "performance": {
+    "visibleImageCount": 5,
+    "smallestHitArea": [
+      58.5,
+      50.7
+    ],
+    "scope": "layout/input checks; not a GPU/memory benchmark"
+  }
+}

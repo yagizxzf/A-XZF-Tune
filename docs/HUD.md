@@ -31,3 +31,13 @@ Current checks: iPhone 7 (666×374 GUI viewport), iPhone 13 (749×388), iPad A16
 Simulator input verified gas 1→0 on drag-out release, brake=1, left/right=-1/+1, reverse=-1, separate handbrake/park toggles, hiding help without hiding buttons, exit restoring native TouchGui, and re-entry displaying P for retained parking. Main original Studio also shows P/PARK ON separately from HB ON with the native seat HUD disabled.
 
 Optional HTML authoring: install @resvg/resvg-js under .tools/svg, run `node ui/render_icons.mjs`, then copy_icons.py from ui/ using icons.json and icon-pack/png. Normal `python tools/build.py` uses committed runtime modules and requires no icon toolchain. Reuse ui/assets.json through ledger.py; do not re-upload unchanged icons.
+
+## 0.4 physical mobile controls (current)
+
+The user approved physical pedal/handbrake art and then explicitly asked to apply matching left/right buttons instead of the steering wheel. The active mobile HUD now uses five original raster graphics, replacing the0.3 Lucide button treatment: two metal/rubber steering keys at lower left, wide brake plus tall gas pedal at lower right, a separate handbrake lever above, and a small P/R/help/exit group at upper left. The utility group is moved below Roblox's top bar; actual simulator P/R input was verified there.
+
+Keyboard help starts hidden on touch screens and opens with TUŞ. Driving controls stay visible while it is open. Physical images receive amber press/toggle feedback. Five critical images preload asynchronously; if an image is unavailable, its existing native label appears temporarily and input still works. The fallback was tested by clearing/restoring the gas Image value.
+
+Source art: ui/art/v4/control-atlas.png and steering-buttons.png, generated with built-in image_gen. Full prompts/provenance/ownership context/upload results are in ui/art/v4/. Mobile-game store screenshots were observed for grouping only, not reused as artwork. The steering-wheel cell in the source atlas is unused. Previous Lucide files/notices remain for0.3 provenance and rollback; no Lucide icon is referenced by the active0.4 Mobile data.
+
+Current landscape checks: iPhone7/13 and iPadA16, nine working controls, five images loaded, one cockpit, no button/help/dial overlap. Smallest auxiliary targets58.5×50.7logical px; steering94.25×130, gas97.5×185.25, brake123.5×143 and handbrake117×117 on the tested phone. Physical multitouch/portrait0.4 remain unverified. The actual original Studio has the same sources, and its desktop entry/P/E were checked.

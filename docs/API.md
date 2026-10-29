@@ -62,3 +62,11 @@ A runtime step exception quarantines that vehicle, cleans it up, records AXZFErr
 Edit-only Migration.inspect/convert/fromSelection are documented in MIGRATION.md. Fleet publishes AXZF_Key<Action> and AXZF_Config<DisplayField> from validated Tune values. Telemetry adds AXZF_handbrake, AXZF_recovery and AXZF_recoveryCount. Recovery waits for clear space, slow grounded inversion and a continuous delay; it has a 5-second cooldown. VFX uses only server-decided allowed names/CFrames/intensity; clients render nearby bursts. See HUD.md/VFX.md.
 
 0.3 attributes: `AXZF_parkRequested` is updated immediately; `AXZF_parkState` is Drive/Stopping/Parked at telemetry frequency. Numeric gear is preserved for API consumers; the cockpit displays P when parking is requested. Parking request survives input expiry and driver changes; clearInput does not release it.
+
+## 0.4 wheel visual contract
+
+Vehicle.new tags each owned Motor6D `AXZFWheelVisual` after setting AXZF_Radius, AXZF_RollAxis, AXZF_ForwardAxis and AXZF_Rear. The immutable axes preserve authored hub orientation. Server C0 contains only suspension/steering/base orientation; the installed WheelVisuals LocalScript advances non-replicated Transform per PreSimulation for nearby wheels. It applies no force or ownership change and sends no remote. Destroyed/streamed-out tagged motors are removed; the client script restores transforms on teardown. The visual range is250studs; this is not a measured performance budget.
+
+Shared.WheelMotion exposes angularVelocity, rpm and advance as pure helpers. Forward local -Z rolls with negative local-X angular velocity. Full visual simulation dt is used, independently of the server's capped physics integration dt. Powertrain reuses the same road-speed RPM conversion.
+
+Official references checked: https://create.roblox.com/docs/reference/engine/classes/Motor6D and https://create.roblox.com/docs/reference/engine/classes/RunService.

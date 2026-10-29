@@ -80,7 +80,7 @@ Speed measurements use total assembly speed, and tests use synthetic repeated se
 
 ## Reproduction
 
-Build and check commands are in README. Headless execution uses the **same seven shared test modules**, translating only engine require paths into temporary relative CLI paths. It does not emulate physics or replace expected values. Temporary files are removed after execution. `tools/check.py` also compares generated package bytes with the committed artifacts.
+Build and check commands are in README. Headless execution uses the **same eight shared test modules**, translating only engine require paths into temporary relative CLI paths. It does not emulate physics or replace expected values. Temporary files are removed after execution. `tools/check.py` also compares generated package bytes with the committed artifacts.
 
 For Studio, open the demo, start Play and run on Server:
 
@@ -165,3 +165,19 @@ print(game:GetService("HttpService"):JSONEncode(require(game.ServerStorage.AXZFT
 Evidence: evidence/v3-*.json and ui/shots/v3-studio-*.png. Initial v3-roll-before.json contains a failed bound-prototype-clone attempt; corrected baseline uses a fresh factory model in v3-roll-before-prototype.json. The first optional exit test failed its seating setup; v3-autopark-retest.json unseats/repositions the human first and passes. No failures are counted as passes. The earlier0.4065stud/s parking slope observation is superseded by v3-parking-static-hold.json after gravity compensation.
 
 Physical multitouch/gamepad, new0.3 two-client park/adverse-network tests and portrait0.3 are not claimed. Existing two-client authority checks are historical0.2 results; the same ownership gates remain and park type/legacy-packet checks now run headlessly. The tested place is LandscapeSensor. All started Play sessions and device simulation were stopped after testing.
+
+## 0.4 validation
+
+61 Luau compile (59 packaged scripts plus2 diagnostic probes),93 headless and100 Studio units pass. Main original Studio and local five-car demo both ran100/100. Ten new deterministic cases cover direction, radius scaling, idle, lock, circumference, dt independence, RPM conversion, hitch duration and inner/outer speed differences.
+
+The old server implementation measured+0.266667rad for10stud/s, Radius1.25, raw dt0.1, where rolling requires-0.8rad: wrong sign plus the1/30 physics dt cap affected visual rotation. Client Transform now rolls in the correct direction using full visual dt. Live forward/reverse/import traces pass paired frame checks; max angular-rate error0.000297rad/s, max joint pose error0.000691rad. Main import at mean31.66stud/s showed200.67wheelRPM, with selected engine/gear RPM separate. A measurement waiter sees the previous visual update, so the corrected probe pairs it with the previous dt/speed; the first mismatched-frame probe failure remains recorded.
+
+Moving handbrake check at64.08stud/s: rear Transform delta0, front0.2227rad over0.1s. Idle:850engineRPM, wheel delta0 over0.3s, speed0.0023. Initial handbrake attempts had invalid preconditions (the unattended test car left the finite track; another was already stopped); the explicit moving retest passes. These are not counted as successful earlier tests.
+
+All mobile actions send correct intents; P toggles, gas=1, brake=1, steering=-1/+1, R throttle=-1, HB separate. Drag-out release clears held input. Help stays separate; unloaded-image fallback works; exit disables cockpit and restores TouchGui. Five images load on iPhone7/13/iPadA16 landscape with no overlap. The top-bar utility hit issue was reproduced and corrected by moving the group down.
+
+Import DriveTest and FleetTest passed, with4 baseline tagged motors remaining after temporary rigs were destroyed. Four imported rigs pass180-sample jitter: angular RMS sedan0.00261, police0.03656, SUV0.05084, import0.00316rad/s; height range0. Five-car delivery has20 tagged motors, all rigs upright/bound and100 units passed. Active main P/E and WheelVisuals presence passed.
+
+Evidence: evidence/v4-*.json, ui/shots/v4-studio-*.png. Rendering/layout and input were simulated; physical multitouch/gamepad, adverse network, total FPS/memory profiling and0.4 portrait are not claimed. Public packages and local native demo were regenerated; this session validated the already-open demo after updating its sources, without reopening the new binary in another window.
+
+Live client probes used for0.4 are saved as tools/visual-probes/Wheels.luau and Cockpit.luau. Execute their saved text in a Studio **Client** context after seating in AXZF_Prototype; wheel probe expects an already-moving car. For the imported main car, change that model path to AXZF_ImportedCar. They return JSON, do not inject driving input, and reject live/server contexts. Their syntax is included in the61-file check; public packages contain59 scripts.

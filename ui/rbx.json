@@ -1,1 +1,45 @@
-{"gui":"AXZFCockpit","templates_folder":"AXZFCockpitTemplates","port":8870,"design":[1920,1080],"luau_out":"runtime","font_map":{"Arial":"Arial"},"screens":[{"name":"HUD","page":"hud","groups":["Dashboard","Controls","Toggle"],"visible":true,"hud":true},{"name":"Mobile","page":"hud_phone","groups":["DashboardMobile","TouchLeft","TouchRight"]},{"name":"Recovery","page":"states","groups":["Recovery"]}],"templates":[]}
+{
+  "gui": "AXZFCockpit",
+  "templates_folder": "AXZFCockpitTemplates",
+  "port": 8870,
+  "design": [
+    1920,
+    1080
+  ],
+  "luau_out": "runtime",
+  "font_map": {
+    "Arial": "Arial"
+  },
+  "screens": [
+    {
+      "name": "HUD",
+      "page": "hud",
+      "groups": [
+        "Dashboard",
+        "Controls",
+        "Toggle"
+      ],
+      "visible": true,
+      "hud": true
+    },
+    {
+      "name": "Mobile",
+      "page": "hud_phone",
+      "groups": [
+        "DashboardMobile",
+        "TouchLeft",
+        "TouchPedals",
+        "TouchHandbrake",
+        "TouchUtility"
+      ]
+    },
+    {
+      "name": "Recovery",
+      "page": "states",
+      "groups": [
+        "Recovery"
+      ]
+    }
+  ],
+  "templates": []
+}

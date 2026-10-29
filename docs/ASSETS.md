@@ -54,3 +54,5 @@ For the optional native writer, place a Studio API-Dump.json under .tools/rbxmk/
 ## Mobile cockpit icons (0.3)
 
 Nine selected Lucide SVGs and derived white PNGs are redistributed under Lucide ISC / listed Feather MIT terms, with the complete notice in licenses/Lucide-LICENSE.txt. Official source: https://github.com/lucide-icons/lucide. Selection/provenance: ui/icon-pack/provenance.json; mapping: ui/icons.json; uploads: ui/assets.json. The circle_parking action uses circle-pause, not a copied vehicle HUD graphic. These icon terms are separate from the kit MIT license. External car meshes/unions remain excluded.
+
+0.4 active mobile controls use original physical-object rasters generated with built-in image_gen. See ui/art/v4/PROMPTS.md, provenance.json and uploads.json. Five new images uploaded; unchanged near-identical raster hashes alias an existing upload. The former steering-wheel cell and Lucide source art remain historical source only, not active mobile controls.

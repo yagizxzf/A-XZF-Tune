@@ -1,0 +1,29 @@
+{
+  "units": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"wheelTags\":8,\"passed\":100,\"prototype\":true,\"failed\":0,\"run\":100,\"import\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "wheel": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"meanSpeed\":31.664336768948304,\"samples\":49,\"maxJointError\":0.0006905339541845024,\"engineRPM\":2313.9693960846336,\"maxOmegaError\":0.00007412228350034411,\"pass\":true,\"gear\":1,\"meanOmega\":-21.0138347863782,\"radius\":1.5,\"wheelRPM\":200.6673407741108}"
+      }
+    ],
+    "isError": false
+  },
+  "exit": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"seated\":false,\"park\":true,\"wheelScript\":true,\"gui\":false}"
+      }
+    ],
+    "isError": false
+  }
+}

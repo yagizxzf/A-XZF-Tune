@@ -9,3 +9,5 @@ A-XZF-Tune vehicle implementation and original examples/effect textures are auth
 External Creator Store cars are evaluation art, acquired separately, and are not relicensed by the kit's MIT license. See docs/ASSETS.md and compatibility evidence.
 
 Mobile cockpit SVG/PNG icons are selected Lucide artwork (ISC; listed Feather-derived icons MIT). Retain licenses/Lucide-LICENSE.txt with distribution. Provenance and action aliases: ui/icon-pack/provenance.json. These assets are licensed separately from our implementation.
+
+0.4 mobile physical pedal/handbrake/arrow artwork is original generated project art. Generation prompts and provenance are preserved in ui/art/v4/. Mobile racing screenshots informed layout only; no game artwork was reused. Legacy0.3 Lucide notices above remain applicable to the retained historical SVG/PNG files.

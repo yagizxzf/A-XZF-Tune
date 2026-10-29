@@ -15,5 +15,11 @@ return {
 		["rotate_ccw"] = "rbxassetid://78691306546761",
 	},
 	art = {
+		["a3df5ad79d6"] = "rbxassetid://123584403619529",
+		["a47922417c7"] = "rbxassetid://87490249709669",
+		["a4cb4869c0b"] = "rbxassetid://100668449590705",
+		["a72875eebef"] = "rbxassetid://123399833903709",
+		["a83c4cefba7"] = "rbxassetid://100668449590705",
+		["a930620bbf2"] = "rbxassetid://118096181524058",
 	},
 }
