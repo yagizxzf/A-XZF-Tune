@@ -1,0 +1,65 @@
+{
+  "hudFixMainServer": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"nativeSeat\":false,\"preserved\":true,\"template\":true,\"units\":{\"run\":75,\"failed\":0,\"passed\":75}}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixMainClient": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"enabled\":true,\"copies\":1,\"gui\":true,\"seat\":\"DriveSeat\",\"size\":\"330, 370\",\"driver\":true,\"dashboard\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixHide": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"help\":false}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixExit": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"exited\":true,\"hudOff\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixReenter": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"seat\":\"DriveSeat\",\"guiEnabled\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixRespawnServer": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"respawned\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "hudFixRespawnClient": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"enabled\":true,\"copies\":1,\"seat\":\"DriveSeat\",\"resetOnSpawn\":false}"
+      }
+    ],
+    "isError": false
+  }
+}

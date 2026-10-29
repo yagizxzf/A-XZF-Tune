@@ -618,7 +618,8 @@ local function set(parent,name,value)
 	if text then text.Text=tostring(value) text.Size=UDim2.fromScale(1,1) text.Position=UDim2.fromOffset(0,0) text.TextScaled=true end
 end
 function Cockpit.new(player: Player,action: any): any
-	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate")
+	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate",15)
+	assert(template,"[A-XZF-Tune] CockpitTemplate missing: start the default Fleet with the UI package installed")
 	local gui=template:Clone() gui.Name="AXZFCockpit" gui.IgnoreGuiInset=false gui.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets
 	gui.Enabled=false gui.Parent=player:WaitForChild("PlayerGui")
 	local self=setmetatable({gui=gui,root=gui.Root,vehicle=nil,help=true,connections={},pressed={},mobile=UIS.TouchEnabled},Cockpit)
@@ -2063,13 +2064,6 @@ return Adapter
           <Properties>
             <string name="Name">Bootstrap</string>
             <ProtectedString name="Source">--!strict
-local packageRoot=game:GetService("ReplicatedStorage").AXZF
-local ui=packageRoot:FindFirstChild("UI")
-if ui then
-	require(ui.Builder).build()
-	local template=game:GetService("StarterGui").AXZFCockpit
-	template.Name="CockpitTemplate" template.Enabled=false template.Parent=packageRoot
-end
 local fleet=require(script.Parent.Fleet).start()
 game:BindToClose(function() fleet:stop() end)
 </ProtectedString>
@@ -2146,6 +2140,13 @@ function Fleet.start(options: any): any
 	local remoteName=options.remoteName or "Control"
 	local packageRoot=game:GetService("ReplicatedStorage").AXZF
 	assert(not packageRoot:FindFirstChild(remoteName),"Fleet already started")
+	-- Prepare presentation for both Bootstrap and applications that start Fleet directly.
+	local ui=packageRoot:FindFirstChild("UI")
+	if remoteName=="Control" and ui and not packageRoot:FindFirstChild("CockpitTemplate") then
+		require(ui.Builder).build()
+		local template=game:GetService("StarterGui").AXZFCockpit
+		template.Name="CockpitTemplate" template.Enabled=false template.Parent=packageRoot
+	end
 	local remote=Instance.new("RemoteEvent") remote.Name=remoteName remote.Parent=packageRoot
 	local self=setmetatable({vehicles={},pending={},queued={},connections={},buckets={},remote=remote,stopped=false},Fleet)
 	if remoteName=="Control" and packageRoot.Parent:FindFirstChild("VFX") then self.effects=require(script.Parent.VFXService).new() end
@@ -2699,7 +2700,11 @@ local function action(name,down,amount)
 	elseif name=="HideControls" then if down and cockpit then cockpit:toggleHelp() end
 	elseif state[name]~=nil then state[name]=if down then amount or 1 else 0 end
 end
-cockpit=require(packageRoot.UI.Cockpit).new(player,action)
+local ui=packageRoot:WaitForChild("UI",15)
+if not ui then warn("[A-XZF-Tune] GUI package missing: install ReplicatedStorage.AXZF.UI") return end
+local cockpitModule=ui:WaitForChild("Cockpit",15)
+if not cockpitModule then warn("[A-XZF-Tune] GUI package incomplete: Cockpit module missing") return end
+cockpit=require(cockpitModule).new(player,action)
 local function send()
 	if not active then return end sequence+=1
 	if UIS:GetFocusedTextBox() then clear() state.Brake=1 end

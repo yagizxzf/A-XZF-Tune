@@ -13,3 +13,5 @@ Kurallar: tek kaynak Git'teki Luau dosyaları; Studio kopyaları bu kaynaklardan
 Production-ready iddiası yalnızca doğrulanmış release kapıları kapanınca yapılır. Tek istemci testini multiplayer veya mobil test gibi raporlama. Yapılmayan kontrolleri açıkça kaydet.
 
 0.2 kaynakları: ui/runtime onaylı native cockpit verisi/controller; vfx/runtime MIT Emit/Build ve özgün VehicleRecipes; examples/VehicleTune araç içi Türkçe rehber. Yerel dış-art sahne .rbxl ve native paketi ignore edilir; docs/ASSETS.md opsiyonel rbxmk yolunu açıklar. Kullanıcı HUD için açıkça yuvarlak sürümü onayladı; tekrar onay gerekmez. VFX için roblox-vfx kullanıldı.
+
+Studio güncellemelerinde açık editör buffer'ını da eşitlemek için ScriptEditorService.UpdateSourceAsync kullan. StarterPlayerScripts gibi korumalı mevcut container'lara Parent atama. GUI doğrulamasını yalnızca ayrı demoda değil, kullanıcının gerçek açık hedefinde de yap. Default Fleet.start UI kuruluysa cockpit şablonunu otomatik hazırlar.

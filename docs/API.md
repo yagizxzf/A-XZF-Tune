@@ -4,10 +4,7 @@ Server modules live under `ServerScriptService.AXZFServer`; shared pure modules 
 
 ```lua
 local Fleet = require(game.ServerScriptService.AXZFServer.Fleet)
--- Disable Bootstrap for custom startup; prepare the driver template first.
-require(game.ReplicatedStorage.AXZF.UI.Builder).build()
-local template=game.StarterGui.AXZFCockpit
-template.Name="CockpitTemplate" template.Enabled=false template.Parent=game.ReplicatedStorage.AXZF
+-- Disable Bootstrap for custom startup; Fleet prepares the cockpit automatically.
 local fleet = Fleet.start()
 local vehicle = fleet:get(workspace.MyCar) -- nil when unregistered
 if vehicle then

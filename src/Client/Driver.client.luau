@@ -31,7 +31,11 @@ local function action(name,down,amount)
 	elseif name=="HideControls" then if down and cockpit then cockpit:toggleHelp() end
 	elseif state[name]~=nil then state[name]=if down then amount or 1 else 0 end
 end
-cockpit=require(packageRoot.UI.Cockpit).new(player,action)
+local ui=packageRoot:WaitForChild("UI",15)
+if not ui then warn("[A-XZF-Tune] GUI package missing: install ReplicatedStorage.AXZF.UI") return end
+local cockpitModule=ui:WaitForChild("Cockpit",15)
+if not cockpitModule then warn("[A-XZF-Tune] GUI package incomplete: Cockpit module missing") return end
+cockpit=require(cockpitModule).new(player,action)
 local function send()
 	if not active then return end sequence+=1
 	if UIS:GetFocusedTextBox() then clear() state.Brake=1 end

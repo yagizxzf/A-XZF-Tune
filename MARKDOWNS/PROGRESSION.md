@@ -44,3 +44,10 @@
 ## 2026-10-29T18:39:23+03:00
 - 2d251034caf13832b20fa2d3f70c75ad1ac20aaf main'e gönderildi. GitHub Validate40903141125 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40903141125.49 compile/68 headless/deterministik paket kontrolü remote ortamda geçti.75 Studio ve son pendingCancelRebind sonuçları kanıt dosyalarında.
 - İstenen0.2 geliştirme teslimi tamamlandı; HANDOVER/ROADMAP güncellendi. Yerel gerçek araçlı .rbxl Git dışında; public kaynak/paket/docs GitHub'da. Stabil v1.0 adoption koşulları açık tutuldu.
+
+## 2026-10-29T19:09:42+03:00
+- Kullanıcı GUI görünmüyor bildirdi. Görünür asıl A-XZF-Tune Studio (place72435697524161) incelendi: UI klasörü yok, eski Driver5749 karakter ve iki satırlık Bootstrap vardı. Ayrı demo cold-client koltuk testi GUI açtı; önceki teslimin ana sahne aktarımı eksik kalmıştı.
+- Komut çubuğu installer mevcut StarterPlayerScripts.Parent alanını tekrar yazınca duruyordu. Yalnızca yeni klasörlerde Parent ayarlayacak şekilde düzeltildi. Source ataması açık Fleet editörünü eşitlemiyordu (Source6061/editor4631); ScriptEditorService.UpdateSourceAsync ile açık editör de güncelleniyor.
+- Default Fleet.start cockpit şablonunu kendisi hazırlıyor; eski/manual Bootstrap da GUI başlatabiliyor. Driver/UI bağımlılıkları replication sırasını bekliyor; eksik UI/template15 saniyede açıklamalı hata veriyor. Tasarım değişmedi; yeni görsel onayı gerekmedi.
+- Güncel kaynaklar gerçek ana Studio'ya uygulandı. Community köprüsü bu eski pencerede yüklü olmadığından mevcut built-in Studio bağlantısı kullanıldı; hiçbir kullanıcı penceresi kapatılmadı. R3dTuxedo ve araç geometrisi korundu; yerel kaynak yedeği ignore edildi.
+- Ana sahnede75/75 Studio; prototipte GUI açık, bir kopya; H gizleme; E çıkışta HUD kapanması; import araca tekrar girişte açılması; ölüm/respawn sonrası tek GUI ve tekrar açılma geçti. Kanıt evidence/gui-hotfix-*.json. İki test Play oturumu durduruldu.49 compile/68 headless/deterministik paket kontrolleri geçti; .rbxl demo yenilendi. Yeni push/CI bu kayıtta henüz tamamlandı sayılmıyor.

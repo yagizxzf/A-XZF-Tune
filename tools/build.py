@@ -89,13 +89,13 @@ def build():
         lines.append("do local parent=game:GetService("+json.dumps(path[0])+")")
         for name in path[1:-1]:
             cls = "StarterPlayerScripts" if name == "StarterPlayerScripts" else "Folder"
-            lines.append("local next=parent:FindFirstChild("+json.dumps(name)+") or Instance.new("+json.dumps(cls)+") next.Name="+json.dumps(name)+" next.Parent=parent parent=next")
+            lines.append("local next=parent:FindFirstChild("+json.dumps(name)+") if not next then next=Instance.new("+json.dumps(cls)+") next.Name="+json.dumps(name)+" next.Parent=parent end parent=next")
         name = json.dumps(path[-1])
         lines.append("local s=parent:FindFirstChild("+name+") or Instance.new("+json.dumps(entry["className"])+") assert(s.ClassName=="+json.dumps(entry["className"])+",'AXZF path collision') s.Name="+name)
         delimiter = "==="
         while "]"+delimiter+"]" in entry["source"]:
             delimiter += "="
-        lines.append("s.Source=["+delimiter+"["+entry["source"]+"]"+delimiter+"] s.Parent=parent end")
+        lines.append("s.Parent=parent game:GetService('ScriptEditorService'):UpdateSourceAsync(s,function() return ["+delimiter+"["+entry["source"]+"]"+delimiter+"] end) end")
     (BUILD / "InstallDemo.luau").write_text("\n".join(lines)+"\n", encoding="utf-8")
     return entries
 

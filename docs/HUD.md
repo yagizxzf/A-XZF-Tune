@@ -18,3 +18,5 @@ VehicleSeat.HeadsUpDisplay is disabled while bound and restored on destroy. Char
 Studio layout checks: iPhone 7 landscape, iPhone 13 landscape/portrait, iPad 6th generation landscape. Inspected buttons are at least 48×48 logical pixels, with no button/button or button/dial overlaps. Mobile GO/PARK/KEYS/EXIT were exercised by simulator input. Physical multitouch/gamepad, console focus, localization expansion and accessibility text scaling remain adoption tests.
 
 Visual source: ui/build.py + ui/rbx.json. Generated Data modules define the native GUI; Cockpit.luau binds and lays it out. Builder is credited MIT tooling. The optional export uses the installed roblox-ui-maker tools; the normal package build needs no HTML export tools or external icons.
+
+Hotfix verification: the original A-XZF-Tune place72435697524161 was updated directly. GUI appears on prototype/imported driver-seat entry, H hides help, E exits/hides HUD, and respawn/re-entry retains exactly one cockpit. Fleet now prepares the template without special Bootstrap UI code. GUI dependencies wait for replication and report missing package/template after15 seconds.

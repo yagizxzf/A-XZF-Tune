@@ -13,6 +13,13 @@ function Fleet.start(options: any): any
 	local remoteName=options.remoteName or "Control"
 	local packageRoot=game:GetService("ReplicatedStorage").AXZF
 	assert(not packageRoot:FindFirstChild(remoteName),"Fleet already started")
+	-- Prepare presentation for both Bootstrap and applications that start Fleet directly.
+	local ui=packageRoot:FindFirstChild("UI")
+	if remoteName=="Control" and ui and not packageRoot:FindFirstChild("CockpitTemplate") then
+		require(ui.Builder).build()
+		local template=game:GetService("StarterGui").AXZFCockpit
+		template.Name="CockpitTemplate" template.Enabled=false template.Parent=packageRoot
+	end
 	local remote=Instance.new("RemoteEvent") remote.Name=remoteName remote.Parent=packageRoot
 	local self=setmetatable({vehicles={},pending={},queued={},connections={},buckets={},remote=remote,stopped=false},Fleet)
 	if remoteName=="Control" and packageRoot.Parent:FindFirstChild("VFX") then self.effects=require(script.Parent.VFXService).new() end

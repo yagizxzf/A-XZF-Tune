@@ -12,7 +12,8 @@ local function set(parent,name,value)
 	if text then text.Text=tostring(value) text.Size=UDim2.fromScale(1,1) text.Position=UDim2.fromOffset(0,0) text.TextScaled=true end
 end
 function Cockpit.new(player: Player,action: any): any
-	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate")
+	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate",15)
+	assert(template,"[A-XZF-Tune] CockpitTemplate missing: start the default Fleet with the UI package installed")
 	local gui=template:Clone() gui.Name="AXZFCockpit" gui.IgnoreGuiInset=false gui.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets
 	gui.Enabled=false gui.Parent=player:WaitForChild("PlayerGui")
 	local self=setmetatable({gui=gui,root=gui.Root,vehicle=nil,help=true,connections={},pressed={},mobile=UIS.TouchEnabled},Cockpit)

@@ -1,0 +1,18 @@
+{
+  "studio": "A-XZF-Tune",
+  "placeId": 72435697524161,
+  "uiPackagePresent": false,
+  "bootstrapChars": 105,
+  "driverChars": 5749,
+  "cars": [
+    [
+      "Workspace.AXZF_ImportedCar",
+      true
+    ],
+    [
+      "Workspace.AXZF_Prototype",
+      true
+    ]
+  ],
+  "diagnosis": "Active original Studio had the older driver and no AXZF.UI. Generated installer also reparented protected StarterPlayerScripts and did not synchronize open editor buffers."
+}

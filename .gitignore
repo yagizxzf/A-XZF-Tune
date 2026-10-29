@@ -7,6 +7,7 @@ build/InstallDemo.luau
 build/manifest.json
 build/Studio-With-ImportedCar.rbxlx
 evidence/imported-geometry.json
+evidence/local-pre-hud-main.json
 build/A-XZF-CompatibilityLab.rbxlx
 build/AXZF-DevInstall.rbxmx
 build/AXZF-TestPatch.rbxmx

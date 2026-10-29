@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-rc.2 — GUI startup hotfix
+
+- Default Fleet.start now creates the cockpit for both standard and custom bootstraps.
+- Driver waits for replicated UI dependencies and reports missing packages/template.
+- Command Bar installer reuses protected containers and synchronizes open editor buffers.
+- Applied to the actual original Studio; seat entry, H, E, second car and respawn regression passed.
+
 ## 0.2.0-rc.1 — 2026-10-29
 
 - Coupled implicit suspension and persistent force/torque support reduce imported-car jitter.

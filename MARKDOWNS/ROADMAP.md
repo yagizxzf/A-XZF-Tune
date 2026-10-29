@@ -42,3 +42,7 @@ Kullanıcı tarafından istenenler: otomatik devrilme düzeltme; varsayılan Veh
 Başlangıç titreşim ölçümü: 120 PostSimulation örneğinde prototip RMS vy 0.202, RMS açısal hız 0; import RMS vy 0.755, RMS açısal hız 1.970 rad/s, tepe 3.327. Bu kayıt çözüm sonucu değildir.
 
 0.2 detay/kanıt: docs/COMPATIBILITY.md, docs/HUD.md, docs/VFX.md ve docs/TESTING.md güncel bölümü. Portre simulator kontrolü tamamlandı; fiziksel cihaz ve modern A-Chassis1.7.2 model testi hâlâ açık. Stabil v1.0 koşulları korunur.
+
+## GUI görünmeme düzeltmesi
+
+Uygulama ve Studio doğrulaması tamamlandı: eksik ana sahne aktarımı, korumalı container ve açık editör buffer hataları düzeltildi. Ana sahnede giriş/H/çıkış/ikinci araç/respawn ve75 test geçti. Paketler yenilendi; GitHub hotfix CI kontrolü sürüyor.
