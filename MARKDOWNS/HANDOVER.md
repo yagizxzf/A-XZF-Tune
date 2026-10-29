@@ -1,0 +1,23 @@
+# Devir
+
+Son güncelleme: 2026-10-29T15:36:37+03:00 (uygulama/test sonu; GitHub teslimi sürüyor).
+
+Okuma sırası: AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtları (hepsi MARKDOWNS/ içinde).
+
+Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Git origin: https://github.com/yagizxzf/A-XZF-Tune, boş main; clone yapıldı. GitHub connector yazma yetkili; gh oturumu yok. Sistem rojo komutu Aftman'da yapılandırılmamış. Python ve Git mevcut. Studio MCP bağlı: A-XZF-Tune, placeId 72435697524161, Edit. Workspace taban/spawn dışında boş; ServerStorage.R3dTuxedo korunacak.
+
+Referans A-Chassis README ve güncel release metadata incelendi: v1.7.2-stable. Kaynak kod alınmadı. Kullanıcı bağımsız, açık kaynak, modüler, performans/QOL odaklı araç kiti; prototip ve dış kaynaklı parçalı araçla gerçek testler ve tam belgeler istiyor.
+
+## Güncel çalışan durum
+
+Bağımsız server-owned raycast araç kiti, 28 Luau dosyası. Kaynak src/, kullanıcı belgeleri docs/, özgün araç/pist examples/, testler tests/, paketleme tools/. Başlangıç bilgilerinin üzerindeki bu güncel bölüm geçerlidir. Tüm dosyalar kullanıcının ek talimatıyla yalnızca bu Git kökünde.
+
+`python tools/build.py` public model/demo üretir. `python tools/check.py --compiler .tools/luau/luau-compile.exe --runtime .tools/luau/luau.exe`: 28 compile, 58 headless case, deterministik build geçti. Luau 0.744 hash doğrulandı, .tools Git dışında. Studio birim testi 65/65. İki araç drive, handling, fleet lifecycle, 12 araç solve timing, iki gerçek istemci security, keyboard/focus, iPhone/iPad landscape denemeleri geçti. Kanıt docs/TESTING.md ve evidence/studio-results.json.
+
+Ana Studio Edit: Workspace.AXZF_Prototype, AXZF_ImportedCar, AXZF_TestTrack bilinçli tutuldu. ServerStorage.AXZFExamples.ImportedCarSource inert kaynak. Var olan R3dTuxedo/baseplate/spawn korunur. Yabancı karantina paketi kaldırıldı; yabancı kod çalıştırılmadı. Harici araç 14215126016, 47 BasePart/45 MeshPart. Art MIT olarak dağıtılmaz; yerel build/Studio-With-ImportedCar.rbxlx ve evidence/imported-geometry.json ignore edilir. Mesh InitialSize ölçeği yeniden açılarak doğrulandı. Public demo özgün parça araç üretir; dış model reçetesi docs/ASSETS.md.
+
+Studio pluginleri Roundy/Animation Spoofer gibi kit dışı hatalar veriyor; genel temiz konsol iddiası yok. Play oturumları durduruldu, simulator defaulta döndü. Son client değişikliği: textbox focus brake sonrasında focus release clear ve global event cleanup; gerçek istemci regresyonu geçti.
+
+Release candidate hazır; stabil v1.0 tamamlanmadı. Fiziksel cihaz/gamepad, portre, kötü ağ/streaming, death-reset-reconnect, uzun soak/toplam profil/type-aware analiz açık. Ayrıntı docs/READINESS.md ve ROADMAP.md.
+
+Sıradaki somut adımlar: GitHub'a kaynak/belgeler/public paketler/test kanıtlarını gönder; CI sonucunu doğrula; gerçek SHA/CI bilgisini bu dosyaya ve PROGRESSION'a ekle. Canlı Roblox publish yapılmadı.

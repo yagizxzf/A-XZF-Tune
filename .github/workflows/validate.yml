@@ -1,0 +1,21 @@
+name: Validate
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned upstream Luau 0.744
+        run: |
+          mkdir -p .tools/luau
+          curl -fsSL https://github.com/luau-lang/luau/releases/download/0.744/luau-ubuntu.zip -o .tools/luau.zip
+          echo '6506f0852c623aaffcb28494aac16c26dc04a269ea0e16cc0aafc8c8ac79f3ec  .tools/luau.zip' | sha256sum -c -
+          unzip -q .tools/luau.zip -d .tools/luau
+          chmod +x .tools/luau/luau .tools/luau/luau-compile
+      - name: Compile, shared contracts, reproducible packages
+        run: python tools/check.py --compiler .tools/luau/luau-compile --runtime .tools/luau/luau

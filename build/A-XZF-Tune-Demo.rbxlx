@@ -1,0 +1,1245 @@
+<?xml version='1.0' encoding='utf-8'?>
+<roblox version="4">
+  <Item class="ReplicatedStorage" referent="AXZF0">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="Folder" referent="AXZF1">
+      <Properties>
+        <string name="Name">AXZF</string>
+      </Properties>
+      <Item class="Folder" referent="AXZF2">
+        <Properties>
+          <string name="Name">Shared</string>
+        </Properties>
+        <Item class="ModuleScript" referent="AXZF3">
+          <Properties>
+            <string name="Name">InputGuard</string>
+            <ProtectedString name="Source">--!strict
+local Math=require(script.Parent.Math)
+local Guard={}
+local fields={seq=true,throttle=true,steer=true,brake=true,handbrake=true}
+function Guard.validate(packet: any, lastSequence: number): boolean
+	if type(packet)~="table" then return false end
+	for key in pairs(packet) do if not fields[key] then return false end end
+	if not Math.finite(packet.seq) or packet.seq%1~=0 or packet.seq&lt;=lastSequence or packet.seq&gt;2^31-1 then return false end
+	for _,key in ipairs({"throttle","steer","brake"}) do
+		local v=packet[key]
+		if not Math.finite(v) or v &gt; 1 or v &lt; (if key=="brake" then 0 else -1) then return false end
+	end
+	return type(packet.handbrake)=="boolean"
+end
+function Guard.consume(bucket: any, now: number): boolean
+	bucket.tokens=math.min(45,bucket.tokens+math.max(0,now-bucket.time)*30)
+	bucket.time=now
+	if bucket.tokens&lt;1 then return false end
+	bucket.tokens-=1
+	return true
+end
+return table.freeze(Guard)
+</ProtectedString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="AXZF4">
+          <Properties>
+            <string name="Name">Math</string>
+            <ProtectedString name="Source">--!strict
+local M = {}
+function M.finite(value: any): boolean
+	return type(value) == "number" and value == value and math.abs(value) &lt; math.huge
+end
+function M.approach(current: number, target: number, rate: number, dt: number): number
+	return target + (current - target) * math.exp(-rate * dt)
+end
+function M.curve(points: {{number}}, x: number): number
+	if x &lt;= points[1][1] then return points[1][2] end
+	for i = 2, #points do
+		local a, b = points[i-1], points[i]
+		if x &lt;= b[1] then return a[2] + (b[2]-a[2])*(x-a[1])/(b[1]-a[1]) end
+	end
+	return points[#points][2]
+end
+-- Returns longitudinal and lateral demand inside a friction circle.
+function M.friction(longitudinal: number, lateral: number, capacity: number): (number, number)
+	local magnitude = math.sqrt(longitudinal*longitudinal + lateral*lateral)
+	local scale = if magnitude &gt; capacity and magnitude &gt; 0 then capacity/magnitude else 1
+	return longitudinal*scale, lateral*scale
+end
+function M.spring(mass: number, gravity: number, frequency: number, damping: number, compression: number, velocity: number, maxLoad: number): number
+	local omega = 2*math.pi*frequency
+	return math.clamp(mass*omega*omega*compression - 2*damping*mass*omega*velocity, 0, mass*gravity*maxLoad)
+end
+function M.braking(speed: number, demand: number, mass: number, dt: number): number
+	return -math.sign(speed)*math.min(demand, math.abs(speed)*mass/math.max(dt, 1e-4))
+end
+-- Positive command turns right; left is then the outer front wheel.
+function M.ackermann(angle: number, wheelbase: number, track: number): (number, number)
+	if math.abs(angle) &lt; 1e-5 then return 0, 0 end
+	local radius = wheelbase/math.tan(math.abs(angle))
+	local inner = math.atan(wheelbase/math.max(0.1, radius-track/2))
+	local outer = math.atan(wheelbase/(radius+track/2))
+	if angle &gt; 0 then return outer, inner end
+	return -inner, -outer
+end
+return table.freeze(M)
+</ProtectedString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="AXZF5">
+          <Properties>
+            <string name="Name">Powertrain</string>
+            <ProtectedString name="Source">--!strict
+local Math=require(script.Parent.Math)
+local Powertrain={}
+Powertrain.__index=Powertrain
+function Powertrain.new(tune: any): any
+	return setmetatable({tune=tune,gear=1,rpm=tune.IdleRPM,cooldown=0,direction=1},Powertrain)
+end
+function Powertrain:step(speed: number, throttle: number, dt: number): (number, number)
+	local t=self.tune
+	self.cooldown=math.max(0,self.cooldown-dt)
+	local direction=if throttle&lt;0 then -1 else 1
+	if math.abs(throttle)&gt;0.01 and speed*direction &lt; -2 then return 0,math.abs(throttle) end
+	if math.abs(throttle)&gt;0.01 and direction~=self.direction then self.direction=direction self.gear=1 end
+	local ratio=if self.direction&lt;0 then t.ReverseRatio else t.Gears[self.gear]
+	local wheelRPM=math.abs(speed)/t.Radius*60/(2*math.pi)
+	self.rpm=math.clamp(wheelRPM*ratio*t.FinalDrive,t.IdleRPM,t.RedlineRPM)
+	if self.direction&gt;0 and self.cooldown==0 then
+		if self.rpm&gt;t.ShiftUpRPM and self.gear&lt;#t.Gears then self.gear+=1 self.cooldown=t.ShiftTime
+		elseif self.rpm&lt;t.ShiftDownRPM and self.gear&gt;1 then self.gear-=1 self.cooldown=t.ShiftTime end
+	end
+	ratio=if self.direction&lt;0 then t.ReverseRatio else t.Gears[self.gear]
+	self.rpm=math.clamp(wheelRPM*ratio*t.FinalDrive,t.IdleRPM,t.RedlineRPM)
+	local cut=if self.rpm&gt;=t.RedlineRPM then 0 else 1
+	local shift=if self.cooldown&gt;0 then 0.35 else 1
+	return self.direction*math.abs(throttle)*Math.curve(t.TorqueCurve,self.rpm)*t.TorqueScale*ratio*t.FinalDrive/t.Radius*cut*shift,0
+end
+return Powertrain
+</ProtectedString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="AXZF6">
+          <Properties>
+            <string name="Name">Presets</string>
+            <ProtectedString name="Source">--!strict
+-- Partial overrides; pass through Tune.resolve before use.
+return table.freeze({
+	Street=table.freeze({Drive="RWD"}),
+	Touring=table.freeze({Drive="FWD",Grip=1.1,SteerDegrees=28,TorqueScale=3.2}),
+	Rally=table.freeze({Drive="AWD",RestLength=2,FrequencyHz=3,Grip=1.35}),
+	Drift=table.freeze({Drive="RWD",Grip=0.8,SteerDegrees=45,TorqueScale=5}),
+})
+</ProtectedString>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="AXZF7">
+          <Properties>
+            <string name="Name">Tune</string>
+            <ProtectedString name="Source">--!strict
+-- All fields use Roblox mass/stud/second units. No kg conversion is implied.
+local Math = require(script.Parent.Math)
+local Tune = {}
+local defaults = {
+	SchemaVersion=1, Drive="RWD", Radius=1.25, RestLength=1.6,
+	FrequencyHz=3.5, DampingRatio=0.85, MaxLoad=4,
+	Grip=1.2, LateralResponse=12, BrakeAcceleration=90, HandbrakeAcceleration=110,
+	RollingResistance=0.015, Drag=0.025, SteerDegrees=32, SteerResponse=7,
+	SteerFadeSpeed=100, MinSteerFraction=0.28,
+	IdleRPM=850, RedlineRPM=7000, ShiftUpRPM=6100, ShiftDownRPM=2100,
+	ShiftTime=0.3, FinalDrive=3.7, ReverseRatio=3.1,
+	Gears={3.2,2.1,1.5,1.12,0.88}, TorqueCurve={{850,95},{2500,150},{4500,175},{7000,110}},
+	TorqueScale=4, InputTimeout=0.35, TelemetryHz=10, SleepAfter=3,
+}
+local ranges = {
+	Radius={0.1,10}, RestLength={0.1,10}, FrequencyHz={1,12}, DampingRatio={0.1,3},
+	MaxLoad={1,10}, Grip={0.05,3}, LateralResponse={0.1,40}, BrakeAcceleration={1,500},
+	HandbrakeAcceleration={1,500}, RollingResistance={0,0.2}, Drag={0,2},
+	SteerDegrees={1,60}, SteerResponse={0.1,30}, SteerFadeSpeed={1,500}, MinSteerFraction={0.05,1},
+	IdleRPM={100,5000}, RedlineRPM={1000,20000}, ShiftUpRPM={500,20000}, ShiftDownRPM={100,10000},
+	ShiftTime={0.05,3}, FinalDrive={0.1,15}, ReverseRatio={0.1,10}, TorqueScale={0.1,100},
+	InputTimeout={0.1,2}, TelemetryHz={1,20}, SleepAfter={0,30},
+}
+function Tune.resolve(overrides: any): any
+	assert(overrides == nil or type(overrides) == "table", "Tune must be a table")
+	local result = table.clone(defaults)
+	for key, value in pairs(overrides or {}) do
+		assert(defaults[key] ~= nil, "Unknown Tune field: "..tostring(key))
+		result[key] = value
+	end
+	assert(result.SchemaVersion == 1, "Unsupported Tune schema")
+	assert(result.Drive == "FWD" or result.Drive == "RWD" or result.Drive == "AWD", "Drive must be FWD/RWD/AWD")
+	for key, range in pairs(ranges) do
+		local v = result[key]
+		assert(Math.finite(v) and v &gt;= range[1] and v &lt;= range[2], "Invalid Tune."..key)
+	end
+	assert(result.IdleRPM &lt; result.ShiftDownRPM and result.ShiftDownRPM &lt; result.ShiftUpRPM and result.ShiftUpRPM &lt; result.RedlineRPM, "RPM thresholds must be idle &lt; down &lt; up &lt; redline")
+	assert(type(result.Gears)=="table" and #result.Gears&gt;=1 and #result.Gears&lt;=10, "Gears must have 1..10 ratios")
+	local previous=math.huge
+	local gears={}
+	for i, ratio in ipairs(result.Gears) do
+		assert(Math.finite(ratio) and ratio&gt;0 and ratio&lt;previous, "Gear ratios must descend and be positive")
+		previous=ratio gears[i]=ratio
+	end
+	assert(type(result.TorqueCurve)=="table" and #result.TorqueCurve&gt;=2 and #result.TorqueCurve&lt;=32, "TorqueCurve needs 2..32 points")
+	previous=-1
+	local curve={}
+	for i,p in ipairs(result.TorqueCurve) do
+		assert(type(p)=="table" and #p==2 and Math.finite(p[1]) and p[1]&gt;previous and Math.finite(p[2]) and p[2]&gt;=0 and p[2]&lt;=1e5, "Invalid torque curve point")
+		previous=p[1] curve[i]=table.freeze({p[1],p[2]})
+	end
+	result.Gears=table.freeze(gears) result.TorqueCurve=table.freeze(curve)
+	return table.freeze(result)
+end
+return table.freeze(Tune)
+</ProtectedString>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerScriptService" referent="AXZF8">
+    <Properties>
+      <string name="Name">ServerScriptService</string>
+    </Properties>
+    <Item class="Folder" referent="AXZF9">
+      <Properties>
+        <string name="Name">AXZFServer</string>
+      </Properties>
+      <Item class="ModuleScript" referent="AXZF10">
+        <Properties>
+          <string name="Name">Adapter</string>
+          <ProtectedString name="Source">--!strict
+local Doctor=require(script.Parent.Doctor)
+local Adapter={}
+-- Explicit geometry adapter. Author retains responsibility for removing old mechanics.
+-- root/seat must be descendants; wheel references must be distinct sibling parts/models.
+function Adapter.prepare(model: Model, root: BasePart, seat: VehicleSeat, wheels: any, restLength: number): any
+	assert(not model:GetAttribute("AXZFBound"),"Cannot adapt a running vehicle")
+	assert(root:IsDescendantOf(model) and seat:IsDescendantOf(model),"Root/seat must belong to model")
+	assert(restLength&gt;0 and restLength&lt;=10,"Invalid rest length")
+	assert(not model:FindFirstChild("Wheels") and not model:FindFirstChild("Body"),"Adapter expects unconfigured geometry; use Doctor on an existing rig")
+	local seen={}
+	for _,id in ipairs({"FL","FR","RL","RR"}) do
+		local wheel=wheels[id]
+		assert(wheel and wheel:IsDescendantOf(model) and wheel~=root and wheel~=seat and not seen[wheel],"Invalid/duplicate wheel "..id)
+		assert(Doctor.hub(wheel),"Wheel needs a hub: "..id)
+		seen[wheel]=true
+	end
+	-- All assertions above happen before mutating the supplied geometry.
+	local body=Instance.new("Folder") body.Name="Body"
+	local folder=Instance.new("Folder") folder.Name="Wheels"
+	root.Name="Chassis" root.Parent=model seat.Name="DriveSeat" seat.Parent=model
+	for _,id in ipairs({"FL","FR","RL","RR"}) do
+		local wheel=wheels[id] local hub=Doctor.hub(wheel) :: BasePart
+		local mount=Instance.new("Attachment") mount.Name=id
+		mount.Position=root.CFrame:PointToObjectSpace(hub.Position)+Vector3.new(0,restLength,0)
+		mount.Parent=root wheel.Name=id wheel.Parent=folder
+	end
+	for _,v in ipairs(model:GetChildren()) do
+		if v~=root and v~=seat and not v:IsA("LuaSourceContainer") then v.Parent=body end
+	end
+	body.Parent=model folder.Parent=model model.PrimaryPart=root
+	return Doctor.inspect(model)
+end
+return Adapter
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="Script" referent="AXZF11">
+        <Properties>
+          <string name="Name">Bootstrap</string>
+          <ProtectedString name="Source">--!strict
+local fleet=require(script.Parent.Fleet).start()
+game:BindToClose(function() fleet:stop() end)
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF12">
+        <Properties>
+          <string name="Name">Doctor</string>
+          <ProtectedString name="Source">--!strict
+local Doctor={}
+local ids={"FL","FR","RL","RR"}
+function Doctor.hub(wheel: Instance?): BasePart?
+	if wheel and wheel:IsA("BasePart") then return wheel end
+	if wheel and wheel:IsA("Model") then return wheel.PrimaryPart end
+	return nil
+end
+function Doctor.inspect(model: any): any
+	local errors, warnings={},{}
+	local function fail(code,message) table.insert(errors,{code=code,message=message}) end
+	if typeof(model)~="Instance" or not model:IsA("Model") then
+		fail("MODEL","Expected a Model") return {ok=false,errors=errors,warnings=warnings}
+	end
+	local root=model:FindFirstChild("Chassis")
+	local seat=model:FindFirstChild("DriveSeat")
+	local wheels=model:FindFirstChild("Wheels")
+	local body=model:FindFirstChild("Body")
+	if not root or not root:IsA("BasePart") then fail("ROOT","Add a Chassis BasePart facing local -Z") end
+	if not seat or not seat:IsA("VehicleSeat") then fail("SEAT","Add DriveSeat (VehicleSeat)") end
+	if not body then fail("BODY","Add Body folder/model containing your separate panels") end
+	if not wheels then fail("WHEELS","Add Wheels containing FL/FR/RL/RR") end
+	local hubs={}
+	for _,id in ipairs(ids) do
+		local mount=root and root:FindFirstChild(id)
+		if not mount or not mount:IsA("Attachment") then fail("MOUNT_"..id,"Chassis needs Attachment "..id) end
+		local hub=Doctor.hub(wheels and wheels:FindFirstChild(id))
+		if not hub then fail("HUB_"..id,"Wheel "..id.." must be BasePart or Model with PrimaryPart")
+		elseif hubs[hub] then fail("DUPLICATE_HUB","Each wheel needs its own hub") else hubs[hub]=true end
+	end
+	local count=0
+	for _,v in ipairs(model:GetDescendants()) do
+		if v:IsA("BasePart") then count+=1 end
+		if v:IsA("LuaSourceContainer") and not (v:IsA("ModuleScript") and v.Name=="Tune" and v.Parent==model) then fail("SCRIPT","Remove previous chassis code: "..v:GetFullName()) end
+		if v:IsA("Constraint") or v:IsA("WeldConstraint") or v:IsA("JointInstance") or v:IsA("BodyMover") then fail("MECHANICS","Remove previous joints/constraints: "..v.Name) end
+	end
+	if root and root:IsA("BasePart") then
+		local fl,fr,rl,rr=root:FindFirstChild("FL"),root:FindFirstChild("FR"),root:FindFirstChild("RL"),root:FindFirstChild("RR")
+		if fl and fr and rl and rr and fl:IsA("Attachment") and fr:IsA("Attachment") and rl:IsA("Attachment") and rr:IsA("Attachment") then
+			if fl.Position.X&gt;=fr.Position.X or rl.Position.X&gt;=rr.Position.X or fl.Position.Z&gt;=rl.Position.Z or fr.Position.Z&gt;=rr.Position.Z then fail("LAYOUT","Front = -Z, left = -X; check wheel labels/orientation") end
+			if (fl.Position-fr.Position).Magnitude&lt;0.5 or (fl.Position-rl.Position).Magnitude&lt;0.5 then fail("SPACING","Wheel spacing must exceed 0.5 studs") end
+		end
+	end
+	if count&gt;200 then table.insert(warnings,{code="PART_COUNT",message="Over 200 parts; measure replication/render cost"}) end
+	return {ok=#errors==0,errors=errors,warnings=warnings,parts=count}
+end
+return Doctor
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF13">
+        <Properties>
+          <string name="Name">Fleet</string>
+          <ProtectedString name="Source">--!strict
+local Players=game:GetService("Players")
+local RunService=game:GetService("RunService")
+local CollectionService=game:GetService("CollectionService")
+local Guard=require(game:GetService("ReplicatedStorage").AXZF.Shared.InputGuard)
+local Vehicle=require(script.Parent.Vehicle)
+local Fleet={}
+Fleet.__index=Fleet
+function Fleet.start(options: any): any
+	assert(RunService:IsServer(),"Fleet runs on server")
+	options=options or {}
+	local tag=options.tag or "AXZFVehicle"
+	local remoteName=options.remoteName or "Control"
+	local packageRoot=game:GetService("ReplicatedStorage").AXZF
+	assert(not packageRoot:FindFirstChild(remoteName),"Fleet already started")
+	local remote=Instance.new("RemoteEvent") remote.Name=remoteName remote.Parent=packageRoot
+	local self=setmetatable({vehicles={},connections={},buckets={},remote=remote,stopped=false},Fleet)
+	local function connect(signal,fn) table.insert(self.connections,signal:Connect(fn)) end
+	function self:remove(model)
+		local entry=self.vehicles[model] if not entry then return end
+		self.vehicles[model]=nil
+		for _,c in ipairs(entry.connections) do c:Disconnect() end
+		entry.vehicle:destroy()
+	end
+	function self:add(model)
+		if self.vehicles[model] or not model:IsDescendantOf(workspace) then return end
+		local ok,vehicle=pcall(function()
+			local config=model:FindFirstChild("Tune")
+			local overrides=nil
+			if config then assert(config:IsA("ModuleScript"),"Tune must be ModuleScript") overrides=require(config) end
+			return Vehicle.new(model,overrides)
+		end)
+		if not ok then model:SetAttribute("AXZFError",tostring(vehicle)) warn("[A-XZF-Tune] "..model.Name..": "..tostring(vehicle)) return end
+		model:SetAttribute("AXZFError",nil)
+		local entry={vehicle=vehicle,lastSequence=0,driver=nil,connections={}}
+		self.vehicles[model]=entry
+		local function occupantChanged()
+			entry.lastSequence=0 entry.vehicle:clearInput()
+			local humanoid=vehicle.rig.seat.Occupant
+			entry.driver=if humanoid then Players:GetPlayerFromCharacter(humanoid.Parent) else nil
+		end
+		table.insert(entry.connections,vehicle.rig.seat:GetPropertyChangedSignal("Occupant"):Connect(occupantChanged))
+		table.insert(entry.connections,model.AncestryChanged:Connect(function() if not model:IsDescendantOf(workspace) then self:remove(model) end end))
+		occupantChanged()
+	end
+	connect(remote.OnServerEvent,function(player,model,packet)
+		local now=os.clock() local bucket=self.buckets[player]
+		if not bucket then bucket={tokens=45,time=now} self.buckets[player]=bucket end
+		if not Guard.consume(bucket,now) then return end
+		if typeof(model)~="Instance" then return end
+		local entry=self.vehicles[model] if not entry or entry.driver~=player then return end
+		local occupant=entry.vehicle.rig.seat.Occupant
+		if not occupant or occupant.Health&lt;=0 or occupant.Parent~=player.Character then return end
+		if not Guard.validate(packet,entry.lastSequence) then return end
+		entry.lastSequence=packet.seq entry.vehicle:setInput(packet)
+	end)
+	connect(Players.PlayerRemoving,function(player)
+		self.buckets[player]=nil
+		for _,entry in pairs(self.vehicles) do if entry.driver==player then entry.driver=nil entry.vehicle:clearInput() end end
+	end)
+	connect(CollectionService:GetInstanceAddedSignal(tag),function(model) self:add(model) end)
+	connect(CollectionService:GetInstanceRemovedSignal(tag),function(model) self:remove(model) end)
+	connect(workspace.DescendantAdded,function(v) if v:IsA("Model") and CollectionService:HasTag(v,tag) then self:add(v) end end)
+	connect(RunService.PreSimulation,function(dt)
+		for model,entry in pairs(self.vehicles) do
+			local ok,err=pcall(entry.vehicle.step,entry.vehicle,dt)
+			if not ok then warn("[A-XZF-Tune] vehicle quarantined: "..tostring(err)) self:remove(model) model:SetAttribute("AXZFError",tostring(err)) end
+		end
+	end)
+	for _,model in ipairs(CollectionService:GetTagged(tag)) do self:add(model) end
+	return self
+end
+function Fleet:get(model: Model): any
+	local entry=self.vehicles[model] return if entry then entry.vehicle else nil
+end
+function Fleet:stop()
+	if self.stopped then return end self.stopped=true
+	for _,c in ipairs(self.connections) do c:Disconnect() end
+	local models={} for model in pairs(self.vehicles) do table.insert(models,model) end
+	for _,model in ipairs(models) do self:remove(model) end
+	self.remote:Destroy() table.clear(self.buckets)
+end
+return Fleet
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF14">
+        <Properties>
+          <string name="Name">Rig</string>
+          <ProtectedString name="Source">--!strict
+local Doctor=require(script.Parent.Doctor)
+local Rig={}
+function Rig.bind(model: Model): any
+	assert(not model:GetAttribute("AXZFBound"),"Vehicle already bound")
+	local report=Doctor.inspect(model)
+	assert(report.ok,"Rig rejected: "..game:GetService("HttpService"):JSONEncode(report.errors))
+	local root=model.Chassis :: BasePart
+	local self={model=model,root=root,seat=model.DriveSeat,wheels={},created={},snapshots={},destroyed=false}
+	local ownership=nil
+	if game:GetService("RunService"):IsRunning() and root:CanSetNetworkOwnership() then ownership={automatic=root:GetNetworkOwnershipAuto(),owner=root:GetNetworkOwner()} end
+	local function own(instance) table.insert(self.created,instance) return instance end
+	local function weld(a,b)
+		local w=own(Instance.new("WeldConstraint")) w.Name="AXZF_Weld" w.Part0=a w.Part1=b w.Parent=a
+	end
+	function self:destroy()
+		if self.destroyed then return end self.destroyed=true
+		if self.seat.Occupant then self.seat.Occupant.Sit=false end
+		local seatWeld=self.seat:FindFirstChild("SeatWeld") if seatWeld then seatWeld:Destroy() end
+		for i=#self.created,1,-1 do self.created[i]:Destroy() end
+		for p,s in pairs(self.snapshots) do
+			if p.Parent then for key,value in pairs(s) do p[key]=value end end
+		end
+		model:SetAttribute("AXZFBound",nil)
+		if ownership and root.Parent and root:CanSetNetworkOwnership() then
+			if ownership.automatic then root:SetNetworkOwnershipAuto() else root:SetNetworkOwner(ownership.owner) end
+		end
+	end
+	local ok,err=pcall(function()
+		for _,p in ipairs(model:GetDescendants()) do
+			if p:IsA("BasePart") then
+				self.snapshots[p]={Anchored=p.Anchored,Massless=p.Massless,CanCollide=p.CanCollide,CanQuery=p.CanQuery,RootPriority=p.RootPriority,CFrame=p.CFrame}
+				p.Anchored=true p.Massless=p~=root p.CanCollide=p==root p.CanQuery=p==root
+			end
+		end
+		root.RootPriority=127
+		for _,p in ipairs(model:GetDescendants()) do
+			if p:IsA("BasePart") and p~=root and not p:IsDescendantOf(model.Wheels) then weld(root,p) end
+		end
+		for _,id in ipairs({"FL","FR","RL","RR"}) do
+			local wheel=model.Wheels[id] local hub=Doctor.hub(wheel) :: BasePart
+			if wheel:IsA("Model") then for _,p in ipairs(wheel:GetDescendants()) do if p:IsA("BasePart") and p~=hub then weld(hub,p) end end end
+			local mount=root[id] :: Attachment
+			local motor=own(Instance.new("Motor6D")) motor.Name="AXZF_"..id motor.Part0=root motor.Part1=hub
+			motor.C0=root.CFrame:ToObjectSpace(hub.CFrame) motor.Parent=root
+			local rotation=hub.CFrame.Rotation:ToObjectSpace(root.CFrame.Rotation):Inverse()
+			table.insert(self.wheels,{id=id,mount=mount,motor=motor,rotation=rotation,spin=0,load=0,length=0})
+		end
+		for p in pairs(self.snapshots) do p.Anchored=false end
+		if game:GetService("RunService"):IsRunning() then
+			local can,reason=root:CanSetNetworkOwnership() assert(can,reason)
+			root:SetNetworkOwner(nil)
+		end
+		model:SetAttribute("AXZFBound",true)
+	end)
+	if not ok then self:destroy() error(err,2) end
+	return self
+end
+return Rig
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF15">
+        <Properties>
+          <string name="Name">Vehicle</string>
+          <ProtectedString name="Source">--!strict
+local Shared=game:GetService("ReplicatedStorage").AXZF.Shared
+local Math=require(Shared.Math)
+local Tune=require(Shared.Tune)
+local Powertrain=require(Shared.Powertrain)
+local Rig=require(script.Parent.Rig)
+local Vehicle={}
+Vehicle.__index=Vehicle
+local neutral=table.freeze({throttle=0,steer=0,brake=1,handbrake=false})
+function Vehicle.new(model: Model, overrides: any): any
+	local tune=Tune.resolve(overrides)
+	assert(tune.RestLength&gt;workspace.Gravity/(2*math.pi*tune.FrequencyHz)^2+0.1,"Suspension travel shorter than static sag; increase FrequencyHz or RestLength")
+	local rig=Rig.bind(model)
+	local params=RaycastParams.new() params.FilterType=Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances={model} params.RespectCanCollide=true
+	local self=setmetatable({rig=rig,tune=tune,powertrain=Powertrain.new(tune),input=neutral,inputAge=0,steer=0,telemetryAge=0,idleTime=0,destroyed=false,sleeping=false,lastStepMs=0},Vehicle)
+	self.params=params
+	self.wheelbase=math.abs(rig.root.FL.Position.Z-rig.root.RL.Position.Z)
+	self.track=math.abs(rig.root.FL.Position.X-rig.root.FR.Position.X)
+	return self
+end
+-- Server integration / NPC seam; callers must supply a validated intent table.
+function Vehicle:setInput(packet: any)
+	self.input={throttle=packet.throttle,steer=packet.steer,brake=packet.brake,handbrake=packet.handbrake}
+	self.inputAge=0 self.idleTime=0 self.sleeping=false
+end
+function Vehicle:clearInput()
+	self.input=neutral self.inputAge=0 self.idleTime=0 self.sleeping=false
+end
+function Vehicle:getTelemetry(): any
+	return {speed=self.rig.root.AssemblyLinearVelocity.Magnitude,rpm=self.powertrain.rpm,gear=if self.powertrain.direction&lt;0 then -1 else self.powertrain.gear,sleeping=self.sleeping,stepMs=self.lastStepMs}
+end
+function Vehicle:step(rawDt: number)
+	if self.destroyed or not self.rig.model:IsDescendantOf(workspace) then return end
+	local started=os.clock()
+	local dt=math.clamp(rawDt,0,1/30) if dt==0 then return end
+	self.inputAge+=rawDt
+	local input=if self.inputAge&gt;self.tune.InputTimeout then neutral else self.input
+	local rig,t=self.rig,self.tune
+	local root=rig.root local cf=root.CFrame local velocity=root.AssemblyLinearVelocity
+	if not rig.seat.Occupant and input==neutral and velocity.Magnitude&lt;0.15 and root.AssemblyAngularVelocity.Magnitude&lt;0.1 then self.idleTime+=dt else self.idleTime=0 end
+	-- Keep spring support active: skipping all rays would remove gravity support.
+	-- Sleep only reduces telemetry/visual work; physics contact solving stays correct.
+	self.sleeping=self.idleTime&gt;t.SleepAfter
+	local up=cf.UpVector local speed=velocity:Dot(cf.LookVector)
+	local force,reverseBrake=self.powertrain:step(speed,input.throttle,dt)
+	local fade=math.max(t.MinSteerFraction,1-math.abs(speed)/t.SteerFadeSpeed)
+	self.steer=Math.approach(self.steer,input.steer*math.rad(t.SteerDegrees)*fade,t.SteerResponse,dt)
+	local left,right=Math.ackermann(self.steer,self.wheelbase,self.track)
+	local mass=root.AssemblyMass/4
+	for _,wheel in ipairs(rig.wheels) do
+		local origin=wheel.mount.WorldPosition
+		local hit=workspace:Raycast(origin,-up*(t.RestLength+t.Radius),self.params)
+		local length=t.RestLength local angle=if wheel.id=="FL" then left elseif wheel.id=="FR" then right else 0
+		local load=0
+		if hit and hit.Normal:Dot(up)&gt;0.25 then
+			length=math.clamp(hit.Distance-t.Radius,0,t.RestLength)
+			local normal=hit.Normal
+			local groundVelocity=if hit.Instance:IsA("BasePart") then hit.Instance:GetVelocityAtPosition(hit.Position) else Vector3.zero
+			local pointVelocity=root:GetVelocityAtPosition(origin)-groundVelocity
+			load=Math.spring(mass,workspace.Gravity,t.FrequencyHz,t.DampingRatio,t.RestLength-length,pointVelocity:Dot(normal),t.MaxLoad)
+			local forward=(cf*CFrame.Angles(0,-angle,0)).LookVector
+			forward=forward-normal*forward:Dot(normal)
+			if forward.Magnitude&gt;0.001 then
+				forward=forward.Unit local side=forward:Cross(normal).Unit
+				local longitudinalSpeed=pointVelocity:Dot(forward)
+				local front=wheel.id=="FL" or wheel.id=="FR"
+				local driven=t.Drive=="AWD" or (t.Drive=="FWD" and front) or (t.Drive=="RWD" and not front)
+				local brake=math.max(input.brake,reverseBrake)*t.BrakeAcceleration
+				if input.handbrake and not front then brake=math.max(brake,t.HandbrakeAcceleration) end
+				local longitudinal=(if driven then force/(if t.Drive=="AWD" then 4 else 2) else 0)+Math.braking(longitudinalSpeed,brake*mass,mass,dt)
+				longitudinal+=Math.braking(longitudinalSpeed,load*t.RollingResistance,mass,dt)
+				local lateral=-pointVelocity:Dot(side)*mass*t.LateralResponse
+				local surface=hit.Instance:GetAttribute("Grip")
+				local grip=if Math.finite(surface) then math.clamp(surface,0.05,3) else 1
+				local longForce,sideForce=Math.friction(longitudinal,lateral,load*t.Grip*grip)
+				root:ApplyImpulseAtPosition((normal*load+forward*longForce+side*sideForce)*dt,hit.Position)
+			end
+		end
+		wheel.load=load wheel.length=length wheel.spin=(wheel.spin+speed/t.Radius*dt)%(2*math.pi)
+		if not self.sleeping then
+			wheel.motor.C0=CFrame.new(wheel.mount.Position-Vector3.new(0,length,0))*CFrame.Angles(0,-angle,0)*CFrame.Angles(wheel.spin,0,0)*wheel.rotation
+		end
+	end
+	root:ApplyImpulse(-velocity*velocity.Magnitude*t.Drag*dt)
+	self.telemetryAge+=rawDt
+	if self.telemetryAge&gt;=1/t.TelemetryHz then
+		self.telemetryAge=0
+		local state=self:getTelemetry()
+		for key,value in pairs(state) do rig.model:SetAttribute("AXZF_"..key,value) end
+	end
+	self.lastStepMs=(os.clock()-started)*1000
+end
+function Vehicle:destroy()
+	if self.destroyed then return end self.destroyed=true self.rig:destroy()
+	for _,key in ipairs({"speed","rpm","gear","sleeping","stepMs"}) do self.rig.model:SetAttribute("AXZF_"..key,nil) end
+end
+return Vehicle
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Script" referent="AXZF22">
+      <Properties>
+        <string name="Name">Demo</string>
+        <ProtectedString name="Source">--!strict
+local storage=game:GetService("ServerStorage")
+local rs=game:GetService("ReplicatedStorage")
+local tags=game:GetService("CollectionService")
+local examples=storage:WaitForChild("AXZFExamples")
+if not workspace:FindFirstChildOfClass("SpawnLocation") then
+	local spawn=Instance.new("SpawnLocation") spawn.Name="AXZFSpawn" spawn.Anchored=true
+	spawn.Size=Vector3.new(5,0.5,5) spawn.CFrame=CFrame.new(0,1,45) spawn.Parent=workspace
+end
+if not workspace:FindFirstChild("AXZF_TestTrack") then require(examples.TestTrack).create().Parent=workspace end
+if not workspace:FindFirstChild("AXZF_Prototype") then
+	local car=require(examples.PrototypeCar).create(CFrame.new(-12,5,35))
+	car.Parent=workspace tags:AddTag(car,"AXZFVehicle")
+end
+</ProtectedString>
+      </Properties>
+    </Item>
+    <Item class="Script" referent="AXZF33">
+      <Properties>
+        <string name="Name">Multiplayer</string>
+        <ProtectedString name="Source">--!strict
+-- Only runs under the explicit StudioTestService test invocation below.
+local RunService=game:GetService("RunService")
+if not RunService:IsStudio() then return end
+local testService=game:GetService("StudioTestService")
+local args=testService:GetTestArgs()
+if type(args)~="table" or args.name~="AXZF" then return end
+local packageRoot=game.ReplicatedStorage:WaitForChild("AXZF")
+local remote=Instance.new("RemoteEvent") remote.Name="__Prototype_AXZF_Multiplayer" remote.Parent=packageRoot
+packageRoot:SetAttribute("__MultiplayerTest",true)
+local players=game:GetService("Players")
+local tags=game:GetService("CollectionService")
+local cars={} local replies={}
+local connection=remote.OnServerEvent:Connect(function(player,id) replies[player]=id end)
+local report={}
+task.delay(45,function() testService:EndTest({pass=false,error="multiplayer watchdog timeout"}) end)
+local ok,err=xpcall(function()
+	local start=os.clock()
+	while #players:GetPlayers()&lt;2 and os.clock()-start&lt;15 do task.wait(.1) end
+	local list=players:GetPlayers() assert(#list==2,"Expected exactly two real test clients")
+	packageRoot:WaitForChild("Control",10)
+	local factory=require(game.ServerStorage.AXZFExamples.PrototypeCar)
+	for i,player in ipairs(list) do
+		local character=player.Character or player.CharacterAdded:Wait()
+		local humanoid=character:WaitForChild("Humanoid")
+		local m=factory.create(CFrame.new(if i==1 then -20 else 20,5,20),"__Prototype_AXZF_MP"..i)
+		m.Parent=workspace tags:AddTag(m,"AXZFVehicle") table.insert(cars,m)
+		task.wait(.2) m.DriveSeat:Sit(humanoid)
+	end
+	task.wait(2)
+	report.twoOccupants=cars[1].DriveSeat.Occupant~=nil and cars[2].DriveSeat.Occupant~=nil
+	report.serverOwnership=cars[1].Chassis:GetNetworkOwner()==nil and cars[2].Chassis:GetNetworkOwner()==nil
+	local function request(player,id,target,kind,seq)
+		replies[player]=nil remote:FireClient(player,id,target,kind,seq)
+		local now=os.clock() while replies[player]~=id and os.clock()-now&lt;5 do task.wait(.05) end
+		assert(replies[player]==id,"Client did not complete "..id)
+	end
+	local z=cars[2].Chassis.Position.Z
+	request(list[1],"cross-owner",cars[2],"valid",100)
+	report.otherDriverRejected=math.abs(cars[2].Chassis.Position.Z-z)&lt;1
+	z=cars[1].Chassis.Position.Z
+	request(list[1],"malformed",cars[1],"invalid",200)
+	report.malformedRejected=math.abs(cars[1].Chassis.Position.Z-z)&lt;1
+	request(list[1],"valid",cars[1],"valid",300)
+	report.ownDriverMoves=cars[1].Chassis.AssemblyLinearVelocity.Magnitude&gt;10
+	z=cars[1].Chassis.Position.Z
+	request(list[1],"replay",cars[1],"valid",1)
+	task.wait(2) report.replayStops=cars[1].Chassis.AssemblyLinearVelocity.Magnitude&lt;3
+	list[1].Character.Humanoid.Sit=false task.wait(.3)
+	report.exitClearsSeat=cars[1].DriveSeat.Occupant==nil
+	report.pass=true
+	for _,key in ipairs({"twoOccupants","serverOwnership","otherDriverRejected","malformedRejected","ownDriverMoves","replayStops","exitClearsSeat"}) do if not report[key] then report.pass=false end end
+end,debug.traceback)
+connection:Disconnect() remote:Destroy() for _,m in ipairs(cars) do m:Destroy() end
+if not ok then report.error=tostring(err) report.pass=false end
+testService:EndTest(report)
+</ProtectedString>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="StarterPlayer" referent="AXZF16">
+    <Properties>
+      <string name="Name">StarterPlayer</string>
+    </Properties>
+    <Item class="StarterPlayerScripts" referent="AXZF17">
+      <Properties>
+        <string name="Name">StarterPlayerScripts</string>
+      </Properties>
+      <Item class="LocalScript" referent="AXZF18">
+        <Properties>
+          <string name="Name">Driver</string>
+          <ProtectedString name="Source">--!strict
+-- Native ContextActionService touch buttons; no dependency on a particular HUD.
+local Players=game:GetService("Players")
+local CAS=game:GetService("ContextActionService")
+local UIS=game:GetService("UserInputService")
+local RunService=game:GetService("RunService")
+local CollectionService=game:GetService("CollectionService")
+local player=Players.LocalPlayer
+local packageRoot=game:GetService("ReplicatedStorage"):WaitForChild("AXZF")
+local remote=packageRoot:WaitForChild("Control") :: RemoteEvent
+local active: Model?=nil
+local sequence=0 local elapsed=0
+local state={forward=0,reverse=0,left=0,right=0,brake=0,handbrake=0}
+local connections={}
+local lifetime={}
+local function connect(signal,fn) table.insert(lifetime,signal:Connect(fn)) end
+local actions={"forward","reverse","left","right","brake","handbrake","exit"}
+local bindings={
+	forward={Enum.KeyCode.W,Enum.KeyCode.Up,Enum.KeyCode.ButtonR2},
+	reverse={Enum.KeyCode.S,Enum.KeyCode.Down,Enum.KeyCode.ButtonL2},
+	left={Enum.KeyCode.A,Enum.KeyCode.Left},right={Enum.KeyCode.D,Enum.KeyCode.Right},
+	brake={Enum.KeyCode.B,Enum.KeyCode.ButtonB},handbrake={Enum.KeyCode.Space,Enum.KeyCode.ButtonA},
+	exit={Enum.KeyCode.E,Enum.KeyCode.ButtonY},
+}
+local stick=0
+local touchGui: ScreenGui?=nil
+local defaultTouch: ScreenGui?=nil
+local defaultTouchEnabled=true
+local function clear() for key in pairs(state) do state[key]=0 end stick=0 end
+local function unbind()
+	for _,id in ipairs(actions) do CAS:UnbindAction("AXZF_"..id) end
+	CAS:UnbindAction("AXZF_stick") clear()
+	if touchGui then touchGui:Destroy() touchGui=nil end
+	if defaultTouch then defaultTouch.Enabled=defaultTouchEnabled defaultTouch=nil end
+end
+local function send()
+	if not active then return end sequence+=1
+	if UIS:GetFocusedTextBox() then clear() state.brake=1 end
+	remote:FireServer(active,{seq=sequence,throttle=state.forward-state.reverse,steer=math.clamp(state.right-state.left+stick,-1,1),brake=state.brake,handbrake=state.handbrake&gt;0})
+end
+local function setVehicle(model: Model?)
+	if active==model then return end
+	if active then clear() state.brake=1 send() end
+	unbind() active=model sequence=0
+	if not active then return end
+	local touchFrame=nil
+	if UIS.TouchEnabled then
+		local native=player:WaitForChild("PlayerGui"):FindFirstChild("TouchGui")
+		if native and native:IsA("ScreenGui") then defaultTouch=native defaultTouchEnabled=native.Enabled native.Enabled=false end
+		touchGui=Instance.new("ScreenGui") touchGui.Name="AXZFControls" touchGui.ResetOnSpawn=false
+		touchGui.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets touchGui.Parent=player:WaitForChild("PlayerGui")
+		touchFrame=Instance.new("Frame") touchFrame.Name="Controls" touchFrame.Size=UDim2.fromScale(1,1) touchFrame.BackgroundTransparency=1 touchFrame.Parent=touchGui
+	end
+	for i,id in ipairs(actions) do
+		CAS:BindActionAtPriority("AXZF_"..id,function(_,phase,input)
+			if UIS:GetFocusedTextBox() then clear() return Enum.ContextActionResult.Pass end
+			if id=="exit" then
+				if phase==Enum.UserInputState.Begin then local h=player.Character and player.Character:FindFirstChildOfClass("Humanoid") if h then h.Sit=false end end
+				return Enum.ContextActionResult.Sink
+			end
+			if phase==Enum.UserInputState.End or phase==Enum.UserInputState.Cancel then state[id]=0
+			elseif input.KeyCode==Enum.KeyCode.ButtonR2 or input.KeyCode==Enum.KeyCode.ButtonL2 then state[id]=math.clamp(input.Position.Z,0,1)
+			elseif phase==Enum.UserInputState.Begin then state[id]=1 end
+			return Enum.ContextActionResult.Sink
+		end,true,3000,table.unpack(bindings[id]))
+		CAS:SetTitle("AXZF_"..id,({forward="GO",reverse="REV",left="LEFT",right="RIGHT",brake="BRAKE",handbrake="PARK",exit="EXIT"})[id])
+		local position=({forward=UDim2.new(1,-90,1,-240),reverse=UDim2.new(1,-90,1,-165),left=UDim2.new(0,20,1,-165),right=UDim2.new(0,95,1,-165),brake=UDim2.new(1,-165,1,-165),handbrake=UDim2.new(0,20,1,-240),exit=UDim2.new(1,-165,1,-240)})[id]
+		CAS:SetPosition("AXZF_"..id,position)
+		local button=CAS:GetButton("AXZF_"..id)
+		if button and touchFrame then button.Parent=touchFrame button.Position=position button.Size=UDim2.fromOffset(64,64) end
+	end
+	CAS:BindActionAtPriority("AXZF_stick",function(_,phase,input)
+		stick=if phase==Enum.UserInputState.Cancel or phase==Enum.UserInputState.End then 0 else (if math.abs(input.Position.X)&gt;0.12 then input.Position.X else 0)
+		return Enum.ContextActionResult.Sink
+	end,false,3000,Enum.KeyCode.Thumbstick1)
+end
+local function hook(character: Model)
+	for _,c in ipairs(connections) do c:Disconnect() end table.clear(connections) setVehicle(nil)
+	local humanoid=character:WaitForChild("Humanoid") :: Humanoid
+	local function refresh()
+		local seat=humanoid.SeatPart local model=seat and seat.Parent
+		setVehicle(if seat and seat.Name=="DriveSeat" and model and model:IsA("Model") and CollectionService:HasTag(model,"AXZFVehicle") then model else nil)
+	end
+	table.insert(connections,humanoid.Seated:Connect(refresh))
+	table.insert(connections,humanoid.Died:Connect(function() setVehicle(nil) end)) refresh()
+end
+connect(player.CharacterAdded,hook)
+if player.Character then task.spawn(hook,player.Character) end
+connect(UIS.WindowFocusReleased,function() clear() state.brake=1 send() end)
+connect(UIS.WindowFocused,function() clear() end)
+connect(UIS.TextBoxFocused,function() clear() state.brake=1 send() end)
+connect(UIS.TextBoxFocusReleased,function() clear() end)
+connect(RunService.Heartbeat,function(dt)
+	elapsed+=dt if elapsed&lt;1/20 then return end elapsed=0
+	if active and not active:IsDescendantOf(workspace) then setVehicle(nil) end
+	send()
+end)
+script.Destroying:Connect(function() setVehicle(nil) for _,c in ipairs(connections) do c:Disconnect() end for _,c in ipairs(lifetime) do c:Disconnect() end end)
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="LocalScript" referent="AXZF32">
+        <Properties>
+          <string name="Name">Multiplayer</string>
+          <ProtectedString name="Source">--!strict
+if not game:GetService("RunService"):IsStudio() then return end
+local packageRoot=game.ReplicatedStorage:WaitForChild("AXZF")
+local remote=packageRoot:WaitForChild("__Prototype_AXZF_Multiplayer",8)
+if not remote then return end
+local normal=game.Players.LocalPlayer.PlayerScripts:WaitForChild("Driver",5)
+if normal then normal.Enabled=false end
+remote.OnClientEvent:Connect(function(id,model,kind,sequence)
+	local control=packageRoot:WaitForChild("Control")
+	for i=1,20 do
+		control:FireServer(model,{seq=sequence+i,throttle=if kind=="invalid" then 2 else 1,steer=0,brake=0,handbrake=false}) task.wait(.05)
+	end
+	remote:FireServer(id)
+end)
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerStorage" referent="AXZF19">
+    <Properties>
+      <string name="Name">ServerStorage</string>
+    </Properties>
+    <Item class="Folder" referent="AXZF20">
+      <Properties>
+        <string name="Name">AXZFExamples</string>
+      </Properties>
+      <Item class="ModuleScript" referent="AXZF21">
+        <Properties>
+          <string name="Name">CreatorCarAdapter</string>
+          <ProtectedString name="Source">--!strict
+-- Editor-only integration recipe for Creator Store asset 14215126016.
+-- Third-party geometry is not relicensed or distributed with this MIT kit.
+return function(quarantined: Model, at: CFrame?): Model
+	assert(not game:GetService("RunService"):IsRunning(),"Adapt external art in Edit mode only")
+	local source=quarantined:FindFirstChild("Car") or quarantined
+	assert(source:FindFirstChild("Body") and source:FindFirstChild("Chassis"),"Expected reviewed Car asset hierarchy")
+	local m=Instance.new("Model") m.Name="AXZF_ImportedCar"
+	local ok,err=pcall(function()
+		local body=source.Body:Clone()
+		for _,v in ipairs(body:GetDescendants()) do
+			-- Geometry-only allowlist. SurfaceAppearance/texture dependencies intentionally excluded:
+			-- the inspected asset referenced inaccessible/mismatched texture-pack content.
+			if not (v:IsA("BasePart") or v:IsA("Model") or v:IsA("Folder") or v:IsA("DataModelMesh")) then v:Destroy()
+			elseif v:IsA("MeshPart") then v.TextureID=""
+			elseif v:IsA("SpecialMesh") then v.TextureId="" end
+		end
+		for _,v in ipairs(body:GetChildren()) do v.Parent=m end body:Destroy()
+		local wheels={} local center=Vector3.zero
+		for _,id in ipairs({"FL","FR","RL","RR"}) do
+			local wheel=m[id] wheel.PrimaryPart=wheel:FindFirstChild("tire")
+			assert(wheel.PrimaryPart,"Missing tire hub "..id)
+			wheels[id]=wheel center+=wheel.PrimaryPart.Position/4
+		end
+		local root=Instance.new("Part") root.Name="Root" root.Size=Vector3.new(5.8,.8,11.5)
+		root.CFrame=CFrame.new(center+Vector3.new(0,.8,0))*source.Chassis.VehicleSeat.CFrame.Rotation
+		root.Transparency=1 root.Anchored=true root.CustomPhysicalProperties=PhysicalProperties.new(1.2,.3,0,100,100) root.Parent=m
+		local seat=Instance.new("VehicleSeat") seat.Size=Vector3.new(1,.25,1)
+		seat.CFrame=source.Chassis.VehicleSeat.CFrame seat.Anchored=true seat.Parent=m
+		local report=require(game.ServerScriptService.AXZFServer.Adapter).prepare(m,root,seat,wheels,1.6)
+		assert(report.ok,game:GetService("HttpService"):JSONEncode(report.errors))
+		m:SetAttribute("SourceAsset","14215126016") m:SetAttribute("SourceCreator","Roblox Resources")
+		m:SetAttribute("Redistribution","Not included in MIT source; rights unverified")
+		m:PivotTo(at or CFrame.new(12,5,35))
+	end)
+	if not ok then m:Destroy() error(err,2) end
+	return m
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF23">
+        <Properties>
+          <string name="Name">PrototypeCar</string>
+          <ProtectedString name="Source">--!strict
+-- Original, fully editable multi-part demonstration car. No external meshes.
+local Car={}
+local function part(name,size,cf,color,parent)
+	local p=Instance.new("Part") p.Name=name p.Size=size p.CFrame=cf p.Color=color
+	p.Anchored=true p.TopSurface=Enum.SurfaceType.Smooth p.BottomSurface=Enum.SurfaceType.Smooth p.Parent=parent return p
+end
+function Car.create(at: CFrame?, name: string?): Model
+	local frame=at or CFrame.new(0,4,0)
+	local m=Instance.new("Model") m.Name=name or "AXZF_Prototype"
+	local root=part("Chassis",Vector3.new(5.6,0.8,9.5),frame,Color3.fromRGB(27,31,36),m)
+	root.CustomPhysicalProperties=PhysicalProperties.new(1.2,0.3,0,100,100)
+	root.Transparency=0.5 m.PrimaryPart=root
+	local body=Instance.new("Folder") body.Name="Body" body.Parent=m
+	local paint=Color3.fromRGB(227,106,36)
+	part("Floor",Vector3.new(5.8,0.35,10),frame*CFrame.new(0,0.5,0),paint,body)
+	part("Hood",Vector3.new(5.5,0.8,3),frame*CFrame.new(0,1,-3.3),paint,body)
+	part("Trunk",Vector3.new(5.5,0.6,2.3),frame*CFrame.new(0,1,3.7),paint,body)
+	part("Roof",Vector3.new(5.2,0.25,3.8),frame*CFrame.new(0,3,0.5),paint,body)
+	for _,x in ipairs({-2.5,2.5}) do
+		part(if x&lt;0 then "DoorLeft" else "DoorRight",Vector3.new(0.25,1.2,4.7),frame*CFrame.new(x,1.1,0.3),paint,body)
+		for _,z in ipairs({-1.3,2.3}) do part("Pillar",Vector3.new(0.2,1.8,0.2),frame*CFrame.new(x,2,z),paint,body) end
+	end
+	for _,x in ipairs({-1.8,1.8}) do
+		local lamp=part("Headlamp",Vector3.new(1.1,0.4,0.12),frame*CFrame.new(x,1,-4.84),Color3.fromRGB(255,238,183),body) lamp.Material=Enum.Material.Neon
+		part("TailLamp",Vector3.new(1.1,0.35,0.12),frame*CFrame.new(x,1,4.94),Color3.fromRGB(180,26,25),body)
+	end
+	local seat=Instance.new("VehicleSeat") seat.Name="DriveSeat" seat.Size=Vector3.new(2,0.4,2)
+	seat.CFrame=frame*CFrame.new(-1.2,1.3,0.4) seat.Anchored=true seat.Parent=m
+	local wheels=Instance.new("Folder") wheels.Name="Wheels" wheels.Parent=m
+	for _,id in ipairs({"FL","FR","RL","RR"}) do
+		local x=if string.sub(id,2,2)=="L" then -3.1 else 3.1
+		local z=if string.sub(id,1,1)=="F" then -3.2 else 3.2
+		local mount=Instance.new("Attachment") mount.Name=id mount.Position=Vector3.new(x,0.6,z) mount.Parent=root
+		local wheel=Instance.new("Model") wheel.Name=id wheel.Parent=wheels
+		local cf=frame*CFrame.new(x,-1,z)
+		local tire=part("Tire",Vector3.new(0.8,2.5,2.5),cf,Color3.fromRGB(23,24,27),wheel)
+		tire.Shape=Enum.PartType.Cylinder tire.Material=Enum.Material.Rubber wheel.PrimaryPart=tire
+		local rim=part("Rim",Vector3.new(0.85,1.6,1.6),cf,Color3.fromRGB(177,186,193),wheel) rim.Shape=Enum.PartType.Cylinder rim.Material=Enum.Material.Metal
+	end
+	return m
+end
+return Car
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF24">
+        <Properties>
+          <string name="Name">TestTrack</string>
+          <ProtectedString name="Source">--!strict
+local Track={}
+function Track.create(): Model
+	local m=Instance.new("Model") m.Name="AXZF_TestTrack"
+	local function p(name,size,cf,color,grip)
+		local a=Instance.new("Part") a.Name=name a.Anchored=true a.Size=size a.CFrame=cf a.Color=color a.Material=Enum.Material.Asphalt
+		if grip then a:SetAttribute("Grip",grip) end a.Parent=m return a
+	end
+	p("Straight",Vector3.new(100,1,800),CFrame.new(0,0,-280),Color3.fromRGB(51,55,60))
+	for i=0,15 do p("LaneMark",Vector3.new(0.25,0.02,7),CFrame.new(0,0.51,50-i*40),Color3.fromRGB(233,225,195)) end
+	p("LowGrip",Vector3.new(20,0.1,80),CFrame.new(32,0.56,-100),Color3.fromRGB(103,135,153),0.3)
+	p("Ramp",Vector3.new(18,1,45),CFrame.new(-30,4,-100)*CFrame.Angles(math.rad(10),0,0),Color3.fromRGB(111,115,121))
+	for i=1,8 do p("Bump",Vector3.new(12,0.3,0.6),CFrame.new(28,0.65,-220-i*5),Color3.fromRGB(190,156,55)) end
+	return m
+end
+return Track
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+    <Item class="Folder" referent="AXZF25">
+      <Properties>
+        <string name="Name">AXZFTests</string>
+      </Properties>
+      <Item class="ModuleScript" referent="AXZF26">
+        <Properties>
+          <string name="Name">DriveTest</string>
+          <ProtectedString name="Source">--!strict
+-- Integration harness intentionally kept outside runtime. It refuses live servers.
+local RunService=game:GetService("RunService")
+local Vehicle=require(game.ServerScriptService.AXZFServer.Vehicle)
+return function(source: Model, overrides: any): any
+	assert(RunService:IsStudio() and RunService:IsServer(),"Studio server tests only")
+	local model=source:Clone() model.Name="__Prototype_AXZF_DriveTest"
+	game:GetService("CollectionService"):RemoveTag(model,"AXZFVehicle")
+	model.DriveSeat.Disabled=true
+	model:PivotTo(CFrame.new(0,5,20)) model.Parent=workspace
+	local vehicle=nil local connection=nil local observations={}
+	local ok,err=xpcall(function()
+		vehicle=Vehicle.new(model,overrides)
+		connection=RunService.PreSimulation:Connect(function(dt) vehicle:step(dt) end)
+		local root=model.Chassis
+		local function drive(seconds,throttle,steer,brake)
+			local start=os.clock()
+			repeat vehicle:setInput({throttle=throttle,steer=steer,brake=brake,handbrake=false}) task.wait(.05) until os.clock()-start&gt;=seconds
+		end
+		drive(3,0,0,1)
+		observations.settled={height=root.Position.Y,upright=root.CFrame.UpVector.Y,verticalSpeed=root.AssemblyLinearVelocity.Y}
+		drive(5,1,0,0)
+		observations.accelerate={speed=root.AssemblyLinearVelocity.Magnitude,position=tostring(root.Position),upright=root.CFrame.UpVector.Y}
+		drive(4,0,0,1)
+		observations.brake={speed=root.AssemblyLinearVelocity.Magnitude}
+		-- Fresh grounded pose avoids carrying acceleration-test position into steering trial.
+		model:PivotTo(CFrame.new(0,5,20)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+		drive(3,0,0,1) local forward=root.CFrame.LookVector
+		drive(2,0.35,0.7,0)
+		observations.steer={degrees=math.deg(math.acos(math.clamp(forward:Dot(root.CFrame.LookVector),-1,1))),upright=root.CFrame.UpVector.Y}
+		vehicle:setInput({throttle=1,steer=0,brake=0,handbrake=false})
+		task.wait(.5)
+		observations.watchdog={age=vehicle.inputAge,expired=vehicle.inputAge&gt;vehicle.tune.InputTimeout}
+		local before=#model:GetDescendants() vehicle:destroy() vehicle:destroy()
+		local after=#model:GetDescendants()
+		observations.cleanup={before=before,after=after,bound=model:GetAttribute("AXZFBound"),anchored=root.Anchored}
+		local v2=Vehicle.new(model,overrides) v2:destroy() observations.rebind=true
+		observations.pass=observations.settled.upright&gt;.9 and math.abs(observations.settled.verticalSpeed)&lt;5 and observations.accelerate.speed&gt;10 and observations.accelerate.upright&gt;.8 and observations.brake.speed&lt;3 and observations.steer.degrees&gt;5 and observations.steer.upright&gt;.8 and observations.watchdog.expired and observations.cleanup.anchored and observations.rebind
+	end,debug.traceback)
+	if connection then connection:Disconnect() end
+	if vehicle then vehicle:destroy() end
+	model:Destroy()
+	if not ok then observations.error=tostring(err) observations.pass=false end
+	return observations
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF27">
+        <Properties>
+          <string name="Name">FleetBenchmark</string>
+          <ProtectedString name="Source">--!strict
+-- Script solve time only. This is not an engine/GPU/MicroProfiler or network benchmark.
+return function(count: number?): any
+	assert(game:GetService("RunService"):IsStudio(),"Studio only")
+	count=math.clamp(count or 12,1,40)
+	local Car=require(game.ServerStorage.AXZFExamples.PrototypeCar)
+	local Vehicle=require(game.ServerScriptService.AXZFServer.Vehicle)
+	local cars,vehicles,samples={},{},{}
+	local connection=nil
+	local ok,err=xpcall(function()
+		for i=1,count do
+			local m=Car.create(CFrame.new(-30+((i-1)%4)*20,5,100-math.floor((i-1)/4)*20),"__Prototype_AXZF_Benchmark")
+			m.DriveSeat.Disabled=true m.Parent=workspace table.insert(cars,m) table.insert(vehicles,Vehicle.new(m,nil))
+		end
+		connection=game:GetService("RunService").PreSimulation:Connect(function(dt)
+			local now=os.clock()
+			for _,v in ipairs(vehicles) do v:step(dt) end
+			table.insert(samples,(os.clock()-now)*1000)
+		end)
+		task.wait(5)
+	end,debug.traceback)
+	if connection then connection:Disconnect() end
+	for _,v in ipairs(vehicles) do v:destroy() end for _,m in ipairs(cars) do m:Destroy() end
+	if not ok then return {pass=false,error=tostring(err)} end
+	table.sort(samples) local total=0 for _,v in ipairs(samples) do total+=v end
+	return {pass=true,vehicles=count,samples=#samples,meanMs=total/#samples,p95Ms=samples[math.ceil(#samples*.95)],maxMs=samples[#samples],raysPerStep=count*4,scope="script solve only; includes settled + initial drop",cleanup=true}
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF28">
+        <Properties>
+          <string name="Name">FleetTest</string>
+          <ProtectedString name="Source">--!strict
+return function(): any
+	assert(game:GetService("RunService"):IsStudio(),"Studio only")
+	local Fleet=require(game.ServerScriptService.AXZFServer.Fleet)
+	local Car=require(game.ServerStorage.AXZFExamples.PrototypeCar)
+	local tags=game:GetService("CollectionService")
+	local fleet=Fleet.start({tag="__Prototype_AXZF_Fleet",remoteName="__Prototype_AXZF_Control"})
+	local m=Car.create(CFrame.new(40,5,80)) m.DriveSeat.Disabled=true
+	local report={} local ok,err=xpcall(function()
+		tags:AddTag(m,"__Prototype_AXZF_Fleet") m.Parent=workspace task.wait(.1)
+		report.preTaggedSpawn=fleet:get(m)~=nil
+		fleet:add(m)
+		local motors=0 for _,v in ipairs(m:GetDescendants()) do if v:IsA("Motor6D") then motors+=1 end end
+		report.duplicateAddSafe=motors==4
+		m.Parent=game.ServerStorage task.wait(.1) report.removalClean=fleet:get(m)==nil and not m:GetAttribute("AXZFBound")
+		m.Parent=workspace task.wait(.1) report.returnRebind=fleet:get(m)~=nil
+		tags:RemoveTag(m,"__Prototype_AXZF_Fleet") task.wait(.1) report.untagClean=fleet:get(m)==nil and m.Chassis.Anchored
+		tags:AddTag(m,"__Prototype_AXZF_Fleet") task.wait(.1) report.retag=fleet:get(m)~=nil
+		fleet:stop() fleet:stop() report.stopClean=not game.ReplicatedStorage.AXZF:FindFirstChild("__Prototype_AXZF_Control") and not m:GetAttribute("AXZFBound")
+		report.pass=true for _,key in ipairs({"preTaggedSpawn","duplicateAddSafe","removalClean","returnRebind","untagClean","retag","stopClean"}) do if not report[key] then report.pass=false end end
+	end,debug.traceback)
+	fleet:stop() m:Destroy()
+	if not ok then report.error=tostring(err) report.pass=false end
+	return report
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF29">
+        <Properties>
+          <string name="Name">HandlingTest</string>
+          <ProtectedString name="Source">--!strict
+return function(): any
+	assert(game:GetService("RunService"):IsStudio(),"Studio only")
+	local Car=require(game.ServerStorage.AXZFExamples.PrototypeCar)
+	local Vehicle=require(game.ServerScriptService.AXZFServer.Vehicle)
+	local container=Instance.new("Folder") container.Name="__Prototype_AXZF_Handling" container.Parent=workspace
+	local m=Car.create(CFrame.new(200,5,80)) m.DriveSeat.Disabled=true m.Parent=container
+	local v=nil local connection=nil local result={}
+	local ok,err=xpcall(function()
+		v=Vehicle.new(m,nil)
+		connection=game:GetService("RunService").PreSimulation:Connect(function(dt) v:step(dt) end)
+		local root=m.Chassis
+		local function command(seconds,throttle,brake,handbrake)
+			local now=os.clock() repeat v:setInput({throttle=throttle,steer=0,brake=brake,handbrake=handbrake}) task.wait(.05) until os.clock()-now&gt;=seconds
+		end
+		task.wait(2)
+		-- No ground within ray range: throttle must not accelerate in X/Z.
+		m:PivotTo(CFrame.new(200,100,80)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+		command(.3,1,0,false)
+		local horizontal=Vector3.new(root.AssemblyLinearVelocity.X,0,root.AssemblyLinearVelocity.Z).Magnitude
+		result.airborne={horizontalSpeed=horizontal,pass=horizontal&lt;.1}
+		-- Repeat on a dedicated flat contact surface; reset pose/velocity for each friction level.
+		local ground=Instance.new("Part") ground.Name="GripPlate" ground.Anchored=true ground.Size=Vector3.new(60,1,400) ground.CFrame=CFrame.new(200,1,-40) ground.Parent=container
+		local function gripTrial(grip)
+			ground:SetAttribute("Grip",grip) m:PivotTo(CFrame.new(200,6,100)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+			command(2,0,1,false) command(1,1,0,false)
+			return root.AssemblyLinearVelocity.Magnitude
+		end
+		local normal=gripTrial(1) local ice=gripTrial(.15)
+		result.surfaceGrip={normalSpeed=normal,lowGripSpeed=ice,pass=ice&lt;normal*.6}
+		ground:SetAttribute("Grip",1) command(3,0,0,true)
+		result.handbrake={speed=root.AssemblyLinearVelocity.Magnitude,pass=root.AssemblyLinearVelocity.Magnitude&lt;3}
+		m:PivotTo(CFrame.new(200,6,100)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+		command(2,0,1,false) command(1,-.5,0,false)
+		result.reverse={signedSpeed=root.AssemblyLinearVelocity:Dot(root.CFrame.LookVector),pass=root.AssemblyLinearVelocity:Dot(root.CFrame.LookVector)&lt;-5}
+		command(3,0,1,false)
+		-- A moderate slope should remain finite/upright under gravity with brakes held.
+		ground.CFrame=CFrame.new(200,1,-40)*CFrame.Angles(math.rad(8),0,0)
+		m:PivotTo(CFrame.new(200,8,-40)*CFrame.Angles(math.rad(8),0,0)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+		command(3,0,1,false)
+		result.slope={upright=root.CFrame.UpVector.Y,speed=root.AssemblyLinearVelocity.Magnitude,pass=root.CFrame.UpVector.Y&gt;.85 and root.AssemblyLinearVelocity.Magnitude&lt;5}
+		result.pass=result.airborne.pass and result.surfaceGrip.pass and result.handbrake.pass and result.reverse.pass and result.slope.pass
+	end,debug.traceback)
+	if connection then connection:Disconnect() end if v then v:destroy() end container:Destroy()
+	if not ok then result.pass=false result.error=tostring(err) end
+	return result
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF30">
+        <Properties>
+          <string name="Name">InputGuard_Test</string>
+          <ProtectedString name="Source">--!strict
+return function(t)
+	local G=require(game.ReplicatedStorage.AXZF.Shared.InputGuard) local e=t.expect
+	local function p() return {seq=1,throttle=1,steer=-1,brake=0,handbrake=false} end
+	-- Network payloads are finite, bounded, exact-shape intents with replay rejection.
+	t.test("legal intent accepted",function() e.truthy(G.validate(p(),0)) end)
+	t.test("replay rejected",function() e.falsy(G.validate(p(),1)) end)
+	t.test("out of order rejected",function() e.falsy(G.validate(p(),2)) end)
+	t.test("non-table rejected",function() e.falsy(G.validate("attack",0)) end)
+	t.test("missing fields rejected",function() e.falsy(G.validate({seq=1},0)) end)
+	t.test("extra authority fields rejected",function() local a=p() a.velocity=100 e.falsy(G.validate(a,0)) end)
+	t.test("NaN input rejected",function() local a=p() a.throttle=0/0 e.falsy(G.validate(a,0)) end)
+	t.test("infinite input rejected",function() local a=p() a.steer=math.huge e.falsy(G.validate(a,0)) end)
+	t.test("negative brake rejected",function() local a=p() a.brake=-.1 e.falsy(G.validate(a,0)) end)
+	t.test("overrange throttle rejected",function() local a=p() a.throttle=1.01 e.falsy(G.validate(a,0)) end)
+	t.test("fractional sequence rejected",function() local a=p() a.seq=1.5 e.falsy(G.validate(a,0)) end)
+	t.test("invalid boolean rejected",function() local a=p() a.handbrake=1 e.falsy(G.validate(a,0)) end)
+	-- Token bucket uses injected time and caps stored burst credit.
+	t.test("burst limited to 45 commands",function() local b={tokens=45,time=0} for _=1,45 do e.truthy(G.consume(b,0)) end e.falsy(G.consume(b,0)) end)
+	t.test("bucket replenishes at 30 per second",function() local b={tokens=0,time=0} e.truthy(G.consume(b,1/30)) e.falsy(G.consume(b,1/30)) end)
+	t.test("clock rollback grants no tokens",function() local b={tokens=0,time=5} e.falsy(G.consume(b,4)) end)
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF31">
+        <Properties>
+          <string name="Name">Math_Test</string>
+          <ProtectedString name="Source">--!strict
+return function(t)
+	local M=require(game.ReplicatedStorage.AXZF.Shared.Math) local e=t.expect
+	-- Non-finite numbers must never enter forces or network commands.
+	t.test("finite rejects NaN",function() e.falsy(M.finite(0/0)) end)
+	t.test("finite rejects infinity",function() e.falsy(M.finite(math.huge)) end)
+	t.test("finite rejects string",function() e.falsy(M.finite("1")) end)
+	t.test("finite accepts zero",function() e.truthy(M.finite(0)) end)
+	-- Interpolation is bounded at both ends and linear between authored points.
+	t.test("curve interpolates midpoint",function() e.near(M.curve({{0,0},{10,20}},5),10) end)
+	t.test("curve clamps below range",function() e.equal(M.curve({{0,3},{10,20}},-100),3) end)
+	t.test("curve clamps above range",function() e.equal(M.curve({{0,3},{10,20}},100),20) end)
+	-- Combined demand cannot exceed the contact traction budget.
+	t.test("friction circle caps diagonal force",function() local x,y=M.friction(3,4,2) e.near(math.sqrt(x*x+y*y),2) end)
+	t.test("unloaded tire supplies zero force",function() local x,y=M.friction(3,4,0) e.equal(x+y,0) end)
+	t.test("friction retains sublimit demand",function() local x,y=M.friction(3,4,10) e.equal(x,3) e.equal(y,4) end)
+	-- Suspension force is unilateral and static equilibrium supports corner weight.
+	t.test("spring equilibrium supports weight",function() local w=2*math.pi*3.5 e.near(M.spring(10,196.2,3.5,.85,196.2/(w*w),0,4),1962) end)
+	t.test("extended spring never pulls downward",function() e.equal(M.spring(10,196.2,3.5,.85,-1,0,4),0) end)
+	t.test("spring force respects load cap",function() e.near(M.spring(10,196.2,3.5,.85,100,-100,4),7848) end)
+	-- Braking must oppose velocity without crossing through rest in one step.
+	t.test("braking cannot reverse velocity",function() local f=M.braking(1,10000,10,.1) e.near(1+f*.1/10,0) end)
+	t.test("braking reverses sign in reverse",function() e.truthy(M.braking(-1,100,10,.1)&gt;0) end)
+	t.test("braking at rest is zero",function() e.equal(M.braking(0,100,10,.1),0) end)
+	-- Steering geometry must tighten the inner wheel and mirror correctly.
+	t.test("right inner wheel has greater angle",function() local l,r=M.ackermann(.3,6,5) e.truthy(r&gt;l and l&gt;0) end)
+	t.test("Ackermann mirrors left and right",function() local l,r=M.ackermann(.3,6,5) local a,b=M.ackermann(-.3,6,5) e.near(a,-r) e.near(b,-l) end)
+	t.test("straight wheels remain straight",function() local a,b=M.ackermann(0,6,5) e.equal(a+b,0) end)
+	-- Exponential filtering is independent of frame subdivision.
+	t.test("steering smoothing is dt consistent",function() e.near(M.approach(M.approach(0,1,7,.05),1,7,.05),M.approach(0,1,7,.1)) end)
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF34">
+        <Properties>
+          <string name="Name">Powertrain_Test</string>
+          <ProtectedString name="Source">--!strict
+return function(t)
+	local Shared=game.ReplicatedStorage.AXZF.Shared local P=require(Shared.Powertrain) local T=require(Shared.Tune) local e=t.expect
+	-- Forward/reverse requests must brake before reversing a moving vehicle.
+	t.test("forward throttle produces forward force",function() local p=P.new(T.resolve(nil)) local f=p:step(0,1,.02) e.truthy(f&gt;0) end)
+	t.test("reverse from rest produces reverse force",function() local p=P.new(T.resolve(nil)) local f=p:step(0,-1,.02) e.truthy(f&lt;0) end)
+	t.test("reverse at forward speed brakes first",function() local p=P.new(T.resolve(nil)) local f,b=p:step(30,-1,.02) e.equal(f,0) e.equal(b,1) end)
+	t.test("zero throttle supplies zero drive force",function() local p=P.new(T.resolve(nil)) local f=p:step(30,0,.02) e.equal(f,0) end)
+	t.test("rev limiter cuts positive force",function() local p=P.new(T.resolve(nil)) p.gear=5 local f=p:step(1000,1,.02) e.equal(f,0) end)
+	t.test("automatic gearbox upshifts at high RPM",function() local p=P.new(T.resolve(nil)) p:step(80,1,.02) e.equal(p.gear,2) end)
+	t.test("automatic gearbox downshifts at low RPM",function() local p=P.new(T.resolve(nil)) p.gear=3 p:step(1,1,.02) e.equal(p.gear,2) end)
+	t.test("shift cooldown prevents gear hunting",function() local p=P.new(T.resolve(nil)) p:step(80,1,.02) p:step(80,1,.02) e.equal(p.gear,2) end)
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF35">
+        <Properties>
+          <string name="Name">Rig_Test</string>
+          <ProtectedString name="Source">--!strict
+return function(t)
+	local Doctor=require(game.ServerScriptService.AXZFServer.Doctor)
+	local Car=require(game.ServerStorage.AXZFExamples.PrototypeCar) local e=t.expect
+	local function withCar(fn) local m=Car.create() local ok,err=pcall(fn,m) m:Destroy() if not ok then error(err) end end
+	-- Doctor must explain structural errors before any binding mutation.
+	t.test("part-built reference rig accepted",function() withCar(function(m) e.truthy(Doctor.inspect(m).ok) end) end)
+	t.test("missing mount rejected",function() withCar(function(m) m.Chassis.FL:Destroy() e.falsy(Doctor.inspect(m).ok) end) end)
+	t.test("old chassis script rejected",function() withCar(function(m) Instance.new("Script",m) e.falsy(Doctor.inspect(m).ok) end) end)
+	t.test("old constraints rejected",function() withCar(function(m) Instance.new("WeldConstraint",m.Chassis) e.falsy(Doctor.inspect(m).ok) end) end)
+	t.test("wheel without hub rejected",function() withCar(function(m) m.Wheels.FL.PrimaryPart=nil e.falsy(Doctor.inspect(m).ok) end) end)
+	t.test("swapped left/right layout rejected",function() withCar(function(m) m.Chassis.FL.Position=m.Chassis.FR.Position e.falsy(Doctor.inspect(m).ok) end) end)
+	t.test("inspection does not mutate anchored state",function() withCar(function(m) Doctor.inspect(m) e.truthy(m.Chassis.Anchored) end) end)
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF36">
+        <Properties>
+          <string name="Name">RunUnitTest</string>
+          <ProtectedString name="Source">--!strict
+-- Minimal synchronous built-in harness. Unit cases must not yield or access services with side effects.
+return function(filter: string?): any
+	local totals={run=0,passed=0,failed=0,cases={}}
+	local expect={}
+	function expect.equal(a,b) assert(a==b,"expected "..tostring(b)..", got "..tostring(a)) end
+	function expect.truthy(v) assert(v,"expected truthy") end
+	function expect.falsy(v) assert(not v,"expected falsy") end
+	function expect.near(a,b,t) assert(a==a and math.abs(a-b)&lt;=(t or 1e-6),"expected "..tostring(b)..", got "..tostring(a)) end
+	function expect.throws(fn) local ok=pcall(fn) assert(not ok,"expected error") end
+	local context={expect=expect}
+	function context.test(name,fn)
+		totals.run+=1 local ok,err=pcall(fn)
+		table.insert(totals.cases,{name=name,pass=ok,error=if ok then nil else tostring(err)})
+		if ok then totals.passed+=1 else totals.failed+=1 warn("[AXZF FAIL] "..name..": "..tostring(err)) end
+	end
+	for _,m in ipairs(script.Parent:GetChildren()) do
+		if m:IsA("ModuleScript") and string.sub(m.Name,-5)=="_Test" and (not filter or string.find(m.Name,filter,1,true)) then
+			local ok,err=pcall(function() require(m)(context) end)
+			if not ok then context.test(m.Name.." load",function() error(err) end) end
+		end
+	end
+	print(string.format("[AXZF UNIT] %d run / %d passed / %d failed",totals.run,totals.passed,totals.failed))
+	return totals
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="AXZF37">
+        <Properties>
+          <string name="Name">Tune_Test</string>
+          <ProtectedString name="Source">--!strict
+return function(t)
+	local T=require(game.ReplicatedStorage.AXZF.Shared.Tune) local e=t.expect
+	-- Versioned configuration rejects typos instead of silently using defaults.
+	t.test("default tune resolves",function() e.equal(T.resolve(nil).SchemaVersion,1) end)
+	t.test("unknown field rejected",function() e.throws(function() T.resolve({Gripp=2}) end) end)
+	t.test("unknown schema rejected",function() e.throws(function() T.resolve({SchemaVersion=2}) end) end)
+	t.test("NaN grip rejected",function() e.throws(function() T.resolve({Grip=0/0}) end) end)
+	t.test("negative radius rejected",function() e.throws(function() T.resolve({Radius=-1}) end) end)
+	t.test("zero travel rejected",function() e.throws(function() T.resolve({RestLength=0}) end) end)
+	t.test("invalid drive rejected",function() e.throws(function() T.resolve({Drive="4x4"}) end) end)
+	t.test("RPM hysteresis required",function() e.throws(function() T.resolve({ShiftDownRPM=6500}) end) end)
+	t.test("descending ratios required",function() e.throws(function() T.resolve({Gears={1,2}}) end) end)
+	t.test("empty ratios rejected",function() e.throws(function() T.resolve({Gears={}}) end) end)
+	t.test("curve abscissas strictly increase",function() e.throws(function() T.resolve({TorqueCurve={{1,2},{1,3}}}) end) end)
+	t.test("curve requires finite torque",function() e.throws(function() T.resolve({TorqueCurve={{1,2},{2,math.huge}}}) end) end)
+	t.test("resolved tune immutable",function() e.throws(function() T.resolve(nil).Grip=0 end) end)
+	t.test("caller changes cannot mutate resolved gear ratios",function() local g={3,2,1} local v=T.resolve({Gears=g}) g[1]=9 e.equal(v.Gears[1],3) end)
+	t.test("caller changes cannot mutate curve",function() local c={{800,10},{7000,20}} local v=T.resolve({TorqueCurve=c}) c[1][2]=99 e.equal(v.TorqueCurve[1][2],10) end)
+end
+</ProtectedString>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
