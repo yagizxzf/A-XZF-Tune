@@ -63,3 +63,8 @@
 - 56 compile/83 headless/90 Studio, deterministik paket, Python/JS ve gerçek HTML overflow/broken-image kontrolü geçti. Ana Studio,lab ve açık yerel demoda90 test; demoda5 araç bağlı/upright. Başarısız bound-prototype baseline ve ilk seating setup çıktıları ayrı saklandı; fresh factory/seating retest geçti.
 - iPhone7/13 ve iPadA16 landscape:9 ikon yüklenir, min84.5x58.5px, overlap yok. Küçük telefon help/dial çakışması ölçülüp help açıkken dial ölçeği düzeltildi. Gaz1→0 drag-out,brake,left/right,reverse,HB/P,help/exit ve TouchGui restorasyonu geçti. Kullanıcı açık görsel onay verdi.9 resim upload edildi, ledger korunur; ISC/FeatherMIT notice eklendi.
 - Kaynak/UI/Tune gerçek ana Studio'ya ve ayrı demoya aktarıldı; kullanıcı geometrisi/R3dTuxedo/baseplate/spawn korunur. Tüm başlatılan Play ve simülasyon durduruldu; publish yok. Public/yerel paketler güncel; yeni binary ayrı pencerede yeniden açılmadı. GitHub push/CI bu kayıtta henüz tamamlandı sayılmıyor.
+
+## 2026-10-29T21:09:46+03:00
+- 0.3 kaynak098e2a527dadbab933608f24e01fa72c2d525f14 normal commit/push ile GitHub main'e gönderildi. Validate40927928835 / contracts123638325128 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40927928835.
+- Son ana Studio Edit ve source/editor eşitliği kontrolü geçti: iki gerçek Tune'da Türkçe rehber/P ve statik park kaynak düzeltmesi kurulu. Lab/delivery sadece Edit peer, aktif multiplayer/Play yok; cihaz simülasyonu default. Yeni native dosya yeniden ayrı pencerede açılmadığı sınırı HANDOVER'da korunur.
+- ROADMAP0.3 teslimi tamamlandı, HANDOVER ve belgeler kodla tutarlı. Bu kayıt ayrı docs commit'idir; kaynak testi tekrar gerektiren kod değişikliği yok.

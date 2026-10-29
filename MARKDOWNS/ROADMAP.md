@@ -53,3 +53,5 @@ Sürüyor: P ile el freninden ayrı kalıcı park modu; gerçek araçların içi
 
 
 0.3 uygulama/doğrulama tamamlandı: ayrı park (P/W/P/E, spawn/exit ve8° eğim);49 alanlı rehber gerçek iki ana araç ve4 uyumluluk kaynağının içinde; kullanıcı onaylı9 ikonlu dokunmatik kontrol; ayarlanabilir viraj dengesi. Import tepe yatış8.409→0.457°, prototip10.329→0.879°; dört import jitter geçer.90 Studio/83 headless/56 compile. Telefon7/13 ve iPadA16 landscape giriş/yerleşim kontrolü geçti. Son aşama: GitHub push/CI ve teslim kaydı sürüyor. Fiziksel multitouch/0.3 iki-client park/adverse-network/modern1.7.2/stabil1.0 kapıları önceki açık kapsam olarak korunur.
+
+0.3 GitHub teslimi tamamlandı: kaynak098e2a527dadbab933608f24e01fa72c2d525f14, Validate40927928835 completed/success. Son devir notu ayrı docs commit'idir; mevcut0.3 kullanıcı işlerinde bekleyen uygulama yok. Stabil1.0 açık kapıları yukarıda korunur.

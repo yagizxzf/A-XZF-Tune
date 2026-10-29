@@ -1,8 +1,8 @@
 # Güncel devir
 
-Son güncelleme: 2026-10-29T21:07:36+03:00. Okuma sırası: MARKDOWNS/AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtlar.
+Son güncelleme: 2026-10-29T21:09:46+03:00. Okuma sırası: MARKDOWNS/AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtlar.
 
-Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origin https://github.com/yagizxzf/A-XZF-Tune. Bütün geliştirme burada. Önceki GUI hotfix50b3fc0220cf0db5e3cdf58342e4017c822d9955 / Validate40908822445 success. Mevcut0.3 değişiklikleri test edildi, push/CI henüz bu kayıtta tamamlandı sayılmıyor.
+Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origin https://github.com/yagizxzf/A-XZF-Tune. Bütün geliştirme burada. Önceki GUI hotfix50b3fc0220cf0db5e3cdf58342e4017c822d9955 / Validate40908822445 success. 0.3 kaynak098e2a527dadbab933608f24e01fa72c2d525f14 main'e gönderildi. Validate40927928835 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40927928835. Son teslim/devir kaydı ayrı docs commit'i olarak gönderilir.
 
 ## Mevcut çalışan durum
 
@@ -38,4 +38,4 @@ Studio kurulumunda ScriptEditorService.UpdateSourceAsync kullan; açık buffer/S
 
 ## Sıradaki somut adımlar
 
-0.3 kaynak/belge değişikliklerini gözden geçirip GitHub main'e normal commit/push; Validate CI sonucunu oku. Ardından PROGRESSION'a gerçek commit/CI ekle, ROADMAP teslimini tamamlandı yap ve bu HANDOVER'ın pending durumunu düzelt. Stabil1.0 henüz ilan edilmez: fiziksel input, kötü ağ/streaming, uzun soak/toplam engine/network/GPU/memory profil ve Roblox-aware typing/modernA-Chassis1.7.2 model kontrolleri açık. Otomatik yayın/satın alma/DataStore yok.
+İstenen0.3 geliştirme, ana Studio kurulumu, testler, paketler ve GitHub kaynak/başarılıCI teslimi tamamlandı. Son devir notu ayrı docs commit'iyle gönderilir. Kullanıcı Play'e basıp iki ana aracın DriveSeat'ine oturarak sürüşü deneyebilir; Tune doğrudan modelin içinde. Son salt-okunur kontrol iki Tune açık editörünün Source ile eşit, Türkçe rehber/P içerdiğini ve statik park kodunun ana Studio'da kurulu olduğunu doğruladı. Stabil1.0 henüz ilan edilmez: fiziksel input, kötü ağ/streaming, uzun soak/toplam engine/network/GPU/memory profil ve Roblox-aware typing/modernA-Chassis1.7.2 model kontrolleri açık. Otomatik yayın/satın alma/DataStore yok.
