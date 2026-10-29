@@ -45,4 +45,4 @@ Başlangıç titreşim ölçümü: 120 PostSimulation örneğinde prototip RMS v
 
 ## GUI görünmeme düzeltmesi
 
-Uygulama ve Studio doğrulaması tamamlandı: eksik ana sahne aktarımı, korumalı container ve açık editör buffer hataları düzeltildi. Ana sahnede giriş/H/çıkış/ikinci araç/respawn ve75 test geçti. Paketler yenilendi; GitHub hotfix CI kontrolü sürüyor.
+Uygulama ve Studio doğrulaması tamamlandı: eksik ana sahne aktarımı, korumalı container ve açık editör buffer hataları düzeltildi. Ana sahnede giriş/H/çıkış/ikinci araç/respawn ve75 test geçti. Paketler yenilendi; hotfix50b3fc0 ve Validate40908822445 success.

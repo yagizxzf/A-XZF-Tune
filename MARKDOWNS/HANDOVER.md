@@ -1,6 +1,6 @@
 # Güncel devir
 
-Son güncelleme: 2026-10-29T19:09:42+03:00. Okuma sırası: MARKDOWNS/AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtlar.
+Son güncelleme: 2026-10-29T19:12:06+03:00. Okuma sırası: MARKDOWNS/AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtlar.
 
 Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origin https://github.com/yagizxzf/A-XZF-Tune. 0.2 kaynakları07db86c ve platform düzeltmesi2d251034caf13832b20fa2d3f70c75ad1ac20aaf GitHub main'e gönderildi. Remote Validate40903141125 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40903141125. İlk07db86c CI paket sıralaması nedeniyle başarısızdı; düzeltme ve başarılı tekrar PROGRESSION'da korunur. Tüm geliştirme bu klasörde kaldı.
 
@@ -26,7 +26,7 @@ Native source bundle build/AXZF-CompatibilityCars.rbxm de ignore edilir. Opsiyon
 
 Son Studio community ID instance:9jh-9ve (PID53104), yerel CompatibilityDemo, Edit. Önceki test lab instance:i5h-8xn, Edit; inert orijinaller ve kaynaklar burada durur. Community bridge persistent node_repl rpc ile mevcut; tools discovery namespace olarak görünmediği için stdio istemci kullanıldı. VFX/GUI Studio işleri community MCP ile, built-in sadece VFX upload ve genel non-VFX test/asset işleri için kullanıldı.
 
-Kullanıcının asıl eski Studio A-XZF-Tune (22a56821-c454-406f-86dd-4ea0c00752d6, place72435697524161) kapatılmadı/yayınlanmadı; yeni HUD/VFX'nin son teslim hedefi yukarıdaki ayrı yerel demo ve repo paketidir. R3dTuxedo/baseplate/spawn korunur. Yeni açılan başarısız/ara CompatibilityDemo yardımcı pencereleri kapatıldı; önceden var olan kullanıcı pencerelerine dokunulmadı. Son Play durduruldu. Canlı Roblox publish yok.
+Kullanıcının asıl Studio A-XZF-Tune (22a56821-c454-406f-86dd-4ea0c00752d6, place72435697524161) GUI hotfix sırasında güncellendi; GUI/VFX artık burada da kurulu. Pencere kapatılmadı ve canlı publish yapılmadı. R3dTuxedo/baseplate/spawn korunur. Yeni açılan başarısız/ara CompatibilityDemo yardımcı pencereleri kapatıldı; önceden var olan kullanıcı pencerelerine dokunulmadı. Son Play durduruldu. Canlı Roblox publish yok.
 
 ## Sıradaki somut adım
 
@@ -38,4 +38,4 @@ Stabil v1.0 ilan etme: fiziksel cihazlar, kötü ağ/streaming, tam reset-reconn
 
 Gerçek görünür ana A-XZF-Tune Studio22a56821-c454-406f-86dd-4ea0c00752d6 güncellendi; artık GUI/VFX dahil son runtime burada da kurulu. UI daha önce yalnızca ayrı demo/lab'a aktarılmıştı. Ana Studio Edit, R3dTuxedo/araçlar korundu, publish yok. Açık Fleet editörü de SES ile eşitlendi. Kullanıcı Play'e basıp DriveSeat'e oturunca GUI açılır; H/E/ikinci araç/respawn testleri geçti. Kanıt evidence/gui-hotfix-*.json. Local backup evidence/local-pre-hud-main.json ignore altında.
 
-Kod: UI hazırlama Bootstrap'tan default Fleet.start'a taşındı; Driver/Cockpit replicated bağımlılıkları bekleyip eksikleri raporlar. tools/build.py installer mevcut özel container'ları yeniden parent etmez ve Source yerine UpdateSourceAsync ile editör senkronunu korur.49 compile/68 headless/75 Studio geçti. Public ve yerel gerçek araçlı paketler güncellendi. Son hotfix commit/push/CI sırada.
+Kod: UI hazırlama Bootstrap'tan default Fleet.start'a taşındı; Driver/Cockpit replicated bağımlılıkları bekleyip eksikleri raporlar. tools/build.py installer mevcut özel container'ları yeniden parent etmez ve Source yerine UpdateSourceAsync ile editör senkronunu korur.49 compile/68 headless/75 Studio geçti. Public ve yerel gerçek araçlı paketler güncellendi. GUI hotfix50b3fc0220cf0db5e3cdf58342e4017c822d9955 GitHub main'e gönderildi. Validate40908822445 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40908822445. Kaynak kontrolü49 compile/68 headless/deterministik paket; ana Studio75/75. Bu devir kaydı ayrı docs commit'iyle gönderilir.

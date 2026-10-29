@@ -51,3 +51,7 @@
 - Default Fleet.start cockpit şablonunu kendisi hazırlıyor; eski/manual Bootstrap da GUI başlatabiliyor. Driver/UI bağımlılıkları replication sırasını bekliyor; eksik UI/template15 saniyede açıklamalı hata veriyor. Tasarım değişmedi; yeni görsel onayı gerekmedi.
 - Güncel kaynaklar gerçek ana Studio'ya uygulandı. Community köprüsü bu eski pencerede yüklü olmadığından mevcut built-in Studio bağlantısı kullanıldı; hiçbir kullanıcı penceresi kapatılmadı. R3dTuxedo ve araç geometrisi korundu; yerel kaynak yedeği ignore edildi.
 - Ana sahnede75/75 Studio; prototipte GUI açık, bir kopya; H gizleme; E çıkışta HUD kapanması; import araca tekrar girişte açılması; ölüm/respawn sonrası tek GUI ve tekrar açılma geçti. Kanıt evidence/gui-hotfix-*.json. İki test Play oturumu durduruldu.49 compile/68 headless/deterministik paket kontrolleri geçti; .rbxl demo yenilendi. Yeni push/CI bu kayıtta henüz tamamlandı sayılmıyor.
+
+## 2026-10-29T19:12:06+03:00
+- GUI hotfix50b3fc0220cf0db5e3cdf58342e4017c822d9955 main'e gönderildi. Remote Validate40908822445 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40908822445. Ana Studio GUI giriş/H/E/ikinci araç/respawn ve75 test kanıtları,49 compile/68 headless/deterministik paket sonucu ile birlikte doğrulandı.
+- Ana Studio ve test demosu Edit bırakıldı. Gerçek asıl proje artık güncel; önceki yalnız-demo teslim bilgisi HANDOVER'da düzeltildi. Canlı publish yapılmadı.
