@@ -1,0 +1,128 @@
+{
+  "jitterBaseline": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"AXZF_Prototype\":{\"rmsAngular\":0,\"rmsVy\":0.2020812289351485,\"samples\":120,\"heightRange\":0.021101713180541993,\"maxAngular\":0},\"AXZF_ImportedCar\":{\"rmsAngular\":1.9696560489054458,\"rmsVy\":0.7550971844889614,\"samples\":120,\"heightRange\":0.08276033401489258,\"maxAngular\":3.3274991512298586}}"
+      }
+    ],
+    "isError": false
+  },
+  "jitterAfter2": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"AXZF_Prototype\":{\"rmsAngular\":0.04352872682047624,\"heightRange\":0,\"height\":2.3443002700805666,\"samples\":120,\"rmsVy\":0.0000013987885919390077,\"maxAngular\":0.05484586954116821},\"AXZF_ImportedCar\":{\"rmsAngular\":0.02969758612490994,\"heightRange\":0,\"height\":2.394300937652588,\"samples\":120,\"rmsVy\":0.0000029164876565350527,\"maxAngular\":0.029799172654747964}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2UnitsRecovery": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"recovery\":{\"blockedSpaceWaits\":true,\"uprightUntouched\":true,\"pass\":true,\"airborneNotTeleported\":true,\"invertedRecovered\":true,\"recoversWhenClear\":true},\"units\":{\"cases\":[{\"name\":\"legal intent accepted\",\"pass\":true},{\"name\":\"replay rejected\",\"pass\":true},{\"name\":\"out of order rejected\",\"pass\":true},{\"name\":\"non-table rejected\",\"pass\":true},{\"name\":\"missing fields rejected\",\"pass\":true},{\"name\":\"extra authority fields rejected\",\"pass\":true},{\"name\":\"NaN input rejected\",\"pass\":true},{\"name\":\"infinite input rejected\",\"pass\":true},{\"name\":\"negative brake rejected\",\"pass\":true},{\"name\":\"overrange throttle rejected\",\"pass\":true},{\"name\":\"fractional sequence rejected\",\"pass\":true},{\"name\":\"invalid boolean rejected\",\"pass\":true},{\"name\":\"burst limited to 45 commands\",\"pass\":true},{\"name\":\"bucket replenishes at 30 per second\",\"pass\":true},{\"name\":\"clock rollback grants no tokens\",\"pass\":true},{\"name\":\"finite rejects NaN\",\"pass\":true},{\"name\":\"finite rejects infinity\",\"pass\":true},{\"name\":\"finite rejects string\",\"pass\":true},{\"name\":\"finite accepts zero\",\"pass\":true},{\"name\":\"curve interpolates midpoint\",\"pass\":true},{\"name\":\"curve clamps below range\",\"pass\":true},{\"name\":\"curve clamps above range\",\"pass\":true},{\"name\":\"friction circle caps diagonal force\",\"pass\":true},{\"name\":\"unloaded tire supplies zero force\",\"pass\":true},{\"name\":\"friction retains sublimit demand\",\"pass\":true},{\"name\":\"spring equilibrium supports weight\",\"pass\":true},{\"name\":\"extended spring never pulls downward\",\"pass\":true},{\"name\":\"spring force respects load cap\",\"pass\":true},{\"name\":\"braking cannot reverse velocity\",\"pass\":true},{\"name\":\"braking reverses sign in reverse\",\"pass\":true},{\"name\":\"braking at rest is zero\",\"pass\":true},{\"name\":\"right inner wheel has greater angle\",\"pass\":true},{\"name\":\"Ackermann mirrors left and right\",\"pass\":true},{\"name\":\"straight wheels remain straight\",\"pass\":true},{\"name\":\"steering smoothing is dt consistent\",\"pass\":true},{\"name\":\"forward throttle produces forward force\",\"pass\":true},{\"name\":\"reverse from rest produces reverse force\",\"pass\":true},{\"name\":\"reverse at forward speed brakes first\",\"pass\":true},{\"name\":\"zero throttle supplies zero drive force\",\"pass\":true},{\"name\":\"rev limiter cuts positive force\",\"pass\":true},{\"name\":\"automatic gearbox upshifts at high RPM\",\"pass\":true},{\"name\":\"automatic gearbox downshifts at low RPM\",\"pass\":true},{\"name\":\"shift cooldown prevents gear hunting\",\"pass\":true},{\"name\":\"part-built reference rig accepted\",\"pass\":true},{\"name\":\"missing mount rejected\",\"pass\":true},{\"name\":\"old chassis script rejected\",\"pass\":true},{\"name\":\"old constraints rejected\",\"pass\":true},{\"name\":\"wheel without hub rejected\",\"pass\":true},{\"name\":\"swapped left/right layout rejected\",\"pass\":true},{\"name\":\"inspection does not mutate anchored state\",\"pass\":true},{\"name\":\"implicit spring supports its static weight\",\"pass\":true},{\"name\":\"no contacts produces no suspension forces\",\"pass\":true},{\"name\":\"implicit solver never creates tensile load\",\"pass\":true},{\"name\":\"contact ordering does not change settled loads\",\"pass\":true},{\"name\":\"default tune resolves\",\"pass\":true},{\"name\":\"custom keyboard binding resolves\",\"pass\":true},{\"name\":\"duplicate keyboard bindings rejected\",\"pass\":true},{\"name\":\"unknown keyboard key rejected\",\"pass\":true},{\"name\":\"control maps cannot mutate after resolution\",\"pass\":true},{\"name\":\"recovery requires boolean\",\"pass\":true},{\"name\":\"power must be bounded\",\"pass\":true},{\"name\":\"unknown field rejected\",\"pass\":true},{\"name\":\"unknown schema rejected\",\"pass\":true},{\"name\":\"NaN grip rejected\",\"pass\":true},{\"name\":\"negative radius rejected\",\"pass\":true},{\"name\":\"zero travel rejected\",\"pass\":true},{\"name\":\"invalid drive rejected\",\"pass\":true},{\"name\":\"RPM hysteresis required\",\"pass\":true},{\"name\":\"descending ratios required\",\"pass\":true},{\"name\":\"empty ratios rejected\",\"pass\":true},{\"name\":\"curve abscissas strictly increase\",\"pass\":true},{\"name\":\"curve requires finite torque\",\"pass\":true},{\"name\":\"resolved tune immutable\",\"pass\":true},{\"name\":\"caller changes cannot mutate resolved gear ratios\",\"pass\":true},{\"name\":\"caller changes cannot mutate curve\",\"pass\":true}],\"failed\":0,\"run\":75,\"passed\":75}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2SedanDrive": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"cleanup\":{\"before\":264,\"after\":144,\"anchored\":true},\"brake\":{\"speed\":0.08027978241443634},\"pass\":true,\"rebind\":true,\"watchdog\":{\"age\":0.5166666936129332,\"expired\":true},\"accelerate\":{\"speed\":180.25852966308595,\"upright\":0.9999844431877136,\"position\":\"1000, 2.094310998916626, -614.5657958984375\"},\"steer\":{\"upright\":0.9973186254501343,\"degrees\":60.59363701299068},\"settled\":{\"height\":2.094301223754883,\"verticalSpeed\":0.0000051352044465602379,\"upright\":1}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2PoliceDrive": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"cleanup\":{\"before\":232,\"after\":143,\"anchored\":true},\"brake\":{\"speed\":0.11297118663787842},\"pass\":true,\"rebind\":true,\"watchdog\":{\"age\":0.5000000260770321,\"expired\":true},\"accelerate\":{\"speed\":170.1684112548828,\"upright\":0.9999597668647766,\"position\":\"1000, 2.194328784942627, -529.061767578125\"},\"steer\":{\"upright\":0.9997671842575073,\"degrees\":42.42155953296037},\"settled\":{\"height\":2.1943001747131349,\"verticalSpeed\":7.109208581823623e-7,\"upright\":1}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2SUVDrive": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"cleanup\":{\"before\":180,\"after\":101,\"anchored\":true},\"brake\":{\"speed\":0.09735384583473206},\"pass\":true,\"rebind\":true,\"watchdog\":{\"age\":0.5000000260770321,\"expired\":true},\"accelerate\":{\"speed\":179.9211883544922,\"upright\":0.9999616742134094,\"position\":\"994.4050903320312, 1.844756007194519, -670.2523193359375\"},\"steer\":{\"upright\":0.9951657652854919,\"degrees\":95.95161718367067},\"settled\":{\"height\":1.8447110652923585,\"verticalSpeed\":0.000007483613444492221,\"upright\":0.9999865889549255}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2JitterPoliceSUV": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"AXZF_AC_Police\":{\"rmsAngular\":0.027607906026912184,\"heightRange\":9.5367431640625e-7,\"samples\":180,\"pass\":true,\"rmsVy\":0.0000047239805673918339},\"AXZF_AC_SUV\":{\"rmsAngular\":0.0629023120647136,\"heightRange\":0.000009417533874511719,\"samples\":180,\"pass\":true,\"rmsVy\":0.00003472552383433289}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2JitterPrototypeSedan": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"prototype\":{\"rmsAngular\":0,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.000005586286298638393},\"sedan\":{\"rmsAngular\":0.07243148034894856,\"heightRange\":0.00000858306884765625,\"samples\":180,\"pass\":true,\"rmsVy\":0.000030122432386791178}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2JitterImported": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"rmsAngular\":0.02977672741014618,\"heightRange\":0,\"samples\":180,\"pass\":true,\"rmsVy\":0.0000021598335224461717}"
+      }
+    ],
+    "isError": false
+  },
+  "v2ImportedDrive": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"cleanup\":{\"before\":111,\"after\":62,\"anchored\":true},\"brake\":{\"speed\":0.07241232693195343},\"pass\":true,\"rebind\":true,\"watchdog\":{\"age\":0.5000000260770321,\"expired\":true},\"accelerate\":{\"speed\":179.8147430419922,\"upright\":0.9999915957450867,\"position\":\"999.9581909179688, 2.3943097591400146, -602.6641845703125\"},\"steer\":{\"upright\":0.9984039068222046,\"degrees\":64.7232371201849},\"settled\":{\"height\":2.394300937652588,\"verticalSpeed\":0.0000043533582356758419,\"upright\":1}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2RegressionPerf": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"benchmark\":{\"maxMs\":3.239700003177859,\"cleanup\":true,\"vehicles\":12,\"scope\":\"script solve only; includes settled + initial drop\",\"samples\":302,\"pass\":true,\"p95Ms\":1.108799988287501,\"raysPerStep\":48,\"meanMs\":0.7810407289841971},\"handling\":{\"airborne\":{\"horizontalSpeed\":0,\"pass\":true},\"reverse\":{\"pass\":true,\"signedSpeed\":-43.48078155517578},\"pass\":true,\"handbrake\":{\"speed\":0.04151712357997894,\"pass\":true},\"slope\":{\"speed\":0.6229414343833923,\"pass\":true,\"upright\":0.9869256019592285},\"surfaceGrip\":{\"lowGripSpeed\":18.426057815551759,\"normalSpeed\":77.44986724853516,\"pass\":true}},\"fleet\":{\"untagClean\":true,\"preTaggedSpawn\":false,\"pass\":false,\"stopClean\":true,\"removalClean\":true,\"returnRebind\":false,\"retag\":true,\"duplicateAddSafe\":true}}"
+      }
+    ],
+    "isError": false
+  },
+  "v2FleetFinal": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"untagClean\":true,\"preTaggedSpawn\":true,\"pass\":true,\"stopClean\":true,\"removalClean\":true,\"returnRebind\":true,\"retag\":true,\"duplicateAddSafe\":true}"
+      }
+    ],
+    "isError": false
+  },
+  "v2OccupiedRecovery": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"serverOwner\":true,\"up\":0.9999216794967651,\"occupied\":true,\"recoveries\":1}"
+      }
+    ],
+    "isError": false
+  },
+  "v2Multiplayer": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"serverOwnership\":true,\"twoOccupants\":true,\"replayStops\":true,\"exitClearsSeat\":true,\"pass\":true,\"ownDriverMoves\":true,\"malformedRejected\":true,\"otherDriverRejected\":true}"
+      }
+    ],
+    "isError": false
+  }
+}

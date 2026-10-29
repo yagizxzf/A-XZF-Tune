@@ -1,0 +1,59 @@
+{
+  "units": {
+    "failed": 0,
+    "run": 75,
+    "passed": 75
+  },
+  "recovery": {
+    "blockedSpaceWaits": true,
+    "uprightUntouched": true,
+    "pass": true,
+    "airborneNotTeleported": true,
+    "invertedRecovered": true,
+    "recoversWhenClear": true
+  },
+  "fleet": {
+    "untagClean": true,
+    "preTaggedSpawn": true,
+    "pass": true,
+    "stopClean": true,
+    "removalClean": true,
+    "returnRebind": true,
+    "retag": true,
+    "duplicateAddSafe": true
+  },
+  "carsAfterMassRepair": {
+    "AXZF_AC_Police": {
+      "mass": 65.4861068725586,
+      "up": 1,
+      "height": 2.1942999362945557,
+      "bound": true
+    },
+    "AXZF_AC_Sedan": {
+      "mass": 48.83010482788086,
+      "up": 1,
+      "height": 2.094301223754883,
+      "bound": true
+    },
+    "AXZF_ImportedCar": {
+      "mass": 64.0320053100586,
+      "up": 0.9999999403953552,
+      "height": 2.394301176071167,
+      "bound": true
+    },
+    "AXZF_AC_SUV": {
+      "mass": 36.53095626831055,
+      "up": 0.9999874234199524,
+      "height": 1.8447110652923584,
+      "bound": true
+    },
+    "AXZF_Prototype": {
+      "mass": 51.07200241088867,
+      "up": 0.9999998807907104,
+      "height": 2.3443002700805664,
+      "bound": true
+    }
+  },
+  "remapPWorked": true,
+  "source": "opened native compatibility demo; temporary P binding during test"
+}

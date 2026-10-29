@@ -16,8 +16,14 @@ return function(): any
 		m.Parent=workspace task.wait(.1) report.returnRebind=fleet:get(m)~=nil
 		tags:RemoveTag(m,"__Prototype_AXZF_Fleet") task.wait(.1) report.untagClean=fleet:get(m)==nil and m.Chassis.Anchored
 		tags:AddTag(m,"__Prototype_AXZF_Fleet") task.wait(.1) report.retag=fleet:get(m)~=nil
+		local config=m:FindFirstChild("Tune") if config then config:Destroy() end
+		tags:RemoveTag(m,"__Prototype_AXZF_Fleet") task.wait(.05)
+		config=game.ServerStorage.AXZFTests.DelayedTune:Clone() config.Name="Tune" config.Parent=m
+		tags:AddTag(m,"__Prototype_AXZF_Fleet") task.wait(.05)
+		tags:RemoveTag(m,"__Prototype_AXZF_Fleet") tags:AddTag(m,"__Prototype_AXZF_Fleet")
+		task.wait(.4) report.pendingCancelRebind=fleet:get(m)~=nil and not m:GetAttribute("AXZFError")
 		fleet:stop() fleet:stop() report.stopClean=not game.ReplicatedStorage.AXZF:FindFirstChild("__Prototype_AXZF_Control") and not m:GetAttribute("AXZFBound")
-		report.pass=true for _,key in ipairs({"preTaggedSpawn","duplicateAddSafe","removalClean","returnRebind","untagClean","retag","stopClean"}) do if not report[key] then report.pass=false end end
+		report.pass=true for _,key in ipairs({"preTaggedSpawn","duplicateAddSafe","removalClean","returnRebind","untagClean","retag","pendingCancelRebind","stopClean"}) do if not report[key] then report.pass=false end end
 	end,debug.traceback)
 	fleet:stop() m:Destroy()
 	if not ok then report.error=tostring(err) report.pass=false end

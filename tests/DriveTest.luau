@@ -4,10 +4,13 @@ local RunService=game:GetService("RunService")
 local Vehicle=require(game.ServerScriptService.AXZFServer.Vehicle)
 return function(source: Model, overrides: any): any
 	assert(RunService:IsStudio() and RunService:IsServer(),"Studio server tests only")
+	local floor=Instance.new("Part") floor.Name="__AXZF_DriveFloor" floor.Anchored=true
+	-- Stay below Roblox's per-part size limit, with a 2,000-stud braking lane.
+	floor.Size=Vector3.new(200,1,2000) floor.CFrame=CFrame.new(1000,0,-900) floor.Parent=workspace
 	local model=source:Clone() model.Name="__Prototype_AXZF_DriveTest"
 	game:GetService("CollectionService"):RemoveTag(model,"AXZFVehicle")
 	model.DriveSeat.Disabled=true
-	model:PivotTo(CFrame.new(0,5,20)) model.Parent=workspace
+	model:PivotTo(CFrame.new(1000,5,20)) model.Parent=workspace
 	local vehicle=nil local connection=nil local observations={}
 	local ok,err=xpcall(function()
 		vehicle=Vehicle.new(model,overrides)
@@ -24,7 +27,7 @@ return function(source: Model, overrides: any): any
 		drive(4,0,0,1)
 		observations.brake={speed=root.AssemblyLinearVelocity.Magnitude}
 		-- Fresh grounded pose avoids carrying acceleration-test position into steering trial.
-		model:PivotTo(CFrame.new(0,5,20)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
+		model:PivotTo(CFrame.new(1000,5,20)) root.AssemblyLinearVelocity=Vector3.zero root.AssemblyAngularVelocity=Vector3.zero
 		drive(3,0,0,1) local forward=root.CFrame.LookVector
 		drive(2,0.35,0.7,0)
 		observations.steer={degrees=math.deg(math.acos(math.clamp(forward:Dot(root.CFrame.LookVector),-1,1))),upright=root.CFrame.UpVector.Y}
@@ -39,7 +42,7 @@ return function(source: Model, overrides: any): any
 	end,debug.traceback)
 	if connection then connection:Disconnect() end
 	if vehicle then vehicle:destroy() end
-	model:Destroy()
+	model:Destroy() floor:Destroy()
 	if not ok then observations.error=tostring(err) observations.pass=false end
 	return observations
 end

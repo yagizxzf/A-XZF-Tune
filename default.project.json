@@ -2,14 +2,102 @@
   "name": "A-XZF-Tune",
   "tree": {
     "$className": "DataModel",
-    "ReplicatedStorage": {"AXZF": {"Shared": {"$path": "src/Shared"}}},
-    "ServerScriptService": {"AXZFServer": {"$path": "src/Server"}, "Demo": {"$path": "examples/Demo.server.luau"}, "Multiplayer": {"$path": "tests/Multiplayer.server.luau"}},
-    "ServerStorage": {
-      "AXZFExamples": {"PrototypeCar": {"$path": "examples/PrototypeCar.luau"}, "TestTrack": {"$path": "examples/TestTrack.luau"}, "CreatorCarAdapter": {"$path": "examples/CreatorCarAdapter.luau"}},
-      "AXZFTests": {
-        "RunUnitTest": {"$path":"tests/RunUnitTest.luau"}, "Math_Test":{"$path":"tests/Math_Test.luau"}, "Tune_Test":{"$path":"tests/Tune_Test.luau"}, "InputGuard_Test":{"$path":"tests/InputGuard_Test.luau"}, "Powertrain_Test":{"$path":"tests/Powertrain_Test.luau"}, "Rig_Test":{"$path":"tests/Rig_Test.luau"}, "DriveTest":{"$path":"tests/DriveTest.luau"}, "FleetTest":{"$path":"tests/FleetTest.luau"}, "FleetBenchmark":{"$path":"tests/FleetBenchmark.luau"}, "HandlingTest":{"$path":"tests/HandlingTest.luau"}
+    "ReplicatedStorage": {
+      "AXZF": {
+        "Shared": {
+          "$path": "src/Shared"
+        },
+        "UI": {
+          "$path": "ui/runtime"
+        }
+      },
+      "VFX": {
+        "$path": "vfx/runtime"
       }
     },
-    "StarterPlayer": {"StarterPlayerScripts": {"Driver":{"$path":"src/Client/Driver.client.luau"}, "Multiplayer":{"$path":"tests/Multiplayer.client.luau"}}}
+    "ServerScriptService": {
+      "AXZFServer": {
+        "$path": "src/Server"
+      },
+      "Demo": {
+        "$path": "examples/Demo.server.luau"
+      },
+      "Multiplayer": {
+        "$path": "tests/Multiplayer.server.luau"
+      }
+    },
+    "ServerStorage": {
+      "AXZFExamples": {
+        "PrototypeCar": {
+          "$path": "examples/PrototypeCar.luau"
+        },
+        "VehicleTune": {
+          "$path": "examples/VehicleTune.luau"
+        },
+        "TestTrack": {
+          "$path": "examples/TestTrack.luau"
+        },
+        "CreatorCarAdapter": {
+          "$path": "examples/CreatorCarAdapter.luau"
+        }
+      },
+      "AXZFTests": {
+        "RunUnitTest": {
+          "$path": "tests/RunUnitTest.luau"
+        },
+        "Math_Test": {
+          "$path": "tests/Math_Test.luau"
+        },
+        "Tune_Test": {
+          "$path": "tests/Tune_Test.luau"
+        },
+        "InputGuard_Test": {
+          "$path": "tests/InputGuard_Test.luau"
+        },
+        "Powertrain_Test": {
+          "$path": "tests/Powertrain_Test.luau"
+        },
+        "Rig_Test": {
+          "$path": "tests/Rig_Test.luau"
+        },
+        "Suspension_Test": {
+          "$path": "tests/Suspension_Test.luau"
+        },
+        "DriveTest": {
+          "$path": "tests/DriveTest.luau"
+        },
+        "JitterTest": {
+          "$path": "tests/JitterTest.luau"
+        },
+        "RecoveryTest": {
+          "$path": "tests/RecoveryTest.luau"
+        },
+        "FleetTest": {
+          "$path": "tests/FleetTest.luau"
+        },
+        "FleetBenchmark": {
+          "$path": "tests/FleetBenchmark.luau"
+        },
+        "HandlingTest": {
+          "$path": "tests/HandlingTest.luau"
+        },
+        "MigrationTest": {
+          "$path": "tests/MigrationTest.luau"
+        },
+        "DelayedTune": {
+          "$path": "tests/DelayedTune.luau"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Driver": {
+          "$path": "src/Client/Driver.client.luau"
+        },
+        "Multiplayer": {
+          "$path": "tests/Multiplayer.client.luau"
+        }
+      }
+    }
   }
 }

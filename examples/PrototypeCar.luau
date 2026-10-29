@@ -8,6 +8,8 @@ end
 function Car.create(at: CFrame?, name: string?): Model
 	local frame=at or CFrame.new(0,4,0)
 	local m=Instance.new("Model") m.Name=name or "AXZF_Prototype"
+	local tune=game.ServerStorage.AXZFExamples:FindFirstChild("VehicleTune")
+	if tune then local config=tune:Clone() config.Name="Tune" config.Parent=m end
 	local root=part("Chassis",Vector3.new(5.6,0.8,9.5),frame,Color3.fromRGB(27,31,36),m)
 	root.CustomPhysicalProperties=PhysicalProperties.new(1.2,0.3,0,100,100)
 	root.Transparency=0.5 m.PrimaryPart=root

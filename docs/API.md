@@ -1,10 +1,14 @@
 # Public integration API
 
-Server modules live under `ServerScriptService.AXZFServer`; shared pure modules under `ReplicatedStorage.AXZF.Shared`. Tests/examples are optional ServerStorage content. The only production RemoteEvent is `ReplicatedStorage.AXZF.Control`, created at fleet start. Server code stays server-only.
+Server modules live under `ServerScriptService.AXZFServer`; shared pure modules under `ReplicatedStorage.AXZF.Shared`. Tests/examples are optional ServerStorage content. Control RemoteEvent and the server-to-client Effects UnreliableRemoteEvent are created at fleet start. Server code stays server-only.
 
 ```lua
 local Fleet = require(game.ServerScriptService.AXZFServer.Fleet)
-local fleet = Fleet.start() -- disable Bootstrap if starting manually
+-- Disable Bootstrap for custom startup; prepare the driver template first.
+require(game.ReplicatedStorage.AXZF.UI.Builder).build()
+local template=game.StarterGui.AXZFCockpit
+template.Name="CockpitTemplate" template.Enabled=false template.Parent=game.ReplicatedStorage.AXZF
+local fleet = Fleet.start()
 local vehicle = fleet:get(workspace.MyCar) -- nil when unregistered
 if vehicle then
     print(vehicle:getTelemetry().speed)
@@ -21,7 +25,7 @@ end
 | vehicle:setInput(intent) | **Trusted server/NPC API**; intent has throttle/steer/brake/handbrake; refresh at < InputTimeout interval |
 | vehicle:clearInput() | Reset to parked/braking intent; clear steering command age |
 | vehicle:step(dt) | Advance once before physics; Fleet already calls this; do not double-step |
-| vehicle:getTelemetry() | `{speed,rpm,gear,sleeping,stepMs}`; reverse gear = -1 |
+| vehicle:getTelemetry() | `{speed,rpm,gear,sleeping,stepMs,handbrake}`; reverse gear = -1 |
 | vehicle:destroy() | Idempotent; stops control, unseats occupant, removes owned joints, restores geometry/ownership |
 | Fleet.start(options?) | One dispatcher. Optional `{tag,remoteName}` allows isolated server-owned test fleets |
 | fleet:add(model) / remove(model) / get(model) | Normal use follows tag and Workspace ancestry automatically |
@@ -52,3 +56,7 @@ No extra fields are accepted. Server checks player bucket first, then registered
 ## Failure recovery
 
 A runtime step exception quarantines that vehicle, cleans it up, records AXZFError and allows other vehicles to continue. Re-add the tag after repair. A missing wheel hub or destroyed root invalidates the rig; normal model/tag removal is the supported teardown path. Do not independently destroy essential rig parts while leaving the vehicle registered. Upgrade and rollback use complete source/package revisions; no database schema is involved.
+
+## Migration and client presentation
+
+Edit-only Migration.inspect/convert/fromSelection are documented in MIGRATION.md. Fleet publishes AXZF_Key<Action> and AXZF_Config<DisplayField> from validated Tune values. Telemetry adds AXZF_handbrake, AXZF_recovery and AXZF_recoveryCount. Recovery waits for clear space, slow grounded inversion and a continuous delay; it has a 5-second cooldown. VFX uses only server-decided allowed names/CFrames/intensity; clients render nearby bursts. See HUD.md/VFX.md.

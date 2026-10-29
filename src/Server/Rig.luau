@@ -8,6 +8,7 @@ function Rig.bind(model: Model): any
 	local root=model.Chassis :: BasePart
 	local self={model=model,root=root,seat=model.DriveSeat,wheels={},created={},snapshots={},destroyed=false}
 	local ownership=nil
+	local seatHud=self.seat.HeadsUpDisplay
 	if game:GetService("RunService"):IsRunning() and root:CanSetNetworkOwnership() then ownership={automatic=root:GetNetworkOwnershipAuto(),owner=root:GetNetworkOwner()} end
 	local function own(instance) table.insert(self.created,instance) return instance end
 	local function weld(a,b)
@@ -22,6 +23,7 @@ function Rig.bind(model: Model): any
 			if p.Parent then for key,value in pairs(s) do p[key]=value end end
 		end
 		model:SetAttribute("AXZFBound",nil)
+		if self.seat.Parent then self.seat.HeadsUpDisplay=seatHud end
 		if ownership and root.Parent and root:CanSetNetworkOwnership() then
 			if ownership.automatic then root:SetNetworkOwnershipAuto() else root:SetNetworkOwner(ownership.owner) end
 		end
@@ -34,6 +36,12 @@ function Rig.bind(model: Model): any
 			end
 		end
 		root.RootPriority=127
+		self.seat.HeadsUpDisplay=false
+		local forceAttachment=own(Instance.new("Attachment")) forceAttachment.Name="AXZF_Force" forceAttachment.Parent=root
+		local force=own(Instance.new("VectorForce")) force.Name="AXZF_ContactForce" force.Attachment0=forceAttachment
+		force.ApplyAtCenterOfMass=true force.RelativeTo=Enum.ActuatorRelativeTo.World force.Parent=root self.force=force
+		local torque=own(Instance.new("Torque")) torque.Name="AXZF_ContactTorque" torque.Attachment0=forceAttachment
+		torque.RelativeTo=Enum.ActuatorRelativeTo.World torque.Parent=root self.torque=torque
 		for _,p in ipairs(model:GetDescendants()) do
 			if p:IsA("BasePart") and p~=root and not p:IsDescendantOf(model.Wheels) then weld(root,p) end
 		end

@@ -1,0 +1,13 @@
+{
+  "uploadedAt": "2026-10-29T16:39:17+03:00",
+  "TyreSmoke": {
+    "file": "out/TyreSmoke.png",
+    "assetId": "123244819470159"
+  },
+  "RoadGrit": {
+    "file": "out/RoadGrit.png",
+    "assetId": "101186639768027"
+  },
+  "source": "Original numpy textures; created for A-XZF-Tune",
+  "rights": "MIT source textures; Roblox uploaded assets follow destination availability"
+}

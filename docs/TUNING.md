@@ -2,6 +2,8 @@
 
 Put a ModuleScript named `Tune` directly under your vehicle. Return only overrides:
 
+Clone ServerStorage.AXZFExamples.VehicleTune into your car and rename it Tune for a commented Turkish tutorial. Prototype, migration and CreatorCarAdapter create it automatically; the public kit includes it.
+
 ```lua
 return {
     SchemaVersion = 1,
@@ -49,6 +51,25 @@ All dynamics use **Roblox mass/stud/second units**, not SI kilograms/meters. Mea
 | InputTimeout | 0.35 | 0.1..2 seconds; expired controls apply brakes |
 | TelemetryHz | 10 | 1..20 attribute updates/second |
 | SleepAfter | 3 | 0..30 seconds settled; suppresses wheel visual updates, not gravity support |
+| Power | 1 | 0.1..5 force multiplier, not real horsepower |
+| MaxSpeed | 180 | 5..600 studs/s; cuts motor thrust, does not clamp downhill speed |
+| Mass | 0 | 0..5000 Roblox mass; 0 keeps Chassis properties; nonzero must fit density 0.01..100 |
+| AutoRecover | true | boolean; inverted, slow, grounded and target-space-clear recovery |
+| RecoverDelay | 2 | 0.5..15 seconds continuously eligible |
+| RecoverMaxSpeed | 6 | 0.1..15 studs/s; recovery also requires vertical speed <=3 |
+| VFX | true | rear contact effects enabled |
+| VFXIntensity | 1 | 0..2 particle count multiplier |
+| SpeedScale | 1 | 0.01..10 display multiplier only |
+| SpeedUnit | STUD/S | 1..12-character display label |
+| ShowControls | true | initial help visibility; H/KEYS toggles it |
+| Controls | below | unique keyboard key-name strings; partial maps inherit defaults |
+
+```lua
+Controls = {Forward="W", Reverse="S", Left="A", Right="D",
+    Brake="B", Handbrake="Space", Exit="E", HideControls="H"}
+```
+
+Letters A..Z, Space, Left/RightShift, Left/RightControl, Up/Down/Left/Right and One..Five are supported. Duplicate bindings fail validation. Gamepad/touch are independent of keyboard remaps. Space/PARK toggles the handbrake. See [HUD](HUD.md) and [VFX](VFX.md).
 
 RPM thresholds must satisfy `IdleRPM < ShiftDownRPM < ShiftUpRPM < RedlineRPM`. Travel must exceed static sag plus 0.1 studs. Schema numbers do not automatically scale with the model.
 

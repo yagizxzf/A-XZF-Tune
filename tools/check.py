@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def check(compiler, runtime):
-    paths = sorted(p for folder in ("src", "tests", "examples") for p in (ROOT/folder).rglob("*.luau"))
+    paths = sorted(p for folder in ("src", "tests", "examples", "ui/runtime", "vfx/runtime") for p in (ROOT/folder).rglob("*.luau"))
     for path in paths:
         subprocess.run([compiler, "--null", str(path)], check=True, capture_output=True, text=True)
     print(f"Compiled {len(paths)} Luau files")
@@ -21,7 +21,7 @@ def check(compiler, runtime):
                 source = path.read_text(encoding="utf-8")
                 source = re.sub(r"require\(script.Parent.(\w+)\)", r'require("./\1")', source)
                 (temp/path.name).write_text(source, encoding="utf-8")
-            names = ["Math_Test", "Tune_Test", "InputGuard_Test", "Powertrain_Test"]
+            names = ["Math_Test", "Tune_Test", "InputGuard_Test", "Powertrain_Test", "Suspension_Test"]
             for name in names:
                 source = (ROOT/f"tests/{name}.luau").read_text(encoding="utf-8")
                 source = re.sub(r"require\(game.ReplicatedStorage.AXZF.Shared.(\w+)\)", r'require("./\1")', source)

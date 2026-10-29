@@ -1,6 +1,6 @@
 # A-XZF-Tune
 
-An independently authored, modular Roblox vehicle kit. MIT licensed. **0.1.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
+An independently authored, modular Roblox vehicle kit. MIT licensed. **0.2.0 release candidate** — working source and Studio evidence are included; see the [readiness record](docs/READINESS.md) before adopting it in a live experience.
 
 [Türkçe](README.tr.md) · [Quick start](docs/INSTALLATION.md) · [Bring your own car](docs/MODEL-INTEGRATION.md) · [Tune reference](docs/TUNING.md) · [API](docs/API.md) · [Tests](docs/TESTING.md)
 
@@ -11,7 +11,7 @@ An independently authored, modular Roblox vehicle kit. MIT licensed. **0.1.0 rel
 - **Reversible binding:** owned joints are tracked; removing the vehicle/tag restores geometry properties and stops its simulation. Duplicate registration is harmless.
 - **Server-owned physics:** clients send bounded driving intentions, with occupant checks, sequence/replay checks, token-bucket rate limits and a dead-input brake watchdog.
 - **Inspectable handling:** mass-derived spring/damper rates, combined tire friction circle, surface Grip attributes, Ackermann steering, speed-sensitive steering, automatic forward/reverse drivetrain and four presets.
-- **Tests you can run:** 58 headless shared contract cases, 65 Studio unit cases, driving/handling/lifecycle harnesses, a two-client abuse test, fleet solve benchmark and reproducible XML packages.
+- **Tests you can run:** 68 headless shared contract cases, 75 Studio unit cases, driving/handling/lifecycle harnesses, a two-client abuse test, fleet solve benchmark and reproducible XML packages.
 - **Native controls:** keyboard, analog gamepad bindings and safe-area touch buttons with an explicit Exit action. Touch controls restore the character controls after leaving.
 
 These are reasons to evaluate this implementation, not a claim that every competing chassis lacks them. There is no compatibility shim for A-Chassis plugins or Tune tables.
@@ -32,7 +32,7 @@ No Python packages, runtime HTTP, Wally dependencies, paid assets or dynamic ass
 
 ## Evidence and limits
 
-On 2026-10-29, both the original part-built vehicle and a sanitized 47-part Creator Store car passed Studio acceleration, braking, steering, timeout and rebind tests. Two actual Studio test clients passed cross-driver denial, malformed intent rejection, valid driving, replay timeout and seat-exit checks. Twelve vehicles took 0.74 ms average / 1.07 ms p95 script solve time on the test machine. This measures script work, not total engine, network or GPU cost. [Results and reproduction](docs/TESTING.md).
+On 2026-10-29, the original prototype and four sanitized external rigs passed the current Studio checks. Three were actual A-Chassis migrations; their drive and jitter results are in the compatibility matrix. Two actual clients passed cross-driver/malformed/replay/valid/exit checks. Twelve vehicles took 0.781 ms mean / 1.109 ms p95 script solve time on the test machine; this excludes total engine/network/GPU cost. [Results and reproduction](docs/TESTING.md).
 
 The external car is tested in the author's local scene and has a reproducible [geometry adapter](examples/CreatorCarAdapter.luau). Its art is **not included under the MIT license or redistributed in this repository**. Obtain it separately from its [Creator Store page](https://create.roblox.com/store/asset/14215126016); see [asset provenance](docs/ASSETS.md).
 
@@ -40,6 +40,10 @@ Current fidelity: raycast contact tires, road-speed coupled automatic drivetrain
 
 ## Independent implementation
 
-This is not a fork, rename or code port of [A-Chassis](https://github.com/lisphm/A-Chassis). Its README and v1.7.2-stable release notes were used to understand the current reference; source code, Tune tables and release model mechanics were not imported. See [design and provenance](docs/ARCHITECTURE.md) and [migration](docs/MIGRATION.md).
+This is not a fork, rename or code port of [A-Chassis](https://github.com/lisphm/A-Chassis). Its README and v1.7.2-stable release notes were used to understand the current reference; upstream chassis implementation was not copied. Three legacy car packages were quarantined for geometry migration tests; their executable code was never run. See [design and provenance](docs/ARCHITECTURE.md) and [migration](docs/MIGRATION.md).
 
 Contributions: [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md). License: [MIT](LICENSE), covering authored kit code and original examples only.
+
+## 0.2 evaluation update
+
+Circular speed/RPM cockpit, hideable/remappable key help, separate mobile controls, automatic safe-space recovery, coupled implicit suspension, client-only tire smoke/dust and a commented per-car Tune are included. The editor migration helper converts selected legacy geometry in one call. Three real A-Chassis vehicles passed drive and stationary-jitter tests: [compatibility matrix](docs/COMPATIBILITY.md), [migration](docs/MIGRATION.md), [HUD](docs/HUD.md), [VFX](docs/VFX.md). The latest 12-car script measurement is 0.781 ms mean / 1.109 ms p95.

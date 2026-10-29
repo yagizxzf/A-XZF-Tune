@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0-rc.1 — 2026-10-29
+
+- Coupled implicit suspension and persistent force/torque support reduce imported-car jitter.
+- Ground/clearance-aware auto-recovery, including occupied and obstructed cases.
+- Approved circular cockpit, configurable/hideable key help, separate mobile controls, parking toggle and exit.
+- Commented per-car Tune: power/speed/mass/suspension/recovery/VFX/display and keyboard bindings.
+- Editor-only geometry migration with one-call selection workflow; three real A-Chassis cars validated.
+- Client-only tire smoke/dust using original textures and bounded nearby events.
+- New suspension/config/editor/recovery/jitter tests; 49 compile, 68 headless, 75 Studio units.
+- Spawn binding race fixed; local external-art scene kept outside Git. Stable v1.0 gates remain open.
+
+
 ## 0.1.0-rc.1 — 2026-10-29
 
 - First independent implementation: four-ray suspension/contact solver, combined tire grip, automatic forward/reverse, Ackermann steering, four presets and surface Grip.

@@ -1,0 +1,16 @@
+{
+  "conversion": {
+    "returnValue": "[{\"track\":5.990668773651123,\"radius\":1.2999999523162842,\"legacyScripts\":12,\"sourceParts\":117,\"stripped\":96,\"wheelbase\":12.684449195861817,\"legacyScriptsRemaining\":0,\"sourcePath\":\"ServerStorage.AC_Sedan.A-Chassis 6.81T by Novena\",\"doctor\":{\"ok\":true,\"parts\":118,\"warnings\":[],\"errors\":[]},\"parts\":118},{\"track\":7.9000244140625,\"radius\":1.3999987542629243,\"legacyScripts\":64,\"sourceParts\":88,\"stripped\":127,\"wheelbase\":12.899711608886719,\"legacyScriptsRemaining\":0,\"sourcePath\":\"ServerStorage.AC_Police.Police Sedan (A-Chassis)\",\"doctor\":{\"ok\":true,\"parts\":87,\"warnings\":[],\"errors\":[]},\"parts\":87},{\"track\":6.009236574172974,\"radius\":1.050428032875061,\"legacyScripts\":13,\"sourceParts\":78,\"stripped\":25,\"wheelbase\":9.460214614868164,\"legacyScriptsRemaining\":0,\"sourcePath\":\"ServerStorage.AC_SUV.SUV (A-Chassis)\",\"doctor\":{\"ok\":true,\"parts\":77,\"warnings\":[],\"errors\":[]},\"parts\":77}]",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "editorSafety": {
+    "ambiguousSelectionRejected": true,
+    "sourcePreserved": true,
+    "validRig": true,
+    "onlyAuthoredTune": true,
+    "missingWheelRejected": true,
+    "pass": true
+  }
+}

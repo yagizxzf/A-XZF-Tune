@@ -1,3 +1,47 @@
+# Verification update — 0.2.0-rc.1
+
+2026-10-29, Europe/Istanbul. The 0.1 record below is historical. Current evidence: [raw results](../evidence/v2-studio-results.json), [migration](../evidence/v2-migration-report.json), [device rectangles](../evidence/v2-ui-measurements.json), [saved scene](../evidence/v2-saved-demo.json), [drag release](../evidence/v2-input-drag-release.json).
+
+| Check | Current result |
+|---|---|
+| Luau compile / headless / deterministic artifacts | 49 files / 68 cases / PASS |
+| Studio unit contracts | 75/75 PASS |
+| Three real A-Chassis migrations | Sedan / police / SUV: Doctor, drive, brake, steering, watchdog, cleanup/rebind PASS |
+| Original imported car | Drive regression PASS |
+| Stationary jitter | Prototype + four external rigs: all below predeclared thresholds; COMPATIBILITY.md |
+| Auto-recovery | Inverted recovers; airborne/upright untouched; blocked space waits then recovers; PASS |
+| Occupied recovery | Driver stayed seated, one recovery, up dot 0.99992, server ownership retained |
+| Fleet lifecycle | Pre-tagged spawn, ancestry return, duplicate add, tag removal/return, repeated stop PASS |
+| Handling | Airborne horizontal thrust 0; grip differentiation, handbrake 0.0415, reverse -43.48, 8° slope PASS |
+| Two actual clients | Ownership, cross-driver denial, malformed rejection, valid drive, replay stop, exit PASS |
+| 12-car Lua solve | 302 samples: mean 0.781 ms, p95 1.109 ms, max 3.240 ms; 48 rays/frame |
+| Circular HUD | Native seat HUD hidden; H hides help; real telemetry; approved design imported |
+| Simulated mobile UI | iPhone 7/13 landscape, iPhone 13 portrait, iPad 6 landscape: no button/dial overlaps, min 48 px targets |
+| Input actions | GO, PARK, KEYS, EXIT exercised; Tune Handbrake=P worked; drag-off release changed intent throttle 1→0 |
+| Exit restoration | Custom HUD off, seat exited, native TouchGui restored |
+| VFX | Four held moments, uploaded textures, live client burst, no preview-address leftovers |
+
+Full phone multitouch and physical gamepad are unverified. Script timing is not total physics/GPU/network/memory profiling. Latency/loss/streaming, long soak, full reset/reconnect matrix and Roblox-aware strict analysis remain gates in READINESS.md.
+
+Reproduce the new checks in Studio Server:
+```lua
+local t=game.ServerStorage.AXZFTests
+require(t.RunUnitTest)()
+require(t.RecoveryTest)()
+local m=game.ServerStorage.AXZFCompatibilitySources.AXZF_AC_Sedan
+require(t.DriveTest)(m,require(m.Tune))
+require(t.JitterTest)(m,require(m.Tune))
+```
+For MigrationTest stop Play and run require(game.ServerStorage.AXZFTests.MigrationTest)() in Edit. CompatibilitySources requires separately acquired reviewed art; it is only in the author's ignored local scene, not public packages.
+
+Defects found during this update: sequential/per-frame support impulse jitter; cold assembly binding during parent signals (queued one engine heartbeat, guarded concurrent binds); device-switch layout/native TouchGui races; drag-off held inputs. All were repaired and relevant checks rerun.
+
+Test-fixture corrections: recovery needed its own floor outside the small demo track. The faster drive trial initially ran off the finite track; it now has a separate 2,000-stud lane (below engine part-size limits), with unchanged pass thresholds. Those failed setup runs were not recorded as driving passes.
+
+Local export corrections: old rbxmk XML cannot read current NetAsset payloads; native binary preserves geometry. Service descriptors are required when encoding a place. Current native PhysicalProperties decoding was also incompatible; local exported cars use explicit authored mass in Tune and omit that corrupt root payload. The public migration/factory still creates the root normally. These are packaging fixes, not evidence that all arbitrary binary converters or user rigs are supported.
+
+---
+
 # Verification record — 2026-10-29
 
 Candidate: 0.1.0-rc.1, from this repository's source/packages. Original Studio: A-XZF-Tune, placeId 72435697524161, universe 10773638854. Synthetic development tests, no persistent state or publishing. One desktop client for keyboard/device checks; a separate StudioTestService session launched **two actual client DataModels** for the multiplayer checks. Phone/tablet are Studio simulation, not physical hardware.
@@ -79,3 +123,7 @@ Existing Studio plugins emitted `Roundy`/`Animation Spoofer` errors and large di
 Not yet verified: physical phone/tablet/gamepad operation, portrait layout, adverse network latency/loss, reconnect and character-reset matrix, hours-long soak, total engine/network/memory budgets, full strict static analysis with Roblox type definitions, Rojo build, arbitrary user-art rigs and streaming boundary behavior. These are tracked in READINESS.md/ROADMAP.md, not marked passed.
 
 All tool-started Play sessions ended. Device simulator returned to landscape/default viewport. Temporary experiment/drive/handling/benchmark cars and remotes were removed; intentionally retained are the two evaluation cars and test track, plus an inert imported source copy in the author's Studio. No production persistence, purchases, analytics or publishing were used.
+
+Final disk verification: the rebuilt build/A-XZF-CompatibilityDemo.rbxl was independently reopened, four source rigs passed Doctor with exact dimensions/45 MeshParts/31 unions and explicit Tune mass, then all five vehicles bound upright at stable heights and75 units passed. Server Workspace playing emitters0 and preview leftovers empty. See evidence/v2-delivery-file.json.
+
+Final cancellation regression: DelayedTune fixture exercises remove/re-add while configuration is loading; pendingCancelRebind and all lifecycle flags passed. Latest source compiles49 Luau files;68 headless and75 Studio units pass. Raw: evidence/v2-final-regression.json.

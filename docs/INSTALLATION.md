@@ -11,10 +11,13 @@ Back up your place. Insert `build/A-XZF-Tune.rbxmx` through Studio's Insert from
 | Wrapper folder | Destination |
 |---|---|
 | ReplicatedStorage/AXZF | ReplicatedStorage |
+| ReplicatedStorage/VFX | ReplicatedStorage |
 | ServerScriptService/AXZFServer | ServerScriptService |
 | StarterPlayer/StarterPlayerScripts/Driver | StarterPlayer/StarterPlayerScripts |
+| StarterPlayer/StarterPlayerScripts/VehicleEffects | StarterPlayer/StarterPlayerScripts |
+| ServerStorage/AXZFExamples/VehicleTune | ServerStorage/AXZFExamples |
 
-Move the contents, not duplicate Roblox service folders into Workspace. Delete the empty wrapper. `AXZFServer.Bootstrap` starts the fleet once. If you manage fleet startup yourself, remove/disable Bootstrap and call `Fleet.start()` once. Runtime does not need examples or test code. The package does not publish your game or make web requests.
+Move the contents, not duplicate Roblox service folders into Workspace. Delete the empty wrapper. `AXZFServer.Bootstrap` builds the cockpit template and starts the fleet once. If you manage fleet startup yourself, remove/disable Bootstrap, perform its UI template setup, then call `Fleet.start()` once. The included VehicleTune template supports configuration/migration; other examples/tests are optional. The package does not publish your game or make web requests.
 
 Set up your vehicle using [the rig contract](MODEL-INTEGRATION.md), then tag the Model `AXZFVehicle` using Studio's Tag Editor or `CollectionService:AddTag(model,"AXZFVehicle")`. Tag only after geometry and Tune are ready. Late-spawned pre-tagged models are supported. Failures set `AXZFError` on the Model and warn with a reason. Fix the issue, then remove/re-add the tag to retry.
 
@@ -28,4 +31,4 @@ For CLI checks download official Luau 0.744. Linux archive SHA256: `6506f0852c62
 
 ## Update / uninstall
 
-Stop Play, back up the place and retain your model geometry/Tune. Remove the old runtime folders and Driver, then install the new version; do not leave two Bootstraps. For runtime removal, remove the vehicle tag or call your fleet's `stop()` first. This restores bound geometry and removes owned joints/remotes. Keep schema-version changes in version control and compare Tune defaults when updating. No persistent player data needs migration.
+Stop Play, back up the place and retain your model geometry/Tune. Remove the old runtime folders, Driver and VehicleEffects, then install the new version; do not leave two Bootstraps. For runtime removal, remove the vehicle tag or call your fleet's `stop()` first. This restores bound geometry and removes owned joints/remotes. Keep schema-version changes in version control and compare Tune defaults when updating. No persistent player data needs migration.

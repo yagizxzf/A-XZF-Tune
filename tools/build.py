@@ -14,6 +14,8 @@ def sources():
     groups = [("src/Shared", "ReplicatedStorage.AXZF.Shared"),
               ("src/Server", "ServerScriptService.AXZFServer"),
               ("src/Client", "StarterPlayer.StarterPlayerScripts"),
+              ("ui/runtime", "ReplicatedStorage.AXZF.UI"),
+              ("vfx/runtime", "ReplicatedStorage.VFX"),
               ("examples", "ServerStorage.AXZFExamples"),
               ("tests", "ServerStorage.AXZFTests")]
     for folder, prefix in groups:
@@ -72,7 +74,7 @@ def make_xml(entries, kit=False):
 def build():
     BUILD.mkdir(exist_ok=True)
     entries = sources()
-    runtime = [e for e in entries if e["path"].startswith("src/")]
+    runtime = [e for e in entries if e["path"].startswith(("src/", "ui/runtime/", "vfx/runtime/")) or e["path"] == "examples/VehicleTune.luau"]
     (BUILD / "A-XZF-Tune.rbxmx").write_bytes(make_xml(runtime, kit=True))
     (BUILD / "A-XZF-Tune-Demo.rbxlx").write_bytes(make_xml(entries))
     manifest = [{k: v for k, v in e.items() if k != "source"} |

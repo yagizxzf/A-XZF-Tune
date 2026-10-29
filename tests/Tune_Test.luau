@@ -3,6 +3,12 @@ return function(t)
 	local T=require(game.ReplicatedStorage.AXZF.Shared.Tune) local e=t.expect
 	-- Versioned configuration rejects typos instead of silently using defaults.
 	t.test("default tune resolves",function() e.equal(T.resolve(nil).SchemaVersion,1) end)
+	t.test("custom keyboard binding resolves",function() e.equal(T.resolve({Controls={Handbrake="P"}}).Controls.Handbrake,"P") end)
+	t.test("duplicate keyboard bindings rejected",function() e.throws(function() T.resolve({Controls={Brake="W"}}) end) end)
+	t.test("unknown keyboard key rejected",function() e.throws(function() T.resolve({Controls={Brake="UnknownKey"}}) end) end)
+	t.test("control maps cannot mutate after resolution",function() e.throws(function() T.resolve(nil).Controls.Brake="P" end) end)
+	t.test("recovery requires boolean",function() e.throws(function() T.resolve({AutoRecover=1}) end) end)
+	t.test("power must be bounded",function() e.throws(function() T.resolve({Power=10}) end) end)
 	t.test("unknown field rejected",function() e.throws(function() T.resolve({Gripp=2}) end) end)
 	t.test("unknown schema rejected",function() e.throws(function() T.resolve({SchemaVersion=2}) end) end)
 	t.test("NaN grip rejected",function() e.throws(function() T.resolve({Grip=0/0}) end) end)

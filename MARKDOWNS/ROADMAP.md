@@ -20,6 +20,25 @@ Kullanıcının kapsamı: A-XZF-Tune adında sıfırdan A-Chassis alternatifi, v
 
 Başlangıç planının devamı: yukarıdaki uygulama/test/belge aşamaları tamamlandı. Kanıt: docs/TESTING.md ve evidence/studio-results.json. 2026-10-29T15:39:07+03:00 itibarıyla GitHub main f870ffc kaynak sürümü ve remote Validate CI başarılı. Bu teslim release candidate değerlendirmesidir.
 
-Production değerlendirme raporu **tamamlandı**, stabil v1.0 sertifikasyonu **bekliyor**: fiziksel mobil/gamepad, portre, kötü ağ/streaming, death-reset-reconnect matrisi, uzun soak/toplam engine-memory-network profili, Roblox type-aware analiz ve farklı kullanıcı rigleri. Başlangıçta istenen production hedefi bu testler yapılmadan tamamlandı sayılmaz. docs/READINESS.md koşulları ayrıntılandırır. Ses/damage/prediction/clutch gibi uygulanmayan özellikler kesinleşmiş yeni kapsam değildir.
+Production değerlendirme raporu **tamamlandı**, stabil v1.0 sertifikasyonu **bekliyor**: fiziksel mobil/gamepad, kötü ağ/streaming, death-reset-reconnect matrisi, uzun soak/toplam engine-memory-network profili, Roblox type-aware analiz ve farklı kullanıcı rigleri. Başlangıçta istenen production hedefi bu testler yapılmadan tamamlandı sayılmaz. docs/READINESS.md koşulları ayrıntılandırır. Ses/damage/prediction/clutch gibi uygulanmayan özellikler kesinleşmiş yeni kapsam değildir.
 
 Bağımlılık: sözleşme → saf hesaplar → rig/runtime → örnekler → Studio testleri → hata düzeltme → teslim. Dış model lisansı kit lisansından ayrı; yeniden dağıtım doğrulanmadan modele MIT etiketi uygulanmaz.
+
+## İkinci geliştirme kapsamı — 2026-10-29
+
+Kullanıcı tarafından istenenler: otomatik devrilme düzeltme; varsayılan VehicleSeat HUD yerine hız/vites/RPM ve tuş ipuçları olan gizlenebilir özel HUD; mobil gaz/fren/direksiyon/el freni/çıkış; import aracının sallanmasının giderilmesi; gerçek A-Chassis Toolbox araçlarında kolay dönüşüm ve birkaç araçlık uyumluluk matrisi; araç içindeki açıklamalı Tune'dan temel fizik/güç/kontrol ayarları; roblox-vfx becerisiyle sürüş efektleri.
+
+| İş | Durum | Doğrulama |
+|---|---|---|
+| Sallanma teşhisi ve çözümü | tamamlandı | aynı sahnede önce/sonra + beş rig jitter eşiği geçti |
+| Otomatik kurtarma | tamamlandı | inverted/airborne/upright/blocked/occupied senaryoları geçti |
+| HUD ve mobil kontrol | tamamlandı | yuvarlak tasarım kullanıcı tarafından onaylandı; cihaz yerleşimleri ve input geçti |
+| Genişletilmiş açıklamalı Tune | tamamlandı | tutorial/şema/Power-MaxSpeed-Mass/tuş düzeni; P remap doğrulandı |
+| A-Chassis dönüşüm aracı | tamamlandı | Edit-only geometry clone, kaynak korunur, güvenlik fixture geçti |
+| Çok araç uyumluluk | tamamlandı | üç gerçek A-Chassis car; Doctor/drive/jitter/cleanup geçti |
+| Sürüş VFX | tamamlandı | community MCP, özel texture, dört hold + canlı client kontrolü |
+| Paket/belge/CI teslimi | sürüyor | paketler/belgeler/yerel dosya doğrulandı; commit/push/head CI sırada |
+
+Başlangıç titreşim ölçümü: 120 PostSimulation örneğinde prototip RMS vy 0.202, RMS açısal hız 0; import RMS vy 0.755, RMS açısal hız 1.970 rad/s, tepe 3.327. Bu kayıt çözüm sonucu değildir.
+
+0.2 detay/kanıt: docs/COMPATIBILITY.md, docs/HUD.md, docs/VFX.md ve docs/TESTING.md güncel bölümü. Portre simulator kontrolü tamamlandı; fiziksel cihaz ve modern A-Chassis1.7.2 model testi hâlâ açık. Stabil v1.0 koşulları korunur.

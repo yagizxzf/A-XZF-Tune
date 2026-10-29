@@ -1,0 +1,14 @@
+{
+  "source": {
+    "returnValue": "{\"sourceCount\":54,\"cars\":{\"AXZF_AC_SUV\":{\"doctor\":{\"ok\":true,\"parts\":77,\"warnings\":[],\"errors\":[]},\"mass\":36.530954428692648,\"brakeKey\":\"Space\",\"meshes\":0,\"unions\":4,\"size\":\"5.107851028442383, 0.699999988079071, 8.514193534851074\"},\"AXZF_ImportedCar\":{\"doctor\":{\"ok\":true,\"parts\":47,\"warnings\":[],\"errors\":[]},\"mass\":64.03200305986408,\"brakeKey\":\"Space\",\"meshes\":45,\"unions\":0,\"size\":\"5.800000190734863, 0.800000011920929, 11.5\"},\"AXZF_AC_Police\":{\"doctor\":{\"ok\":true,\"parts\":87,\"warnings\":[],\"errors\":[]},\"mass\":65.48610122667643,\"brakeKey\":\"Space\",\"meshes\":0,\"unions\":16,\"size\":\"6.715020656585693, 0.699999988079071, 11.609740257263184\"},\"AXZF_AC_Sedan\":{\"doctor\":{\"ok\":true,\"parts\":118,\"warnings\":[],\"errors\":[]},\"mass\":48.83010405933595,\"brakeKey\":\"Space\",\"meshes\":0,\"unions\":11,\"size\":\"5.092068672180176, 0.699999988079071, 11.416004180908203\"}}}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  },
+  "runtime": {
+    "returnValue": "{\"cars\":{\"AXZF_AC_Police\":{\"height\":2.194300413131714,\"mass\":65.4861068725586,\"pass\":true,\"up\":1},\"AXZF_AC_Sedan\":{\"height\":2.094301462173462,\"mass\":48.83010482788086,\"pass\":true,\"up\":1},\"AXZF_ImportedCar\":{\"height\":2.394301176071167,\"mass\":64.0320053100586,\"pass\":true,\"up\":1},\"AXZF_AC_SUV\":{\"height\":1.844711184501648,\"mass\":36.53095626831055,\"pass\":true,\"up\":0.9999856352806091},\"AXZF_Prototype\":{\"height\":2.3443000316619875,\"mass\":51.07200241088867,\"pass\":true,\"up\":0.9999999403953552}},\"serverPlayingEmitters\":0,\"preview\":[],\"pass\":true,\"units\":{\"failed\":0,\"run\":75,\"passed\":75}}",
+    "message": "Code executed successfully",
+    "success": true,
+    "output": []
+  }
+}

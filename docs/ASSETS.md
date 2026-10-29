@@ -35,10 +35,18 @@ With the demo/source examples installed, in Edit mode:
 local source = game.ServerStorage.__AssetReview.Car_RobloxResources_Review
 local car = require(game.ServerStorage.AXZFExamples.CreatorCarAdapter)(source, CFrame.new(12,5,35))
 car.Parent = workspace
--- Add your own root Tune ModuleScript: return {Radius=1.5,Drive="FWD",TorqueScale=5}
+-- Adapter adds the commented AXZF Tune (Radius=1.5, FWD, TorqueScale=5).
 game:GetService("CollectionService"):AddTag(car,"AXZFVehicle")
 ```
 
 Set Tune before tagging. The specific adapter expects this source hierarchy and fails on changed structure. For unrelated art use the explicit general adapter. Remove the unused source package after keeping an inert backup elsewhere. Public packages deliberately contain only original art generation; inserting the third-party car is an independent acquisition step.
 
-Rejected search alternatives: `133938791811141` had a deleted-creator label and bundled code; `4529389736` explicitly contained another A-Chassis vehicle. Neither was inserted. `6810376207` had a brand-related description and unnecessary provenance ambiguity; not inserted. Search listings are observations, not legal conclusions.
+Initially rejected: `133938791811141` had a deleted-creator label and bundled code and was never inserted. `4529389736` was initially skipped, then deliberately acquired during the user's second-round A-Chassis migration request. It and two additional cars were quarantined and migrated without running legacy code; see COMPATIBILITY.md. `6810376207` had a brand-related description and unnecessary provenance ambiguity; not inserted. Search listings are observations, not legal conclusions.
+
+## Additional migration sources
+
+A-Chassis Sedan 4529389736 (Atomicatfo), Police Sedan 5933886177 (Ravenhasabird57, listing asks credit) and SUV 9857510493 (sky031208) were separately obtained on 2026-10-29 for the requested compatibility work. All originals stayed inert in ServerStorage. New rigs retain only art plus authored AXZF Tune. Counts, tested conventions, results and rights caveats are in COMPATIBILITY.md. None of this third-party art is redistributed in public Git packages.
+
+The author's local build/A-XZF-CompatibilityDemo.rbxl includes all four real cars and the prototype. It is ignored by Git. Reproduce by native-exporting ServerStorage.AXZFCompatibilitySources to build/AXZF-CompatibilityCars.rbxm, then running python tools/export_compatibility.py. This optional helper uses rbxmk 0.9.1 with current service descriptors; Windows archive SHA256 387824c3c370d3fd10461b82bbc3cb9e51f4b8fa1293fafac9347675c94d373f. Native binary preserves union/mesh payloads; the older rbxmk XML conversion cannot round-trip current NetAsset properties. Normal public packaging needs no rbxmk.
+
+For the optional native writer, place a Studio API-Dump.json under .tools/rbxmk/ (the tested copy came from the Roblox-Client-Tracker engine-dump mirror), run `python tools/prepare_rbxmk_descriptor.py .tools/rbxmk/API-Dump.json .tools/rbxmk/API-Descriptor.json`, then `python tools/export_compatibility.py`. Raw aliases are decoded without reflection; Service tags are applied only during encoding. The helper writes each local car's authored mass explicitly in Tune because rbxmk 0.9.1 does not correctly decode current PhysicalProperties. This also makes copied local cars independent of that serialized density. The final file was reopened and all five bound vehicles, dimensions, 45 MeshParts, 31 unions and 75 unit tests were verified.
