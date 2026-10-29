@@ -1,0 +1,7 @@
+{
+  "syntaxErrors": 0,
+  "unexpectedGlobals": [],
+  "diagnosticLines": 287,
+  "robloxTypeDefinitionsPresent": false,
+  "note": "Standalone analyzer lacks Roblox globals and types; this is not a Roblox-aware type-check pass."
+}

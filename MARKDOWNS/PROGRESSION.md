@@ -75,3 +75,8 @@
 -Eskiwheel ileri+0.2667rad vsbeklenen-0.8(10stud/s,1.25radius,.1dt): tersyön ve fizikdtcapgörselhızhatası. WheelMotion+clientWheelVisuals fullvisualdt/Transform, hubaxes, perwheelpointvelocity, HB/parklock; force/authorityserverda. Main/proto/importileri/geri/rölanti/movingHBprobeları geçti. Yanlışphase-frame ilkprobe ve uygunolmayanHBsetupfalseçıktıları tutuldu, düzeltilmişpaired/movingtestgeçer.
 -61compile(59paket+2kaydedilendiagnosticprobe)/93headless/deterministikbuild, main/delivery100Studio geçti. Importdrive/Fleet ve4importjitterregresyonugeçer; temporarymotortagcleanup4baseline. Mainimportmean31.66stud/s,200.67wheelRPM, omegaerror0.000074rad/s.5cardelivery20motorboundupright100unit.
 -AsılmainStudio'ya sources/UI/Tune0.4aktarıldı, modeleözelayarlar/geometrikorundu. Public/nativepaketleryenilendi; binaryayrıyeniwindow'daaçılmadı, açıkdemodoğrulandı. TümPlay/devicekapalı,publishyok. Githubpush/CI bu kayıttahenüztamamlandıdeğil.
+
+## 2026-10-29T23:33:25+03:00
+- 0.4 kaynak1d92502e0a7c441b19a4971dd4278fb436571323 GitHub main'e gönderildi. Validate40949713762 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40949713762.
+- Client analyzer çalıştırıldı: syntax0, beklenmeyen global0. Roblox tanımları bulunmadığı için287 tanı satırı var; tam Roblox-aware type-check başarısı iddia edilmiyor. Kayıt evidence/v4-client-analysis.json.
+- Main Vehicle/WheelVisuals/Cockpit açık editör ve Source eşitliği doğrulandı. Lab/delivery sadece Edit peer; cihaz simülasyonu default, Play yok. Doğrulanmış headless export/render yardımcıları kapatıldı, kullanıcı önizleme sunucusu açık. Bu son kayıt ve devir notu ayrı docs commit'idir; kaynak değişikliği yok.

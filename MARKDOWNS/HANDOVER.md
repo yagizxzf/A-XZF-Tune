@@ -1,37 +1,49 @@
 # Güncel devir
 
-Son güncelleme: 2026-10-29T23:29:48+03:00. Okuma sırası: MARKDOWNS/AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtlar.
+Son güncelleme: 2026-10-29T23:33:25+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
 
-Kök C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune; dal main, origin https://github.com/yagizxzf/A-XZF-Tune. Bütün geliştirme burada. Önceki0.3 kaynak098e2a5 ve docs ee9717c/CI40928186558 success. Bu0.4 kaynak/test/paket değişiklikleri hazır; yeni push/CI bu kayıtta henüz başarılı sayılmıyor.
+Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origin https://github.com/yagizxzf/A-XZF-Tune. Tüm geliştirme burada kaldı. Güncel 0.4 kaynak commit'i 1d92502e0a7c441b19a4971dd4278fb436571323 main'e gönderildi. Validate40949713762 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40949713762. Son teslim ve analiz notu ayrı docs commit'idir.
 
-## Çalışan0.4
+## Çalışan sürüm ve kullanıcı kararları
 
-Kullanıcı fiziksel pedal/el freni görselleri ve gruplandırılmış mobil kontrol istedi, ardından önizlemeyi açıkça onayladı. Son isteği: direksiyon resmi yerine temaya uygun sol/sağ düğmeleri yapıp uygula. Bu doğrudan uygulama yetkisiyle değiştirildi; yeni onay beklenmiyor.
+0.4.0-rc.1 tamamlandı. Kullanıcı fiziksel pedal/el freni görselleri ile gruplandırılmış mobil kontrolleri onayladı. Ardından direksiyon resmi yerine aynı temada sol/sağ düğmeleri yapıp uygulamamızı açıkça istedi; bu son değişiklik de uygulandı. Bekleyen onay yok.
 
-AktifMobile: alt solda metal/kauçuk sol-sağ; sağ altta gaz/fren pedalı; üstünde ayrı el freni; sol üstteP/R/TUŞ/ÇIK. Yardımcı grup Roblox topbar'ından aşağıda(20,105 design). TUŞ ile ortada açılan klavye yardımı mobilde ilk başta gizli; kontroller kalır.5 görsel asenkron preload, yüklenmezse nativeetiket fallback, amberpress/toggle. Kaynak ui/build.py + ui/rbx.json; generatedui/runtime; ui/REVIEW.md yeni tercihler. Art ui/art/v4/control-atlas.png ve steering-buttons.png, built-in image_gen; PROMPTS/provenance/uploads kayıtlı. Orijinal atlasın steering-wheel hücresi kullanılmaz. Önceki Lucide files/notice korunur, aktifMobile ikon kullanmaz. ui/assets.json upload ledger;5 yeni asset, yakın-eş rasterhash alias'ı yeniden yüklenmedi.
+Aktif mobil görünüm: alt solda metal/kauçuk sol ve sağ düğmeleri, sağ altta gaz/fren pedalları, ayrı el freni görseli, sol üstte P/R/TUŞ/ÇIK grubu. Yardımcı grup Roblox üst çubuğunun altında (20,105 design). Mobilde klavye yardımı başlangıçta gizli; TUŞ ile açılır, sürüş kontrolleri görünür kalır. Beş resim ön yüklenir; yüklenemezse native metin yedeği görünür, giriş çalışmayı sürdürür. Basma/açık durumları amber renkle belirtilir.
 
-Teker sorunları doğrulandı: eski ileri+spin ters yöndeydi ve fizikdt1/30 görsel hızı düşürüyordu. Shared/WheelMotion (angularVelocity/rpm/advance) ile doğru yön/tam dt; Powertrain aynı roadRPM formülünü kullanır. Yeni Client/WheelVisuals yerelPreSimulation Motor6D.Transform uygular; Server/VehicleC0 yalnızca suspension/steering/baseorientation. Rig metadata AXZFWheelVisual tag,Radius/RollAxis/ForwardAxis/Rear. Her bağlanan Vehicle için çalışır, sadece standartFleet tag'ine bağlı değildir.250studgörselculling; kuvvet/yetki/remoteclient'a taşınmaz. HBarka/parktekerleri kilitler; durmuş araçta850rpm rölanti teker döndürmez. Bu bağımsız wheel-inertia/slip/clutch simülasyonu değildir.
+UI kaynağı ui/build.py ve ui/rbx.json; generated veri ui/runtime, davranış Cockpit.luau. Art: ui/art/v4/control-atlas.png ve steering-buttons.png; built-in image_gen kullanıldı. Tam prompt, provenance ve yükleme kayıtları aynı klasörde. Atlasın direksiyon hücresi kullanılmaz. Önceki Lucide dosyaları/bildirimi tarihsel kaynak olarak korunur; aktif Mobile verisi 5 art referansı ve 0 icon referansı içerir. ui/assets.json yükleme kaydıdır; değişmeyen resmi tekrar yükleme. Yakın eş raster hash'i mevcut HB asset'ine alias edildi.
 
-0.3 fizik/park/49 alanlı Türkçe Tune rehberi korunur. P ayrı latchedpark, Space arkaHB; requestexit/timeoutta korunur. Main iki Tune güncellendi, import Radius1.5/FWD/TorqueScale5/Power1 korundu; şablon ve4 sources içinde RPM/yarıçap açıklaması eklendi. TuneEditor Edit-only, mevcutTune için açık overrides; legacyTune yürütmez. Eski Handbrake=P remap'i varsa Park benzersizbaşka tuş olmalı.
+## Teker mimarisi
 
-## Gerçek kontroller
+Eski kod ileri sürüşte yanlış +X yönünde dönüyor, görsel süreyi fizik dt sınırı olan1/30 ile kısıtlıyordu. Shared/WheelMotion doğru yön ve tam görsel dt ile roadRPM hesaplar; Powertrain aynı dönüşümü kullanır. EngineRPM = wheelRPM × vites × final oranı, idle/redline sınırları içinde; rölantide sabit aracın tekeri dönmez.
 
-61 Luau syntaxcompile(59packaged +2diagnosticprobes),93headless ve deterministikbuild geçti. Main/delivery100/100Studio;10yeni WheelMotion case. Aktifmainimport canlıwheel maxomegaerror0.000074rad/s, jointposeerror0.000691rad; ileri/geri/prototype/import pairedprobes geçer. Rölanti850, wheelphaseDelta0; hareketliHB64.08stud/s rearDelta0 front0.2227rad/0.1s. İlk waiter probe yanlış dt/speed karesine bakıyordu; önceki dt ile eşlenen probe geçer, eski false çıktı korunur. İlkHBdenemelerinde araç sınırlı pistten çıkmış veya durmuştu; movingretest ayrı tutulur.
+Server/Vehicle motor C0 alanında süspansiyon, direksiyon ve hub taban yönünü tutar. Yeni Client/WheelVisuals, AXZFWheelVisual tag'li motorların metadata'sını okuyup PreSimulation'da yalnızca yerel Motor6D.Transform döndürür. Radius/RollAxis/ForwardAxis/Rear metadata'sı her Vehicle.new için kurulur; yalnızca standart Fleet tag'ine bağlı değildir. Per-wheel nokta hızı kullanılır; arka HB ve park kilitleri uygulanır.250 stud görsel mesafe sınırı var. Fizik kuvvetleri, ağ sahipliği ve yetki sunucuda kalır. Bu, bağımsız teker ataleti/slip/clutch simülasyonu değildir.
 
-Mobil iPhone7/13/iPadA16 landscape:5imagesloaded,1cockpit,9buttons,overlap0; minaux58.5x50.7px, steer94.25x130/gas97.5x185.25/brake123.5x143/HB117x117. P, gaz,fren,sol/sağ,R,HB,help/exit ve drag-out release geçti. EmptyImage fallback/restoration geçer. Main P/E ve WheelVisualsvarlığı geçti. Fizikselmultitouch/gamepad/0.4portrait/newmulti/adversenetwork profili yapılmadı; mevcutplaceLandscapeSensor.
+Manuel kurulumda bütün Client dosyalarını taşı: Driver, VehicleEffects ve WheelVisuals. Rojo ve normal paket yeni dosyayı içerir. Sadece yeni server Vehicle'ı kopyalayıp WheelVisuals'ı unutmak tekerleri görsel olarak sabit bırakır.
 
-ImportDrive+Fleet lifecycle geçti; temporaryriglerden sonra4baselineWheelTags kalır.4import180samplejitter angularRMS0.00261/0.03656/0.05084/0.00316rad/s, heightRange0. Delivery5car/20wheelTag tümüboundupright,100unit. Evidence evidence/v4-*.json; ui/shots/v4-studio-*.png; docs/TESTING.md#04-validation. Kullanılmış istemci ölçüm kaynakları tools/visual-probes/*.luau; client-only, input göndermez. HTMLkontrolü AXZF_UI_CHECK_RECORD=evidence/v4-html-checks.json ile alındı; v3 geçmişi korunur.
+0.3 park/fizik/49 alanlı Türkçe Tune rehberi korunur. P ayrı kalıcı park, Space arka el freni; park isteği çıkış/timeout ile bırakılmaz. Gerçek main iki araç ve4 kaynak Tune güncel; import Radius1.5/FWD/TorqueScale5/Power1 korundu. Şablona yol RPM/Radius açıklaması eklendi. TuneEditor Edit-only ve mevcut Tune için açık overrides ister; legacy Tune çalıştırılmaz. Eski Handbrake=P remap'inde Park başka benzersiz tuş kullanmalı.
 
-## Studio ve paketler
+## Son doğrulamalar
 
-Main built-in22a56821-c454-406f-86dd-4ea0c00752d6, A-XZF-Tune place72435697524161 güncel0.4, Edit. Kullanıcının penceresi kapatılmadı; R3dTuxedo/baseplate/spawn ve geometri korunur, canlıpublishyok. Ana eskipencerede communityplugin olmadığı için sadecebuhedefe built-in/SES installer kullanılır. MevcutStarterPlayerScripts'i yenidenparentetme. ScriptEditorService.UpdateSourceAsync +GetEditorSource; açıkbuffer/Source eşitliği birframegecikebilir.
+61 Luau compile (59 paket script'i +2 diagnostic probe),93 headless ve deterministik paket geçti. Main ve açık delivery demoda100/100 Studio testi geçti. On yeni WheelMotion testi var. Standalone client analyzer: 0 syntax error ve 0 beklenmeyen global; Roblox type definitions olmadığı için287 tanı satırı bulunuyor, tam Roblox-aware type-check geçti denmez.
 
-Lab communityinstance:i5h-8xn (built-in4b297fbf-84ef-47c1-9ab1-c06845d9c69a), deliveryinstance:9jh-9ve (e7f88962-485a-4a3b-aefa-159f877bd2f3), ikisiEdit. BaşlatılanPlay ve devicesimulation kapatıldı. Persistentnode_repl rpc/mt/installCode/tuneUpgradeCode bağlantısı var. Diğer eski kullanıcı Studio pencerelerini kapatma.
+Canlı ileri/geri/prototip/import teker ölçümleri geçti. Main import ort.31.66 stud/s,200.67 wheelRPM; azami omega hata0.000074 rad/s, eklem pozu hata0.000691 rad. Hareketli HB testi:64.08 stud/s'de arka dönüş0, ön0.2227 rad/0.1s. Rölanti850, teker delta0. İlk ölçüm yanlış kare dt'sine bakıyordu; önceki kare dt/hız ile eşlenen test geçti. Önceki false kayıtları korunur. İlk HB denemelerinde hareket koşulu sağlanmamıştı; başarılı moving retest ayrıdır.
 
-Public build/A-XZF-Tune.rbxmx ve A-XZF-Tune-Demo.rbxlx güncel. Yerel dış-art nativebundle build/AXZF-CompatibilityCars.rbxm ve build/A-XZF-CompatibilityDemo.rbxl yenilendi, Gitignore. Açıkdemo aynısrc/Tune ilePlay'de doğrulandı; yeni binary ayrıwindow'da yenidenaçılmadı. Dışcarartını MIT diye dağıtma.
+Mobil iPhone7/13 ve iPadA16 landscape:5 resim loaded,1 cockpit,9 düğme, overlap0. En küçük yardımcı hedef58.5×50.7px; telefon yön düğmesi94.25×130, gaz97.5×185.25, fren123.5×143, HB117×117. P, gaz/fren, sol/sağ, R, HB, yardım ve çıkış girişleri; dışarı bırakmada sıfırlama; image fallback ve TouchGui restorasyonu geçti. Fiziksel multitouch/gamepad,0.4 portre ve yeni multiplayer/adverse-network testi yapılmadı; place LandscapeSensor.
 
-Komutlar: python tools/build.py; python tools/check.py --compiler .tools/luau/luau-compile.exe --runtime .tools/luau/luau.exe. Optional python tools/export_compatibility.py, rbxmk0.9.1+uyumluAPI descriptor; rawsizealias ve Mass=1.2*volume workaround docs/ASSETS.md. RojoClientWheelVisuals yeni path'i içerir; manuelkurulumda bütünClient scriptlerini taşı. UIexporterheadless9333eskiDOM'a bağlanırsa yalnızca doğrulanmış headlesscdp-*helperkapat; görünür tarayıcıyı kapatma.
+Import DriveTest/Fleet yaşam döngüsü geçti; geçici rigler silinince4 baseline wheel tag kaldı. Dört import jitter testi geçti: açısal RMS0.00261/0.03656/0.05084/0.00316rad/s; heightRange0. Delivery5 araç/20 motor, tümü bound/upright,100 unit geçti. Main P/E ve WheelVisuals varlığı doğrulandı. Kanıt: evidence/v4-*.json, ui/shots/v4-studio-*.png ve docs/TESTING.md#04-validation. Kaydedilmiş istemci ölçümleri tools/visual-probes; input göndermez, Studio Client bağlamında çalışır. HTML kayıt adı için AXZF_UI_CHECK_RECORD env kullan; tarihsel v3 kayıtlarını yeniden yazma.
 
-## Sıradaki adım
+## Studio, paketler ve komutlar
 
-0.4 değişikliklerini commit/push et, ValidateCI sonucunu oku ve PROGRESSION/ROADMAP/HANDOVER teslimini güncelle. Bu4 yeni süreklilik dosyası oluşturulmadı, mevcutlar devamettirildi. Stabil1.0 kapıları fizikselinput, kötüağ/streaming, uzunsoak/toplamprofil, Roblox-awaretyping ve modernA-Chassis1.7.2 testleri açık; tamamlandı sayma.
+Asıl kullanıcı Studio: A-XZF-Tune place72435697524161, built-in22a56821-c454-406f-86dd-4ea0c00752d6.0.4 kurulu, Edit. Vehicle/WheelVisuals/Cockpit Source ile açık editör buffer'ı eşitliği geçti. R3dTuxedo/baseplate/spawn ve geometri korundu; kullanıcı penceresi kapatılmadı, canlı publish yok. Bu eski pencerede community plugin yüklü değil; yalnızca bu hedef için mevcut built-in bağlantı ve SES installer kullanılır.
+
+Lab communityinstance:i5h-8xn (built-in4b297fbf-84ef-47c1-9ab1-c06845d9c69a), deliveryinstance:9jh-9ve (e7f88962-485a-4a3b-aefa-159f877bd2f3). İkisi Edit, aktif test yok; cihaz simülasyonu default. Persistent node_repl rpc/mt/installCode/tuneUpgradeCode bağlantısı mevcut. Diğer eski kullanıcı Studio pencerelerini kapatma.
+
+Public build/A-XZF-Tune.rbxmx ve A-XZF-Tune-Demo.rbxlx güncel. Yerel dış-art bundle build/AXZF-CompatibilityCars.rbxm ve build/A-XZF-CompatibilityDemo.rbxl yenilendi, Git dışında. Açık demo güncellenip test edildi; yeni binary ayrı pencerede yeniden açılmadı. Dış araç sanatını MIT diye dağıtma.
+
+Komutlar: python tools/build.py; python tools/check.py --compiler .tools/luau/luau-compile.exe --runtime .tools/luau/luau.exe. Optional python tools/export_compatibility.py; rbxmk0.9.1 ve uyumlu API descriptor gerekir. Native size alias/Mass=1.2*volume workaround docs/ASSETS.md içinde.
+
+Studio güncellemelerinde ScriptEditorService.UpdateSourceAsync ve okumada GetEditorSource kullan; mevcut StarterPlayerScripts gibi özel container'ları yeniden parent etme. UI export9333 headless Edge açık kalırsa yalnızca doğrulanmış headless/cdp-* yardımcısını kapat; aksi halde eski DOM'a export bağlanabilir. Görünür kullanıcı tarayıcısına dokunma. Bu oturumun headless export/render yardımcıları kapatıldı;8870 önizleme sunucusu kullanıcı için açık bırakıldı.
+
+## Devam
+
+İstenen0.4 uygulama, test, paket ve başarılı kaynak CI teslimi tamamlandı. Son devir notu ayrı docs commit'iyle gönderilir. Kullanıcı ana Studio'da Play ve DriveSeat ile deneyebilir. Stabil1.0 için önceki fiziksel cihaz, kötü ağ/streaming, uzun soak/toplam profil, Roblox-aware typing ve modern A-Chassis1.7.2 test kapıları açık kalır; tamamlandı sayılmaz.
