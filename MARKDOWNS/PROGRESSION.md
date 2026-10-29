@@ -37,3 +37,6 @@
 
 ## 2026-10-29T18:32:08+03:00
 - Son iptal-yeniden bağlama koruması için geciken Tune fixture ve regresyon eklendi: pendingCancelRebind geçti. Geçersiz eski işlem yeni işlemin token bilgisini silmiyor. Güncel kaynak49 Luau;68 headless,75 Studio ve tüm Fleet senaryoları geçti. Bu ek test fizik çözümünü değiştirmedi. Play durduruldu.
+
+## 2026-10-29T18:35:33+03:00
+- Kaynak07db86c GitHub main'e gönderildi. İlk remote Validate40902578751: compile49/headless68 geçti, paket byte eşitliği başarısız. Sebep Windows Path sıralamasının case-insensitive, Linux sıralamasının case-sensitive olması; VFXService/Vehicle kayıt sırası farklıydı. Build dosya adı string'iyle açık sıralandı, paketler yeniden üretildi, yerel kontroller geçti. Remote düzeltme doğrulaması sırada. Önceki başarısız CI başarılı olarak raporlanmıyor.

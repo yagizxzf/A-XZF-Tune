@@ -19,7 +19,9 @@ def sources():
               ("examples", "ServerStorage.AXZFExamples"),
               ("tests", "ServerStorage.AXZFTests")]
     for folder, prefix in groups:
-        for path in sorted((ROOT / folder).glob("*.luau")):
+        # Path ordering is case-insensitive on Windows and case-sensitive on Linux.
+        # Sort names explicitly so VFXService/Vehicle produce identical packages.
+        for path in sorted((ROOT / folder).glob("*.luau"), key=lambda path: path.name):
             name = path.stem
             cls = "ModuleScript"
             if name.endswith(".server"):

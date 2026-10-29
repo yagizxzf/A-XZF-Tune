@@ -127,3 +127,5 @@ All tool-started Play sessions ended. Device simulator returned to landscape/def
 Final disk verification: the rebuilt build/A-XZF-CompatibilityDemo.rbxl was independently reopened, four source rigs passed Doctor with exact dimensions/45 MeshParts/31 unions and explicit Tune mass, then all five vehicles bound upright at stable heights and75 units passed. Server Workspace playing emitters0 and preview leftovers empty. See evidence/v2-delivery-file.json.
 
 Final cancellation regression: DelayedTune fixture exercises remove/re-add while configuration is loading; pendingCancelRebind and all lifecycle flags passed. Latest source compiles49 Luau files;68 headless and75 Studio units pass. Raw: evidence/v2-final-regression.json.
+
+Cross-platform packaging correction: the first 0.2 remote run compiled49 files and passed68 cases but failed byte reproducibility. Windows Path ordering differed from Linux for VFXService/Vehicle. tools/build.py now sorts filename strings explicitly; regenerated packages pass local checks. Final successful remote run is recorded in HANDOVER.md after verification.
