@@ -1,0 +1,12 @@
+{
+  "sourceCommit": "2d251034caf13832b20fa2d3f70c75ad1ac20aaf",
+  "runId": 40903141125,
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40903141125",
+  "checkedAt": "2026-10-29T18:39:23+03:00",
+  "compileFiles": 49,
+  "headlessCases": 68,
+  "priorFailedRun": 40902578751,
+  "priorFailure": "Platform-dependent Path filename sorting; fixed with explicit string key"
+}

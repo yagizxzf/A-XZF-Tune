@@ -40,3 +40,7 @@
 
 ## 2026-10-29T18:35:33+03:00
 - Kaynak07db86c GitHub main'e gönderildi. İlk remote Validate40902578751: compile49/headless68 geçti, paket byte eşitliği başarısız. Sebep Windows Path sıralamasının case-insensitive, Linux sıralamasının case-sensitive olması; VFXService/Vehicle kayıt sırası farklıydı. Build dosya adı string'iyle açık sıralandı, paketler yeniden üretildi, yerel kontroller geçti. Remote düzeltme doğrulaması sırada. Önceki başarısız CI başarılı olarak raporlanmıyor.
+
+## 2026-10-29T18:39:23+03:00
+- 2d251034caf13832b20fa2d3f70c75ad1ac20aaf main'e gönderildi. GitHub Validate40903141125 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40903141125.49 compile/68 headless/deterministik paket kontrolü remote ortamda geçti.75 Studio ve son pendingCancelRebind sonuçları kanıt dosyalarında.
+- İstenen0.2 geliştirme teslimi tamamlandı; HANDOVER/ROADMAP güncellendi. Yerel gerçek araçlı .rbxl Git dışında; public kaynak/paket/docs GitHub'da. Stabil v1.0 adoption koşulları açık tutuldu.
