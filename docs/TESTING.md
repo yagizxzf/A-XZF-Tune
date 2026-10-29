@@ -2,6 +2,8 @@
 
 Candidate: 0.1.0-rc.1, from this repository's source/packages. Original Studio: A-XZF-Tune, placeId 72435697524161, universe 10773638854. Synthetic development tests, no persistent state or publishing. One desktop client for keyboard/device checks; a separate StudioTestService session launched **two actual client DataModels** for the multiplayer checks. Phone/tablet are Studio simulation, not physical hardware.
 
+Published source revision `f870ffc`: [remote Validate run passed](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40874968917). Later delivery-record changes do not alter the tested vehicle solver.
+
 Raw attributable tool results: [evidence/studio-results.json](../evidence/studio-results.json). UI evidence: [phone](../evidence/phone-landscape.png) and [tablet with explicit exit](../evidence/tablet-landscape.png). Phone image precedes the final addition of Exit/hiding default character controls; tablet image shows that final layout. Do not interpret the earlier screenshot as the final seven-button surface.
 
 ## Results

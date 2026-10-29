@@ -1,6 +1,6 @@
 # Devir
 
-Son güncelleme: 2026-10-29T15:36:37+03:00 (uygulama/test sonu; GitHub teslimi sürüyor).
+Son güncelleme: 2026-10-29T15:39:07+03:00 (kaynak GitHub'a gönderildi, remote CI geçti).
 
 Okuma sırası: AGENTS.md → HANDOVER.md → ROADMAP.md → PROGRESSION.md son kayıtları (hepsi MARKDOWNS/ içinde).
 
@@ -20,4 +20,6 @@ Studio pluginleri Roundy/Animation Spoofer gibi kit dışı hatalar veriyor; gen
 
 Release candidate hazır; stabil v1.0 tamamlanmadı. Fiziksel cihaz/gamepad, portre, kötü ağ/streaming, death-reset-reconnect, uzun soak/toplam profil/type-aware analiz açık. Ayrıntı docs/READINESS.md ve ROADMAP.md.
 
-Sıradaki somut adımlar: GitHub'a kaynak/belgeler/public paketler/test kanıtlarını gönder; CI sonucunu doğrula; gerçek SHA/CI bilgisini bu dosyaya ve PROGRESSION'a ekle. Canlı Roblox publish yapılmadı.
+GitHub teslimi: main kaynak commit `f870ffcabee823d985be5b95d7cb5aaecc0d0796`; Validate run `40874968917` completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40874968917. İlk README connector ile, kaynak commit/push connector taşıma hatası ardından mevcut Git credential manager ile yapıldı. Yerel dal main, origin/main ile eşlendi. Devir kaydı ayrı takip commit'iyle gönderilir.
+
+Sıradaki somut geliştirme: docs/READINESS.md içindeki adoption testlerini tamamlayıp v1.0 kararı vermek. Şu an release candidate kullanılabilir; kullanıcıya çalışan demo ve yerel gerçek araçlı sahne yolları verilir. Canlı Roblox publish yapılmadı.

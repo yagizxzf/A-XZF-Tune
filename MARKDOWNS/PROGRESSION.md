@@ -16,3 +16,9 @@
 - İki gerçek istemci StudioTestService testi geçti: sürücü dışı kontrol/bozuk/replay reddi, doğru sürüş, server ownership ve exit. Telefon/tablet simülasyonunda düğme overlap düzeltildi; 64 px safe area, Exit/native control restoration geçti. Textbox focus hareketi engelledi; focus sonrası gaz tekrar çalıştı.
 - Python .rbxmx/.rbxlx paketleme, local art export ve pinned/hash-verified Luau CI eklendi. Bağımsız demo yeni Studio'da açıldı ve 65 test geçti. Yerel mesh export ilk denemede InitialSize eksikliği tespit edilip düzeltildi, yeniden açılan mesh size orijinalle eşleşti.
 - Kurulum/model/API/tuning/migration/assets/testing/readiness, MIT, katkı/güvenlik/changelog yazıldı. Release candidate 0.1.0; stabil production gates açık. Play durduruldu, cihaz simülatörü defaulta alındı. GitHub teslimi sırada; henüz push/CI sonucu bu kayıtta başarılı sayılmıyor.
+
+## 2026-10-29T15:39:07+03:00
+- GitHub main'e `f870ffcabee823d985be5b95d7cb5aaecc0d0796` kaynak sürümü gönderildi. Connector create_commit taşıma hatası sonrası mevcut Git credential manager ile normal commit/push başarılı oldu; zorla push yok.
+- Remote Validate CI run 40874968917 completed/success; yerel 28 compile / 58 headless / deterministik build sonuçlarıyla uyumlu.
+- .gitattributes LF ile Windows/Linux paket byte tutarlılığı korundu. Studio lock dosyaları index'ten çıkarılıp ignore edildi; gerçek kaynaklar korunur. Yerel sanat sahnesi/geometri dump'ı Git dışında.
+- HANDOVER/ROADMAP durumları güncellendi. Stabil v1.0 için kalan adoption testleri açık; bu sonuçlar tamamlanmış gibi işaretlenmedi.

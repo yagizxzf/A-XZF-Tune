@@ -61,7 +61,7 @@ def export():
     script=ET.SubElement(service,"Item",{"class":"Script","referent":"LocalArtRegistration"})
     ET.SubElement(script,"Properties")
     build.prop(script,"string","Name","ImportedCarRegistration")
-    build.prop(script,"ProtectedString","Source",'local m=workspace:WaitForChild("AXZF_ImportedCar") m:SetAttribute("SourceAsset","14215126016") game:GetService("CollectionService"):AddTag(m,"AXZFVehicle")')
+    build.prop(script,"ProtectedString","Source",'local m=workspace:WaitForChild("AXZF_ImportedCar") m.Chassis.CustomPhysicalProperties=PhysicalProperties.new(1.2,.3,0,100,100) m:SetAttribute("SourceAsset","14215126016") game:GetService("CollectionService"):AddTag(m,"AXZFVehicle")')
     ET.indent(tree,space="  ")
     path=ROOT/"build/Studio-With-ImportedCar.rbxlx"
     path.write_bytes(ET.tostring(tree,encoding="utf-8",xml_declaration=True))
