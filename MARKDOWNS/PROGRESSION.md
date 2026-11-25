@@ -98,3 +98,7 @@
 - ImageGen transparan atlasından beş özgün PNG çıkarılıp yüklendi. SVG yedek görüntü yüklenmezse görünür. Son Studio testinde beş resim yüklendi, SVG fallback çıkar/restorasyon, 48×48 minimum, park/HB, yardım, çıkış, tüm sürüş girdileri ve basış .94 ölçeği doğrulandı.
 - iPhone 7/13/17 Pro, Galaxy A16, iPad A16 yatay ve iPhone 13 dikey ölçümleri geçti. Masaüstü çeyrek kesit ve H/P geçti. 100 Studio, 93 headless, 61 compile ve altı HTML kontrolü geçti. Play durduruldu, başlangıç iPhone 17 Pro yatay profili geri getirildi.
 - Figma mobil/masaüstü/yardım katmanları oluşturuldu ve yeni resim katmanları doğrulandı. Mobil örnek devir yazısı ilk Figma çekiminde iki satıra kırılıyordu. Boyutu düzelttikten sonra yeni çekimde tek satır. GitHub CI bu kayıtta henüz tamamlanmadı.
+
+## 2026-11-25T21:24:19+03:00
+- Saydam Türkçe HUD ve ImageGen simgelerinin kaynak commit'i 3cecf1ac5664fc19c4e681c31063f68700fc28e7 main'e gönderildi. Validate 45674607510 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45674607510.
+- Ana Studio Edit ve başlangıç iPhone 17 Pro yatay profili etkin. Tarayıcıda son mobil önizleme açıldı. Figma'da Saydam Minimal sayfası ve son renderlar doğrulandı. Bu son kayıt belge değişikliğidir.

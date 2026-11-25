@@ -71,4 +71,4 @@ Tamamlandı. Mevcut yuvarlak HUD, yardım ve fiziksel kontroller küçültüldü
 
 ## Türkçe, kırpılmış gösterge — 2026-11-25
 
-Uygulama ve Studio doğrulaması tamamlandı. Üç seçenek galerisinden sonra kullanıcı siyah-beyaz saydam görünümü ve ImageGen simgelerini belirledi. Mobil yarım ve masaüstü çeyrek gösterge, Türkçe etiketler, başlangıçta kapalı yardım ve animasyonlar ana Studio ile düzenlenebilir Figma katmanlarına uygulandı. Profil/girdi kontrolleri ve paket üretimi geçti. GitHub gönderimi ve CI kaydı sürüyor.
+Tamamlandı. Üç seçenek galerisinden sonra kullanıcı siyah-beyaz saydam görünümü ve ImageGen simgelerini belirledi. Mobil yarım ve masaüstü çeyrek gösterge, Türkçe etiketler, başlangıçta kapalı yardım ve animasyonlar ana Studio ile düzenlenebilir Figma katmanlarına uygulandı. Profil/girdi kontrolleri ve paket üretimi geçti. GitHub main `3cecf1a`, [Validate 45674607510](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45674607510) başarılı.

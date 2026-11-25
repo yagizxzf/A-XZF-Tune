@@ -1,6 +1,6 @@
 # Güncel devir
 
-Son güncelleme: 2026-11-25T21:22:38+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
+Son güncelleme: 2026-11-25T21:24:19+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
 
 ## Güncel saydam HUD
 
@@ -8,7 +8,7 @@ Son güncelleme: 2026-11-25T21:22:38+03:00. Başlangıç okuma sırası: MARKDOW
 
 Ana Studio 72435697524161'de aktif GUI kaynakları ve otomatik oluşturulan Tune örneği eşitlendi. Prototip ve ithal araçtaki eski yardım varsayılanı güncellendi. Asıl sahne Play dışında, çalışmaya başlarken seçili olan iPhone 17 Pro LandscapeLeft profili geri getirildi. Figma sayfasında `2:4` mobil, `2:88` masaüstü, `2:125` açık yardım. [Figma](https://www.figma.com/design/dIEDDaIjSQVsDgpiKiu0y1?node-id=2-4)
 
-Beş ImageGen varlığı yüklenip canlı istemcide denendi. PNG atlas ve kaynak prompt `ui/art/minimal-controls/` altında, `ui/assets.json` yeni Roblox ID'lerini içerir. `ui/art/hud-icons.svg` çizgileri yerel düzenlenebilir yedek. Kanıt `evidence/v6-minimal-hud.json`, `evidence/v6-html-checks.json`, Studio fotoğrafları `ui/shots/v6-studio-*.jpg`. 100 Studio/93 headless/61 compile, paket denetimi, profiller ve gaz bırakma dahil giriş geçti. Fiziksel çoklu dokunuş denenmedi. Son GitHub CI kaydı PROGRESSION.md'de tutulur.
+Beş ImageGen varlığı yüklenip canlı istemcide denendi. PNG atlas ve kaynak prompt `ui/art/minimal-controls/` altında, `ui/assets.json` yeni Roblox ID'lerini içerir. `ui/art/hud-icons.svg` çizgileri yerel düzenlenebilir yedek. Kanıt `evidence/v6-minimal-hud.json`, `evidence/v6-html-checks.json`, Studio fotoğrafları `ui/shots/v6-studio-*.jpg`. 100 Studio/93 headless/61 compile, paket denetimi, profiller ve gaz bırakma dahil giriş geçti. Fiziksel çoklu dokunuş denenmedi. Kaynak `3cecf1a` GitHub main'de ve [Validate 45674607510](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45674607510) başarılı.
 
 ## Önceki kompakt HUD teslimi
 
