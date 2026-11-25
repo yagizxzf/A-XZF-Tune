@@ -1,6 +1,18 @@
 # Güncel devir
 
-Son güncelleme: 2026-10-29T23:33:25+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
+Son güncelleme: 2026-11-25T20:38:06+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
+
+## 2026-11-25 güncel durum
+
+Kullanıcı HUD'un özellikle mobilde küçültülüp iyileştirilmesini istedi. Mevcut dairesel gösterge 21 devir çizgisi, daha belirgin hız ve vites ile sadeleştirildi. Mobil alt köşelerde özgün pedal ve sol/sağ resimleri, el freni sağ üst pedal komşuluğunda ve tek satır P/R/TUŞ/ÇIK var. Yardım varsayılan kapalı, açıkken yatayda direksiyon üstüne yerleşir. Dar portrede gösterge pedalların üstüne çıkar. CoreUISafeInsets üst bar ve ekran çentikleri için boşluk sağlar. Aktif olan beş Roblox görsel ID'si korunur. ui/assets.json yeniden boyutlandırılmış crop alias'larını içerir.
+
+Kök ve dal aynı. Asıl Studio place 72435697524161, bu oturumda built-in `ea9dd415-697c-46ea-9c25-531b1098875e`, community `instance:b36-q7c`. Yeniden bağlantıda kimlikleri listele. Beş UI modülü açık editör kaynağıyla eşitlendi. Prototip ve import gerçek sahnede doğrulandı. Studio Edit, cihaz simülasyonu kapalı; mevcut Sensor yön ayarı ve R3dTuxedo korundu. Canlı yayın yok. Tarayıcı önizleme 8870 portunda çalışıyor.
+
+iPhone 13 yatay ölçümü: toplam dokunma alanı 85.780 → 25.652 px², gösterge sınır alanı %43,6 küçüldü. 48×48 minimum, yardım, park/HB, ayrılma, giriş bırakma ve fallback doğrulandı. iPhone 7/13, Galaxy A16, iPad A16 yatay ve iPhone 13 dikey yerleşimler geçti. 100 Studio, 93 headless, 61 compile ve deterministik paket geçti. Kanıtlar `evidence/v5-compact-hud-studio.json`, `evidence/v5-html-checks.json` ve `ui/shots/v5-studio-*.png`. Fiziksel multitouch açık kalır. Public ve isteğe bağlı yerel paketler yeniden üretildi. GitHub teslim kaydı PROGRESSION.md son kaydına eklenir.
+
+Kaynak `ui/build.py`, `ui/rbx.json`, oluşturulan `ui/runtime/Data_*` ve `ui/runtime/Cockpit.luau`. Çalıştırma: `python -X utf8 ui/build.py`, `python tools/build.py` ve AGENTS'taki `tools/check.py` komutu. Açık üretim testlerini ROADMAP.md'den izle.
+
+## Önceki 0.4 teslim kaydı
 
 Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origin https://github.com/yagizxzf/A-XZF-Tune. Tüm geliştirme burada kaldı. Güncel 0.4 kaynak commit'i 1d92502e0a7c441b19a4971dd4278fb436571323 main'e gönderildi. Validate40949713762 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40949713762. Son teslim ve analiz notu ayrı docs commit'idir.
 
@@ -8,7 +20,7 @@ Kök: C:/Users/yagiz/Desktop/Projects/Life IS Roblox/A-XZF-Tune. Dal main; origi
 
 0.4.0-rc.1 tamamlandı. Kullanıcı fiziksel pedal/el freni görselleri ile gruplandırılmış mobil kontrolleri onayladı. Ardından direksiyon resmi yerine aynı temada sol/sağ düğmeleri yapıp uygulamamızı açıkça istedi; bu son değişiklik de uygulandı. Bekleyen onay yok.
 
-Aktif mobil görünüm: alt solda metal/kauçuk sol ve sağ düğmeleri, sağ altta gaz/fren pedalları, ayrı el freni görseli, sol üstte P/R/TUŞ/ÇIK grubu. Yardımcı grup Roblox üst çubuğunun altında (20,105 design). Mobilde klavye yardımı başlangıçta gizli; TUŞ ile açılır, sürüş kontrolleri görünür kalır. Beş resim ön yüklenir; yüklenemezse native metin yedeği görünür, giriş çalışmayı sürdürür. Basma/açık durumları amber renkle belirtilir.
+Önceki mobil görünüm: alt solda metal/kauçuk sol ve sağ düğmeleri, sağ altta gaz/fren pedalları, ayrı el freni görseli, sol üstte iki satır P/R/TUŞ/ÇIK grubu. Beş resim, metin yedeği ve amber geri bildirim kompakt sürüme taşındı.
 
 UI kaynağı ui/build.py ve ui/rbx.json; generated veri ui/runtime, davranış Cockpit.luau. Art: ui/art/v4/control-atlas.png ve steering-buttons.png; built-in image_gen kullanıldı. Tam prompt, provenance ve yükleme kayıtları aynı klasörde. Atlasın direksiyon hücresi kullanılmaz. Önceki Lucide dosyaları/bildirimi tarihsel kaynak olarak korunur; aktif Mobile verisi 5 art referansı ve 0 icon referansı içerir. ui/assets.json yükleme kaydıdır; değişmeyen resmi tekrar yükleme. Yakın eş raster hash'i mevcut HB asset'ine alias edildi.
 

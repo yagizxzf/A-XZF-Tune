@@ -1,39 +1,69 @@
 --!strict
 -- Runtime controller for the approved HTML-exported template; no visual construction here.
 local UIS=game:GetService("UserInputService")
+local AMBER = Color3.fromRGB(255, 188, 99)
+local IDLE_RIM = Color3.fromRGB(57, 74, 81)
+local REDLINE_RIM = Color3.fromRGB(255, 120, 106)
 local Cockpit={}
 Cockpit.__index=Cockpit
-local function label(parent,name)
-	local node=parent:FindFirstChild(name,true)
-	return if node then (if node:IsA("TextLabel") then node else node:FindFirstChildWhichIsA("TextLabel",true)) else nil
-end
 local function set(parent,name,value)
-	local text=label(parent,name)
-	if text then text.Text=tostring(value) text.Size=UDim2.fromScale(1,1) text.Position=UDim2.fromOffset(0,0) text.TextScaled=true end
-end
-local function image(parent,name)
-	local node=parent:FindFirstChild(name,true)
-	return if node then (if node:IsA("ImageLabel") then node else node:FindFirstChildWhichIsA("ImageLabel",true)) else nil
-end
-local function physicalState(button,name,on)
-	local art=image(button,name.."Art")
-	if art then
-		art.ImageColor3=if on then Color3.fromRGB(255,188,99) else Color3.new(1,1,1)
-		local fallback=button:FindFirstChild(name.."Fallback",true)
-		if fallback then fallback.Visible=not art.IsLoaded end
-		button.BackgroundTransparency=if art.IsLoaded then 1 else .15
+	local text = parent:FindFirstChild(name, true)
+	if text and text:IsA("TextLabel") then
+		text.Text = tostring(value)
+		text.TextScaled = true
 	end
-	button.BackgroundColor3=if on then Color3.fromRGB(119,80,31) else Color3.fromRGB(32,46,54)
+end
+local function cacheAppearance(button)
+	local face = button:FindFirstChild(button.Name .. "Face")
+	local artFrame = button:FindFirstChild(button.Name .. "Art")
+	local art = artFrame and artFrame:FindFirstChildWhichIsA("ImageLabel")
+	local fallback = button:FindFirstChild(button.Name .. "Fallback", true)
+	if fallback and fallback:IsA("TextLabel") then
+		fallback.TextScaled = true
+	end
+	return {
+		face = face,
+		stroke = face and face:FindFirstChildWhichIsA("UIStroke"),
+		restColor = face and face.BackgroundColor3,
+		restTransparency = face and face.BackgroundTransparency,
+		art = art,
+		fallback = fallback,
+	}
+end
+local function physicalState(appearance, on)
+	local face, stroke, art = appearance.face, appearance.stroke, appearance.art
+	if art and appearance.fallback then
+		appearance.fallback.Visible = not art.IsLoaded
+	end
+	if appearance.on == on then return end
+	appearance.on = on
+	if face then
+		face.BackgroundColor3 = if on then Color3.fromRGB(110, 75, 33) else appearance.restColor
+		face.BackgroundTransparency = if on then .12 else appearance.restTransparency
+	end
+	if stroke then
+		stroke.Color = if on then AMBER else Color3.fromRGB(163, 186, 192)
+		stroke.Transparency = if on then 0 else .62
+	end
 end
 function Cockpit.new(player: Player,action: any): any
 	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate",15)
 	assert(template,"[A-XZF-Tune] CockpitTemplate missing: start the default Fleet with the UI package installed")
-	local gui=template:Clone() gui.Name="AXZFCockpit" gui.IgnoreGuiInset=false gui.ScreenInsets=Enum.ScreenInsets.DeviceSafeInsets
+	local gui=template:Clone()
+	gui.Name="AXZFCockpit"
+	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
 	gui.Enabled=false gui.Parent=player:WaitForChild("PlayerGui")
-	local self=setmetatable({gui=gui,root=gui.Root,vehicle=nil,help=true,connections={},pressed={},mobile=UIS.TouchEnabled},Cockpit)
+	local self=setmetatable({
+		gui=gui, root=gui.Root, vehicle=nil, help=true, connections={}, pressed={},
+		mobile=UIS.TouchEnabled, touchAppearance={},
+	},Cockpit)
 	self.root.Dim.Visible=false
-	local dialScale=Instance.new("UIScale") dialScale.Name="DeviceScale" dialScale.Parent=self.root.Mobile.DashboardMobile
-	self.dialScale=dialScale
+	self.root.AnchorPoint = Vector2.zero
+	self.root.Position = UDim2.fromOffset(0, 0)
+	local helpScale = Instance.new("UIScale")
+	helpScale.Name = "DeviceScale"
+	helpScale.Parent = self.root.HUD.Controls
+	self.helpScale = helpScale
 	local images={}
 	for _,node in ipairs(self.root.Mobile:GetDescendants()) do if node:IsA("ImageLabel") then table.insert(images,node) end end
 	self.preload=task.spawn(function()
@@ -43,6 +73,7 @@ function Cockpit.new(player: Player,action: any): any
 	local function wire(name,id,toggle)
 		local button=gui.Root.Mobile:FindFirstChild(name,true)
 		if not button or not button:IsA("TextButton") then return end
+		self.touchAppearance[id] = cacheAppearance(button)
 		if toggle then table.insert(self.connections,button.Activated:Connect(function() action(id,true) end))
 		else
 			table.insert(self.connections,button.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then self.pressed[input]=id action(id,true) end end))
@@ -72,72 +103,108 @@ function Cockpit:setVehicle(model: Model?)
 	local function key(name) return model:GetAttribute("AXZF_Key"..name) or name end
 	local rows={key("Forward").." / "..key("Reverse"),key("Left").." / "..key("Right"),key("Brake"),key("Handbrake"),key("Park"),key("Exit"),key("HideControls")}
 	for i,value in ipairs(rows) do set(self.root.HUD.Controls,"Key"..(i-1),value) end
-	set(self.root.HUD.Toggle,"ShowControlsLabel",key("HideControls").."  CONTROLS")
+	set(self.root.HUD.Toggle,"ShowControlsLabel",key("HideControls").." · CONTROLS")
 	self:update()
 end
-function Cockpit:layout()
-	local viewport=self.gui.AbsoluteSize
-	local mobile=UIS.TouchEnabled self.mobile=mobile
-	local scale=math.clamp(math.min(viewport.X/1100,viewport.Y/700),if mobile then .65 else .65,1)
-	self.root.FitScale.Scale=scale self.root.Size=UDim2.fromOffset(viewport.X/scale,viewport.Y/scale)
-	self.root.AnchorPoint=Vector2.zero self.root.Position=UDim2.fromOffset(0,0)
-	self.root.HUD.Dashboard.Visible=not mobile
-	self.root.HUD.Controls.Visible=self.help
-	self.root.HUD.Toggle.Visible=not mobile
-	self.root.Mobile.Visible=mobile
-	local dashboard=if mobile then self.root.Mobile.DashboardMobile else self.root.HUD.Dashboard
-	dashboard.Position=if mobile then UDim2.new(.5,0,1,-12) else UDim2.new(1,-25,1,-12)
-	self.root.HUD.Controls.Position=UDim2.new(0,25,1,-12)
-	self.root.HUD.Toggle.Position=UDim2.new(0,25,1,if self.help then -332 else -12)
+function Cockpit:layout(recovering)
+	local viewport = self.gui.AbsoluteSize
+	local mobile = UIS.TouchEnabled
+	if self.mobile ~= mobile then
+		self.mobile = mobile
+		self.help = not mobile and self.vehicle:GetAttribute("AXZF_ConfigShowControls") ~= false
+	end
+	if self.layoutViewport == viewport and self.layoutMobile == mobile
+		and self.layoutHelp == self.help and self.layoutRecovery == recovering then return end
+	self.layoutViewport, self.layoutMobile = viewport, mobile
+	self.layoutHelp, self.layoutRecovery = self.help, recovering
+
+	local root = self.root
+	-- The exported phone controls already have a minimum 48px hit area at 1x.
+	local scale = if mobile then math.clamp(math.min(viewport.X / 840, viewport.Y / 430), 1, 1.16)
+		else math.clamp(math.min(viewport.X / 1400, viewport.Y / 820), .72, 1)
+	root.FitScale.Scale = scale
+	root.Size = UDim2.fromOffset(viewport.X / scale, viewport.Y / scale)
+	root.HUD.Dashboard.Visible = not mobile
+	root.HUD.Controls.Visible = self.help
+	root.HUD.Toggle.Visible = not mobile
+	root.Mobile.Visible = mobile
+
+	local controls = root.HUD.Controls
+	local recovery = root.Recovery.Recovery
 	if mobile then
-		local portrait=viewport.Y>viewport.X
-		dashboard.Position=if portrait then UDim2.new(.5,0,1,-330) else UDim2.new(.5,0,1,-12)
-		self.dialScale.Scale=if self.help then .6 else .72
-		self.root.HUD.Controls.Position=UDim2.new(.5,0,0,15) self.root.HUD.Controls.AnchorPoint=Vector2.new(.5,0)
-		self.root.Mobile.TouchLeft.Position=UDim2.new(0,20,1,-20)
-		self.root.Mobile.TouchLeft.Size=UDim2.fromOffset(310,200)
-		self.root.Mobile.TouchPedals.Position=UDim2.new(1,-20,1,-20)
-		self.root.Mobile.TouchPedals.Size=UDim2.fromOffset(360,285)
-		self.root.Mobile.TouchHandbrake.Position=UDim2.new(1,-20,1,-330)
-		self.root.Mobile.TouchHandbrake.Size=UDim2.fromOffset(180,180)
-		self.root.Mobile.TouchUtility.Position=UDim2.fromOffset(20,105)
-		self.root.Mobile.TouchUtility.Size=UDim2.fromOffset(200,172)
-		-- Keep every actual touch hit area at least 48 screen pixels.
-		for _,v in ipairs(self.root.Mobile:GetDescendants()) do if v:IsA("TextButton") then v.Size=UDim2.fromOffset(math.max(v.Size.X.Offset,74),math.max(v.Size.Y.Offset,74)) end end
+		local dashboard = root.Mobile.DashboardMobile
+		local pedals = root.Mobile.TouchPedals
+		local sideWidth = math.max(root.Mobile.TouchLeft.Size.X.Offset, pedals.Size.X.Offset)
+		local needsLift = viewport.X / scale < dashboard.Size.X.Offset + 2 * (sideWidth + 20)
+		local lift = if needsLift then pedals.Size.Y.Offset + 8 else 0
+		dashboard.Position = UDim2.new(.5, 0, 1, -12 - lift)
+		local width = viewport.X / scale
+		local utility = root.Mobile.TouchUtility.Size
+		local helpTop = utility.Y.Offset + 14
+		local recoveryFitsOnTop = width >= utility.X.Offset + recovery.Size.X.Offset + 36
+		if recoveryFitsOnTop then
+			recovery.AnchorPoint = Vector2.new(1, 0)
+			recovery.Position = UDim2.new(1, -12, 0, 8)
+		else
+			recovery.AnchorPoint = Vector2.new(.5, 0)
+			recovery.Position = UDim2.new(.5, 0, 0, helpTop)
+			if recovering then helpTop += recovery.Size.Y.Offset + 6 end
+		end
+		if viewport.X > viewport.Y then
+			-- Keep optional help on the steering side, above the two driving buttons.
+			local availableWidth = (width - dashboard.Size.X.Offset) / 2 - 22
+			local availableHeight = viewport.Y / scale - root.Mobile.TouchLeft.Size.Y.Offset - helpTop - 20
+			self.helpScale.Scale = math.clamp(math.min(availableWidth / controls.Size.X.Offset,
+				availableHeight / controls.Size.Y.Offset), .65, 1)
+			controls.AnchorPoint = Vector2.zero
+			controls.Position = UDim2.fromOffset(12, helpTop)
+		else
+			self.helpScale.Scale = 1
+			controls.AnchorPoint = Vector2.new(.5, 0)
+			controls.Position = UDim2.new(.5, 0, 0, helpTop)
+		end
+	else
+		self.helpScale.Scale = 1
+		controls.AnchorPoint = Vector2.new(0, 1)
+		controls.Position = UDim2.new(0, 20, 1, -62)
+		recovery.AnchorPoint = Vector2.new(.5, 0)
+		recovery.Position = UDim2.new(.5, 0, 0, 8)
 	end
 end
 function Cockpit:update()
 	if not self.vehicle then return end
-	self:layout()
 	local m=self.vehicle
+	local recovery = m:GetAttribute("AXZF_recovery")
+	local recovering = recovery == "Waiting for space"
+	self:layout(recovering)
 	local dashboard=if self.mobile then self.root.Mobile.DashboardMobile else self.root.HUD.Dashboard
 	local speed=(m:GetAttribute("AXZF_speed") or 0)*(m:GetAttribute("AXZF_ConfigSpeedScale") or 1)
 	local rpm=m:GetAttribute("AXZF_rpm") or 0 local redline=m:GetAttribute("AXZF_ConfigRedlineRPM") or 7000
-	set(dashboard,"Speed",string.format("%03d",math.floor(speed+.5)))
+	set(dashboard,"Speed",math.floor(speed+.5))
 	set(dashboard,"Unit",m:GetAttribute("AXZF_ConfigSpeedUnit") or "STUD/S")
 	local gear=m:GetAttribute("AXZF_gear") or 1
 	local park=m:GetAttribute("AXZF_parkRequested")==true
 	set(dashboard,"Gear",if park then "P" elseif gear==-1 then "R" else gear)
-	set(dashboard,"RPM",string.format("%d RPM",math.floor(rpm/50)*50))
-	set(dashboard,"ParkStatus",if park then (if m:GetAttribute("AXZF_parkState")=="Stopping" then "P · STOPPING" else "PARK ON") else "DRIVE")
-	local handbrake=m:GetAttribute("AXZF_handbrake")==true set(dashboard,"HandbrakeStatus",if handbrake then "HB ON" else "HB OFF")
-	local names={Forward="Throttle",Reverse="Reverse",Brake="Brake",Left="SteerLeft",Right="SteerRight"}
-	local held={} for _,id in pairs(self.pressed) do held[id]=true end
-	for id,name in pairs(names) do
-		local button=self.root.Mobile:FindFirstChild(name,true)
-		if button then physicalState(button,name,held[id]) end
+	set(dashboard, "RPM", math.floor(rpm / 50) * 50)
+	set(dashboard, "ParkStatus", if m:GetAttribute("AXZF_parkState") == "Stopping" then "STOPPING" else "PARKED")
+	dashboard.Cockpit.ParkStatusSlot.ParkStatus.Visible = park
+	local handbrake = m:GetAttribute("AXZF_handbrake") == true
+	dashboard.Cockpit.HandbrakeStatusSlot.HandbrakeStatus.Visible = handbrake
+
+	if self.mobile then
+		local held = {Park=park, Handbrake=handbrake, HideControls=self.help}
+		for _, id in pairs(self.pressed) do held[id] = true end
+		for id, appearance in pairs(self.touchAppearance) do
+			physicalState(appearance, held[id] == true)
+		end
 	end
-	for name,on in pairs({Park=park,Handbrake=handbrake,ToggleControls=self.help}) do
-		local button=self.root.Mobile:FindFirstChild(name,true)
-		if button then physicalState(button,name,on) end
-	end
-	for i=0,40 do
+	for i=0,20 do
 		local tick=dashboard:FindFirstChild("RPM"..i,true)
-		if tick and tick:IsA("Frame") then tick.BackgroundColor3=if i/40<=rpm/redline then (if i>35 then Color3.fromRGB(255,120,106) else Color3.fromRGB(255,188,99)) else Color3.fromRGB(67,87,98) end
+		if tick and tick:IsA("Frame") then
+			tick.BackgroundColor3 = if i/20 <= rpm/redline then (if i >= 18 then REDLINE_RIM else AMBER) else IDLE_RIM
+		end
 	end
-	local recovery=m:GetAttribute("AXZF_recovery")
-	self.root.Recovery.Visible=recovery=="Waiting for space"
-	if recovery then set(self.root.Recovery,"RecoveryText",recovery) end
+	self.root.Recovery.Visible = recovering
 end
 function Cockpit:destroy()
 	if self.preload and coroutine.status(self.preload)~="dead" then task.cancel(self.preload) end

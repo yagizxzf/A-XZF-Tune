@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Compact round dashboard with fewer RPM marks, a clear gear badge and contextual park/handbrake indicators.
+- Smaller mobile pedal and steering controls, a single utility row and 48×48 px minimum touch targets. Help fits beside the dial in landscape.
+- iPhone 13 landscape touch-target area reduced by 70.1%. Verified in the original Studio place on phone, tablet and desktop profiles.
+
 ## 0.4.0-rc.1 — 2026-10-29
 
 - Approved original physical pedal/handbrake art, then user-requested matching left/right keys; four mobile control groups replace the icon grid.

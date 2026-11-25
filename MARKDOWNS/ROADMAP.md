@@ -64,3 +64,7 @@ Sürüyor: mobilde düz yazı/Lucide yerine özgün pedal ve el freni gibi fizik
 0.4 uygulama ve doğrulama tamamlandı: özgün physical pedal/HB, kullanıcının son talebine göre temalı sol/sağ; üst bar altına taşınmış yardımcı grup, preload/fallback ve hideablehelp; doğru yön/tam dt/client wheel roll, hub axes veHB/park lock. Main100 unit + liveimportwheel/P/E;93 headless/61 compile; iPhone7/13/iPadA16 landscape input/layout/fallback/exit; Drive/Fleet ve4 import jitter geçti. Public/native paket güncel,5-car demo100 geçti. Sürüyor: GitHub commit/push/CI ve son teslim kaydı. Fiziksel multitouch, kötü ağ/streaming/soak/typing/modern1.7.2 ve stabil1.0 kapıları açık kalır.
 
 0.4 GitHub teslimi tamamlandı: kaynak1d92502e0a7c441b19a4971dd4278fb436571323; Validate40949713762 completed/success. Son devir/analiz notu ayrı docs commit'idir. İstenen mobil görsel/gruplama/sol-sağ ve teker düzeltmesinde bekleyen uygulama yok.
+
+## Kompakt HUD — 2026-11-25
+
+Uygulama ve doğrulama tamamlandı. Mevcut yuvarlak HUD ve fiziksel kontroller küçültüldü. iPhone 13 yatayda toplam dokunma alanı %70,1 azalırken en küçük hedef 48×48 px kaldı. Telefon ve tablet safe area, açık yardım ve giriş kontrolleri doğrulandı. Ana Studio ve tarayıcı güncel, paketler oluşturuldu. GitHub gönderimi ve CI kaydı sürüyor.

@@ -80,3 +80,10 @@
 - 0.4 kaynak1d92502e0a7c441b19a4971dd4278fb436571323 GitHub main'e gönderildi. Validate40949713762 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/40949713762.
 - Client analyzer çalıştırıldı: syntax0, beklenmeyen global0. Roblox tanımları bulunmadığı için287 tanı satırı var; tam Roblox-aware type-check başarısı iddia edilmiyor. Kayıt evidence/v4-client-analysis.json.
 - Main Vehicle/WheelVisuals/Cockpit açık editör ve Source eşitliği doğrulandı. Lab/delivery sadece Edit peer; cihaz simülasyonu default, Play yok. Doğrulanmış headless export/render yardımcıları kapatıldı, kullanıcı önizleme sunucusu açık. Bu son kayıt ve devir notu ayrı docs commit'idir; kaynak değişikliği yok.
+
+## 2026-11-25T20:38:55+03:00
+- Kullanıcının boyut ve görünüm geri bildirimi uygulandı. Mevcut fiziksel görseller korunarak 21 çizgili kompakt gösterge, küçük opaklığı azaltılmış düğme yüzleri ve tek satır yardımcı kontrol geldi. Commit kayıtları ui/assets.json üzerinden mevcut beş Roblox görseline bağlı.
+- Asıl place 72435697524161 uygulandı. iPhone 13 yatay karşılaştırması: 85.780 → 25.652 px² dokunma alanı ve %43,6 gösterge alanı azalması. 48×48 px en küçük hedef. iPhone 7/13, Galaxy A16, iPad A16 yatay ve iPhone 13 dikey simülasyonunda son yerleşim taşma, çakışma ve boş resim vermedi.
+- İlk yardım paneli göstergenin üstüne bindi. Sol tarafa alınıp kullanılabilir yüksekliğe göre ölçeklendi. İlk mobil çalıştırmada görünmez kılınan görseller çözülmedi; görünür bırakılarak ön yükleme ve metin yedeği birlikte doğrulandı. Her iki düzeltme tekrar test edildi.
+- 100 Studio birim, 93 headless, 61 derleme, deterministik paket ve beş HTML kontrolü geçti. Dokunmatik simülatörde sürüş tuşları, dışarı bırakma, P/HB, TUŞ/ÇIK ve TouchGui geri getirme geçti. Desktop import H/P, mobil portre ve uyumluluk paketi üretimi tamamlandı. Fiziksel multitouch denenmedi.
+- Studio testleri durdu, cihaz görünümü sıfırlandı. Kullanıcı model ve Sensor ayarı korundu. Yerel önizleme açık. GitHub CI bu kayıtta henüz tamamlanmadı.

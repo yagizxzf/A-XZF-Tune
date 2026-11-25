@@ -182,4 +182,12 @@ Evidence: evidence/v4-*.json, ui/shots/v4-studio-*.png. Rendering/layout and inp
 
 Live client probes used for0.4 are saved as tools/visual-probes/Wheels.luau and Cockpit.luau. Execute their saved text in a Studio **Client** context after seating in AXZF_Prototype; wheel probe expects an already-moving car. For the imported main car, change that model path to AXZF_ImportedCar. They return JSON, do not inject driving input, and reject live/server contexts. Their syntax is included in the61-file check; public packages contain59 scripts.
 
+## Compact HUD validation
+
+In the original Studio place (72435697524161), iPhone 13 landscape touch targets total 85,780 → 25,652 logical px²; the dashboard bounds go from about 26,743 to 15,080 px². The smallest mobile target is 48×48 px. iPhone 7, iPhone 13, Galaxy A16 and iPad A16 landscape plus iPhone 13 portrait report no control overlap, safe-area overflow, visible text overflow or unloaded images with the final layout. The portrait check uses the place's existing Sensor orientation.
+
+Simulator input covered left/right, throttle/brake, reverse, release outside the accelerator, independent park/handbrake, help, exit and restoration of Roblox touch controls. Clearing and restoring the accelerator image showed the text fallback and then the art. The blocked-recovery notice was exercised via temporary client telemetry. Desktop H and P worked in the imported car. The first help layout overlapped the gauge on iPhone 13 and was corrected by moving help to the steering side. Physical multitouch remains untested.
+
+HTML checks: five pages passed text-overflow and broken-image checks. 61 Luau files compiled, 93 headless checks and 100 Studio unit cases passed, and both public packages were checked for deterministic output. The optional local compatibility file was rebuilt. Evidence: [Studio metrics](../evidence/v5-compact-hud-studio.json), [browser checks](../evidence/v5-html-checks.json), [landscape](../ui/shots/v5-studio-phone13.png), [portrait with help](../ui/shots/v5-studio-portrait.png).
+
 Standalone client analyzer was also run on Driver, VehicleEffects, WheelVisuals and Cockpit:0 syntax errors,0 unexpected own globals,287 diagnostic lines from missing Roblox types/globals. This is not a Roblox-aware type-check pass (evidence/v4-client-analysis.json).
