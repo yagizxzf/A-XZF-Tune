@@ -67,4 +67,4 @@ Sürüyor: mobilde düz yazı/Lucide yerine özgün pedal ve el freni gibi fizik
 
 ## Kompakt HUD — 2026-11-25
 
-Uygulama ve doğrulama tamamlandı. Mevcut yuvarlak HUD ve fiziksel kontroller küçültüldü. iPhone 13 yatayda toplam dokunma alanı %70,1 azalırken en küçük hedef 48×48 px kaldı. Telefon ve tablet safe area, açık yardım ve giriş kontrolleri doğrulandı. Ana Studio ve tarayıcı güncel, paketler oluşturuldu. GitHub gönderimi ve CI kaydı sürüyor.
+Tamamlandı. Mevcut yuvarlak HUD, yardım ve fiziksel kontroller küçültüldü. iPhone 13 yatayda toplam dokunma alanı %70,1 azalırken en küçük hedef 48×48 px kaldı. Telefon ve tablet safe area, açık yardım ve giriş kontrolleri doğrulandı. Ana Studio, tarayıcı, public paketler ve GitHub main güncel. Kaynak `34b21f9`, [Validate 45667055608](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45667055608) başarılı.

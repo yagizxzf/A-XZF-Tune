@@ -1,6 +1,6 @@
 # Güncel devir
 
-Son güncelleme: 2026-11-25T20:38:06+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
+Son güncelleme: 2026-11-25T20:40:14+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
 
 ## 2026-11-25 güncel durum
 
@@ -8,7 +8,7 @@ Kullanıcı HUD'un özellikle mobilde küçültülüp iyileştirilmesini istedi.
 
 Kök ve dal aynı. Asıl Studio place 72435697524161, bu oturumda built-in `ea9dd415-697c-46ea-9c25-531b1098875e`, community `instance:b36-q7c`. Yeniden bağlantıda kimlikleri listele. Beş UI modülü açık editör kaynağıyla eşitlendi. Prototip ve import gerçek sahnede doğrulandı. Studio Edit, cihaz simülasyonu kapalı; mevcut Sensor yön ayarı ve R3dTuxedo korundu. Canlı yayın yok. Tarayıcı önizleme 8870 portunda çalışıyor.
 
-iPhone 13 yatay ölçümü: toplam dokunma alanı 85.780 → 25.652 px², gösterge sınır alanı %43,6 küçüldü. 48×48 minimum, yardım, park/HB, ayrılma, giriş bırakma ve fallback doğrulandı. iPhone 7/13, Galaxy A16, iPad A16 yatay ve iPhone 13 dikey yerleşimler geçti. 100 Studio, 93 headless, 61 compile ve deterministik paket geçti. Kanıtlar `evidence/v5-compact-hud-studio.json`, `evidence/v5-html-checks.json` ve `ui/shots/v5-studio-*.png`. Fiziksel multitouch açık kalır. Public ve isteğe bağlı yerel paketler yeniden üretildi. GitHub teslim kaydı PROGRESSION.md son kaydına eklenir.
+iPhone 13 yatay ölçümü: toplam dokunma alanı 85.780 → 25.652 px², gösterge sınır alanı %43,6 küçüldü. 48×48 minimum, yardım, park/HB, ayrılma, giriş bırakma ve fallback doğrulandı. iPhone 7/13, Galaxy A16, iPad A16 yatay ve iPhone 13 dikey yerleşimler geçti. 100 Studio, 93 headless, 61 compile ve deterministik paket geçti. Kanıtlar `evidence/v5-compact-hud-studio.json`, `evidence/v5-html-checks.json` ve `ui/shots/v5-studio-*.png`. Fiziksel multitouch açık kalır. Public ve isteğe bağlı yerel paketler yeniden üretildi. Kaynak commit `34b21f9` GitHub main'de ve [Validate 45667055608](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45667055608) başarılı.
 
 Kaynak `ui/build.py`, `ui/rbx.json`, oluşturulan `ui/runtime/Data_*` ve `ui/runtime/Cockpit.luau`. Çalıştırma: `python -X utf8 ui/build.py`, `python tools/build.py` ve AGENTS'taki `tools/check.py` komutu. Açık üretim testlerini ROADMAP.md'den izle.
 

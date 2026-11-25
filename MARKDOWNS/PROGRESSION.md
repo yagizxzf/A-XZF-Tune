@@ -87,3 +87,7 @@
 - İlk yardım paneli göstergenin üstüne bindi. Sol tarafa alınıp kullanılabilir yüksekliğe göre ölçeklendi. İlk mobil çalıştırmada görünmez kılınan görseller çözülmedi; görünür bırakılarak ön yükleme ve metin yedeği birlikte doğrulandı. Her iki düzeltme tekrar test edildi.
 - 100 Studio birim, 93 headless, 61 derleme, deterministik paket ve beş HTML kontrolü geçti. Dokunmatik simülatörde sürüş tuşları, dışarı bırakma, P/HB, TUŞ/ÇIK ve TouchGui geri getirme geçti. Desktop import H/P, mobil portre ve uyumluluk paketi üretimi tamamlandı. Fiziksel multitouch denenmedi.
 - Studio testleri durdu, cihaz görünümü sıfırlandı. Kullanıcı model ve Sensor ayarı korundu. Yerel önizleme açık. GitHub CI bu kayıtta henüz tamamlanmadı.
+
+## 2026-11-25T20:40:14+03:00
+- Kompakt HUD güncellemesi 34b21f99013a01e8c1e7a677c1a11af1e0ce98c1 ile GitHub main'e gönderildi. Validate 45667055608 completed/success: https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45667055608.
+- Ana Studio ve iki diğer kullanıcı penceresi Edit. Ana Studio cihaz simülasyonu kapalı. 8870 mobil önizleme HTTP 200. Bu son devir kaydı yalnızca belge değişikliğidir.
