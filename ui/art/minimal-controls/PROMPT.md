@@ -1,0 +1,9 @@
+# Minimal sürüş simgeleri
+
+`atlas.png`, yerleşik ImageGen aracından transparan arka planla alındı. Beş ayrı PNG aynı atlasın hücrelerinden çıkarıldı. `python ui/art/minimal-controls/extract.py` komutu Pillow kullanarak bu işlemi yeniden üretir. Görseller yalnızca bu proje için özgün olarak üretildi.
+
+Kullanılan komut metni:
+
+```text
+Use case: stylized-concept. Asset type: a single transparent sprite sheet for five in-game mobile driving control pictograms. Generate an original cohesive set that looks like polished minimalist automotive instrumentation. Use exactly a 3-column by 2-row equal grid on a rectangular canvas. The art must have generous transparent gutters and each graphic must be fully inside the middle 55 percent of its own cell, sharply isolated so it can be cropped. No grid lines or backgrounds. Exact placement: top left = left-pointing arrow with softly rounded corners; top center = mirrored right-pointing arrow; top right = upright tall accelerator pedal with three clear cutout grip slots and a slightly tapered shoe plate; bottom left = squat wide rectangular brake pedal with rounded edges, a visible short stalk and three spaced cutout grip slots; bottom center = classic handbrake lever angled up to the right from a small horizontal mount, with a clearly distinguishable grip and pivot; bottom right = absolutely empty. Thin cutouts should be legible at 24 pixels. Use only flat bright neutral off-white for the motifs over genuine transparent alpha, no color and no dark outline, so they'd be readable atop a translucent dark button. Give each object a single confident silhouette, simple cutouts, balanced optical weight, clear edges and matched size. No text, letters, words, numerals, labels, button plates, decals, border boxes, UI mockup, metal texture, bevel, drop shadow, highlights, gradients, glow, beveling, patterns or other decoration. No filler in the sheet. Keep output background transparent throughout.
+```

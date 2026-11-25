@@ -24,6 +24,7 @@ local report = {
 	outside = {},
 	textOverflow = {},
 	buttonArea = 0,
+	imageCount = 0,
 	guiCount = 0,
 	help = root.HUD.Controls.Visible,
 	recovery = root.Recovery.Visible,
@@ -34,8 +35,15 @@ local function measure(node: GuiObject)
 	return { x = p.X, y = p.Y, w = s.X, h = s.Y }
 end
 
-rects.Dashboard = measure(dashboard)
+local safe = measure(root)
+local dial = measure(dashboard)
+local clippedX, clippedY = math.max(dial.x, safe.x), math.max(dial.y, safe.y)
+local clippedW = math.min(dial.x + dial.w, safe.x + safe.w) - clippedX
+local clippedH = math.min(dial.y + dial.h, safe.y + safe.h) - clippedY
+rects.Dashboard = { x = clippedX, y = clippedY, w = clippedW, h = clippedH }
 report.dashboard = rects.Dashboard
+report.dialBounds = dial
+report.visibleFraction = clippedW * clippedH / (dial.w * dial.h)
 if report.help then rects.Help = measure(root.HUD.Controls) end
 if report.recovery then rects.Recovery = measure(root.Recovery.Recovery) end
 local side = if mobile then root.Mobile else root.HUD.Toggle
@@ -45,12 +53,14 @@ for _, node in side:GetDescendants() do
 		rects[node.Name] = rect
 		report.buttonArea += rect.w * rect.h
 		table.insert(report.buttons, { name = node.Name, x = rect.x, y = rect.y, w = rect.w, h = rect.h })
-	elseif node:IsA("ImageLabel") and not node.IsLoaded then
-		table.insert(report.unloaded, { name = node:GetFullName(), image = node.Image })
+	elseif node:IsA("ImageLabel") then
+		report.imageCount += 1
+		if not node.IsLoaded then
+			table.insert(report.unloaded, { name = node:GetFullName(), image = node.Image })
+		end
 	end
 end
 
-local safe = measure(root)
 for name, rect in pairs(rects) do
 	if rect.x < safe.x - 1 or rect.y < safe.y - 1
 		or rect.x + rect.w > safe.x + safe.w + 1 or rect.y + rect.h > safe.y + safe.h + 1 then

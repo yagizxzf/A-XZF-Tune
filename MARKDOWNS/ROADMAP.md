@@ -68,3 +68,7 @@ Sürüyor: mobilde düz yazı/Lucide yerine özgün pedal ve el freni gibi fizik
 ## Kompakt HUD — 2026-11-25
 
 Tamamlandı. Mevcut yuvarlak HUD, yardım ve fiziksel kontroller küçültüldü. iPhone 13 yatayda toplam dokunma alanı %70,1 azalırken en küçük hedef 48×48 px kaldı. Telefon ve tablet safe area, açık yardım ve giriş kontrolleri doğrulandı. Ana Studio, tarayıcı, public paketler ve GitHub main güncel. Kaynak `34b21f9`, [Validate 45667055608](https://github.com/yagizxzf/A-XZF-Tune/actions/runs/45667055608) başarılı.
+
+## Türkçe, kırpılmış gösterge — 2026-11-25
+
+Uygulama ve Studio doğrulaması tamamlandı. Üç seçenek galerisinden sonra kullanıcı siyah-beyaz saydam görünümü ve ImageGen simgelerini belirledi. Mobil yarım ve masaüstü çeyrek gösterge, Türkçe etiketler, başlangıçta kapalı yardım ve animasyonlar ana Studio ile düzenlenebilir Figma katmanlarına uygulandı. Profil/girdi kontrolleri ve paket üretimi geçti. GitHub gönderimi ve CI kaydı sürüyor.

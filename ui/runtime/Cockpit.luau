@@ -1,213 +1,342 @@
 --!strict
--- Runtime controller for the approved HTML-exported template; no visual construction here.
-local UIS=game:GetService("UserInputService")
-local AMBER = Color3.fromRGB(255, 188, 99)
-local IDLE_RIM = Color3.fromRGB(57, 74, 81)
-local REDLINE_RIM = Color3.fromRGB(255, 120, 106)
-local Cockpit={}
-Cockpit.__index=Cockpit
-local function set(parent,name,value)
-	local text = parent:FindFirstChild(name, true)
-	if text and text:IsA("TextLabel") then
-		text.Text = tostring(value)
-		text.TextScaled = true
-	end
+-- The exported GUI owns the visuals. The controller binds device layout, input and telemetry.
+local GuiService = game:GetService("GuiService")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+
+local BUTTON_MOTION = TweenInfo.new(.11, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local HELP_MOTION = TweenInfo.new(.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local INTRO_MOTION = TweenInfo.new(.235, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local WHITE = Color3.fromRGB(247, 247, 247)
+local KEY_NAMES = {
+	Space = "Boşluk", Backspace = "Sil", Return = "Enter",
+	LeftShift = "Sol Shift", RightShift = "Sağ Shift",
+	LeftControl = "Sol Ctrl", RightControl = "Sağ Ctrl",
+	LeftAlt = "Sol Alt", RightAlt = "Sağ Alt",
+	Up = "Yukarı", Down = "Aşağı", Left = "Sol", Right = "Sağ",
+}
+
+local Cockpit = {}
+Cockpit.__index = Cockpit
+
+local function label(parent: Instance, name: string): TextLabel
+	local node = parent:FindFirstChild(name, true)
+	assert(node and node:IsA("TextLabel"), "Gösterge etiketi eksik: " .. name)
+	node.TextScaled = true
+	return node
 end
-local function cacheAppearance(button)
-	local face = button:FindFirstChild(button.Name .. "Face")
-	local artFrame = button:FindFirstChild(button.Name .. "Art")
-	local art = artFrame and artFrame:FindFirstChildWhichIsA("ImageLabel")
-	local fallback = button:FindFirstChild(button.Name .. "Fallback", true)
-	if fallback and fallback:IsA("TextLabel") then
-		fallback.TextScaled = true
+
+local function meter(group)
+	local body = group.Cockpit
+	local ticks = {}
+	for i = 0, 14 do
+		table.insert(ticks, body["RPM" .. i])
 	end
 	return {
-		face = face,
-		stroke = face and face:FindFirstChildWhichIsA("UIStroke"),
-		restColor = face and face.BackgroundColor3,
-		restTransparency = face and face.BackgroundTransparency,
-		art = art,
-		fallback = fallback,
+		group = group, ticks = ticks,
+		speed = label(body, "Speed"), unit = label(body, "Unit"),
+		gear = label(body, "Gear"), rpm = label(body, "RPMValue"),
+		park = label(body, "ParkStatus"), handbrake = label(body, "HandbrakeStatus"),
 	}
 end
-local function physicalState(appearance, on)
-	local face, stroke, art = appearance.face, appearance.stroke, appearance.art
-	if art and appearance.fallback then
-		appearance.fallback.Visible = not art.IsLoaded
+
+local function appearance(button)
+	local face = button[button.Name .. "Face"]
+	local scale = Instance.new("UIScale")
+	scale.Name = "PressScale"
+	scale.Parent = face
+	local art = button:FindFirstChild(button.Name .. "Art")
+	return {
+		face = face, scale = scale, stroke = face:FindFirstChildWhichIsA("UIStroke"),
+		color = face.BackgroundColor3, transparency = face.BackgroundTransparency,
+		image = art and art:FindFirstChildWhichIsA("ImageLabel"),
+		fallback = button:FindFirstChild(button.Name .. "Icon"),
+	}
+end
+
+local function setPressed(button, pressed: boolean)
+	if button.image and button.fallback then
+		button.fallback.Visible = not button.image.IsLoaded
 	end
-	if appearance.on == on then return end
-	appearance.on = on
-	if face then
-		face.BackgroundColor3 = if on then Color3.fromRGB(110, 75, 33) else appearance.restColor
-		face.BackgroundTransparency = if on then .12 else appearance.restTransparency
-	end
-	if stroke then
-		stroke.Color = if on then AMBER else Color3.fromRGB(163, 186, 192)
-		stroke.Transparency = if on then 0 else .62
+	if button.pressed == pressed then return end
+	button.pressed = pressed
+	local color = if pressed then WHITE else button.color
+	local transparency = if pressed then .77 else button.transparency
+	local scale = if pressed then .94 else 1
+	if button.scaleTween then button.scaleTween:Cancel() end
+	if button.faceTween then button.faceTween:Cancel() end
+	button.stroke.Transparency = if pressed then 0 else .61
+	if GuiService.ReducedMotionEnabled then
+		button.scale.Scale = 1
+		button.face.BackgroundColor3 = color
+		button.face.BackgroundTransparency = transparency
+	else
+		button.scaleTween = TweenService:Create(button.scale, BUTTON_MOTION, {Scale = scale})
+		button.faceTween = TweenService:Create(button.face, BUTTON_MOTION, {
+			BackgroundColor3 = color, BackgroundTransparency = transparency,
+		})
+		button.scaleTween:Play()
+		button.faceTween:Play()
 	end
 end
-function Cockpit.new(player: Player,action: any): any
-	local template=game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate",15)
-	assert(template,"[A-XZF-Tune] CockpitTemplate missing: start the default Fleet with the UI package installed")
-	local gui=template:Clone()
-	gui.Name="AXZFCockpit"
+
+local function rpmText(rpm: number): string
+	local digits = tostring(math.floor(rpm / 50) * 50)
+	if #digits > 3 then
+		digits = string.sub(digits, 1, -4) .. "." .. string.sub(digits, -3)
+	end
+	return digits .. " dev/dk"
+end
+
+function Cockpit.new(player: Player, action: any): any
+	local template = game.ReplicatedStorage.AXZF:WaitForChild("CockpitTemplate", 15)
+	assert(template, "[A-XZF-Tune] Gösterge şablonu yok. UI paketini yükleyip aracı başlatın.")
+	local gui = template:Clone()
+	gui.Name = "AXZFCockpit"
 	gui.ScreenInsets = Enum.ScreenInsets.CoreUISafeInsets
-	gui.Enabled=false gui.Parent=player:WaitForChild("PlayerGui")
-	local self=setmetatable({
-		gui=gui, root=gui.Root, vehicle=nil, help=true, connections={}, pressed={},
-		mobile=UIS.TouchEnabled, touchAppearance={},
-	},Cockpit)
-	self.root.Dim.Visible=false
-	self.root.AnchorPoint = Vector2.zero
-	self.root.Position = UDim2.fromOffset(0, 0)
+	gui.Enabled = false
+	gui.Parent = player:WaitForChild("PlayerGui")
+
+	local root = gui.Root
+	root.Dim.Visible = false
+	root.AnchorPoint = Vector2.zero
+	root.Position = UDim2.fromOffset(0, 0)
+	root.ClipsDescendants = true
 	local helpScale = Instance.new("UIScale")
 	helpScale.Name = "DeviceScale"
-	helpScale.Parent = self.root.HUD.Controls
-	self.helpScale = helpScale
-	local images={}
-	for _,node in ipairs(self.root.Mobile:GetDescendants()) do if node:IsA("ImageLabel") then table.insert(images,node) end end
-	self.preload=task.spawn(function()
-		local ok,err=pcall(function() game:GetService("ContentProvider"):PreloadAsync(images) end)
-		if not ok and gui.Parent then warn("[A-XZF-Tune] Control images: "..tostring(err)) end
-	end)
-	local function wire(name,id,toggle)
-		local button=gui.Root.Mobile:FindFirstChild(name,true)
+	helpScale.Parent = root.HUD.Controls
+	local self = setmetatable({
+		gui = gui, root = root, help = false, vehicle = nil,
+		desktopMeter = meter(root.HUD.Dashboard),
+		mobileMeter = meter(root.Mobile.DashboardMobile),
+		desktopHelp = appearance(root.HUD.Toggle.ShowControls),
+		helpScale = helpScale, mobile = UIS.TouchEnabled,
+		touch = {}, pressed = {}, connections = {},
+	}, Cockpit)
+
+	local function connect(signal, handler)
+		table.insert(self.connections, signal:Connect(handler))
+	end
+	local function wire(name, id, toggle)
+		local button = root.Mobile:FindFirstChild(name, true)
 		if not button or not button:IsA("TextButton") then return end
-		self.touchAppearance[id] = cacheAppearance(button)
-		if toggle then table.insert(self.connections,button.Activated:Connect(function() action(id,true) end))
+		self.touch[id] = appearance(button)
+		if toggle then
+			connect(button.Activated, function() action(id, true) end)
 		else
-			table.insert(self.connections,button.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then self.pressed[input]=id action(id,true) end end))
+			connect(button.InputBegan, function(input)
+				local kind = input.UserInputType
+				if kind == Enum.UserInputType.Touch or kind == Enum.UserInputType.MouseButton1 then
+					self.pressed[input] = id
+					action(id, true)
+				end
+			end)
 		end
 	end
-	wire("Throttle","Forward",false) wire("Reverse","Reverse",false) wire("Brake","Brake",false)
-	wire("SteerLeft","Left",false) wire("SteerRight","Right",false)
-	wire("Handbrake","Handbrake",true) wire("Park","Park",true) wire("Exit","Exit",true) wire("ToggleControls","HideControls",true)
-	-- Global release also catches a finger/mouse dragged off its original button.
-	table.insert(self.connections,UIS.InputEnded:Connect(function(input)
-		local released={}
-		for held,id in pairs(self.pressed) do
-			if held==input or (input.UserInputType==Enum.UserInputType.MouseButton1 and held.UserInputType==input.UserInputType) then self.pressed[held]=nil released[id]=true end
+	wire("Throttle", "Forward", false)
+	wire("Reverse", "Reverse", false)
+	wire("Brake", "Brake", false)
+	wire("SteerLeft", "Left", false)
+	wire("SteerRight", "Right", false)
+	wire("Handbrake", "Handbrake", true)
+	wire("Park", "Park", true)
+	wire("Exit", "Exit", true)
+	wire("ToggleControls", "HideControls", true)
+	local images = {}
+	for _, button in pairs(self.touch) do
+		if button.image then table.insert(images, button.image) end
+	end
+	self.preload = task.spawn(function()
+		pcall(function() game:GetService("ContentProvider"):PreloadAsync(images) end)
+	end)
+
+	-- Release also applies when a finger leaves its original button before lifting.
+	connect(UIS.InputEnded, function(input)
+		local released = {}
+		for held, id in pairs(self.pressed) do
+			if held == input or (input.UserInputType == Enum.UserInputType.MouseButton1
+				and held.UserInputType == input.UserInputType) then
+				self.pressed[held] = nil
+				released[id] = true
+			end
 		end
-		for id in pairs(released) do local stillHeld=false for _,heldId in pairs(self.pressed) do if heldId==id then stillHeld=true end end if not stillHeld then action(id,false) end end
-	end))
-	table.insert(self.connections,self.root.HUD.Toggle.ShowControls.Activated:Connect(function() action("HideControls",true) end))
+		for _, id in pairs(self.pressed) do released[id] = nil end
+		for id in pairs(released) do action(id, false) end
+	end)
+	connect(UIS.WindowFocusReleased, function() table.clear(self.pressed) end)
+	connect(root.HUD.Toggle.ShowControls.Activated, function() action("HideControls", true) end)
 	return self
 end
-function Cockpit:toggleHelp() self.help=not self.help end
+
+function Cockpit:showHelp(visible: boolean, animate: boolean)
+	self.help = visible
+	local group = self.root.HUD.Controls
+	local panel = group.ControlPanel
+	if self.helpTween then self.helpTween:Cancel() end
+	if not animate or GuiService.ReducedMotionEnabled then
+		group.Visible = visible
+		panel.Position = UDim2.fromOffset(0, 0)
+		return
+	end
+	local resting = UDim2.fromOffset(0, 0)
+	local shifted = UDim2.fromOffset(0, 8)
+	if visible and not group.Visible then
+		panel.Position = shifted
+		group.Visible = true
+	end
+	local tween = TweenService:Create(panel, HELP_MOTION, {Position = if visible then resting else shifted})
+	self.helpTween = tween
+	tween.Completed:Once(function(state)
+		if state == Enum.PlaybackState.Completed and not self.help then group.Visible = false end
+	end)
+	tween:Play()
+end
+
+function Cockpit:toggleHelp()
+	if self.vehicle then self:showHelp(not self.help, true) end
+end
+
 function Cockpit:setVehicle(model: Model?)
 	table.clear(self.pressed)
-	self.vehicle=model self.gui.Enabled=model~=nil
-	-- Keyboard help is opt-in on touch screens; the physical controls stay visible.
-	self.help=not UIS.TouchEnabled and (not model or model:GetAttribute("AXZF_ConfigShowControls")~=false)
+	if self.introTween then self.introTween:Cancel() end
+	self.vehicle = model
+	self.gui.Enabled = model ~= nil
+	self.layoutViewport = nil
+	self:showHelp(model ~= nil and model:GetAttribute("AXZF_ConfigShowControls") == true, false)
 	if not model then return end
-	local function key(name) return model:GetAttribute("AXZF_Key"..name) or name end
-	local rows={key("Forward").." / "..key("Reverse"),key("Left").." / "..key("Right"),key("Brake"),key("Handbrake"),key("Park"),key("Exit"),key("HideControls")}
-	for i,value in ipairs(rows) do set(self.root.HUD.Controls,"Key"..(i-1),value) end
-	set(self.root.HUD.Toggle,"ShowControlsLabel",key("HideControls").." · CONTROLS")
+
+	local function key(action: string): string
+		local value = model:GetAttribute("AXZF_Key" .. action) or action
+		return KEY_NAMES[value] or value
+	end
+	local rows = {
+		key("Forward") .. " / " .. key("Reverse"), key("Left") .. " / " .. key("Right"),
+		key("Brake"), key("Handbrake"), key("Park"), key("Exit"), key("HideControls"),
+	}
+	for i, value in ipairs(rows) do
+		label(self.root.HUD.Controls, "Key" .. (i - 1)).Text = value
+	end
+	label(self.root.HUD.Toggle, "ShowControlsLabel").Text = key("HideControls") .. " · Tuşlar"
 	self:update()
+
+	if not GuiService.ReducedMotionEnabled then
+		local group = (if self.mobile then self.mobileMeter else self.desktopMeter).group
+		local target = group.Position
+		group.Position = target + UDim2.fromOffset(0, 13)
+		self.introTween = TweenService:Create(group, INTRO_MOTION, {Position = target})
+		self.introTween:Play()
+	end
 end
-function Cockpit:layout(recovering)
+
+function Cockpit:layout(recovering: boolean)
 	local viewport = self.gui.AbsoluteSize
 	local mobile = UIS.TouchEnabled
-	if self.mobile ~= mobile then
-		self.mobile = mobile
-		self.help = not mobile and self.vehicle:GetAttribute("AXZF_ConfigShowControls") ~= false
-	end
-	if self.layoutViewport == viewport and self.layoutMobile == mobile
-		and self.layoutHelp == self.help and self.layoutRecovery == recovering then return end
-	self.layoutViewport, self.layoutMobile = viewport, mobile
-	self.layoutHelp, self.layoutRecovery = self.help, recovering
+	if self.layoutViewport == viewport and self.mobile == mobile and self.layoutRecovery == recovering then return end
+	if self.introTween then self.introTween:Cancel() end
+	self.layoutViewport, self.mobile, self.layoutRecovery = viewport, mobile, recovering
 
+	local scale = if mobile then math.clamp(math.min(viewport.X / 840, viewport.Y / 430), 1, 1.1)
+		else math.clamp(math.min(viewport.X / 1380, viewport.Y / 800), .72, 1)
+	local width, height = viewport.X / scale, viewport.Y / scale
 	local root = self.root
-	-- The exported phone controls already have a minimum 48px hit area at 1x.
-	local scale = if mobile then math.clamp(math.min(viewport.X / 840, viewport.Y / 430), 1, 1.16)
-		else math.clamp(math.min(viewport.X / 1400, viewport.Y / 820), .72, 1)
 	root.FitScale.Scale = scale
-	root.Size = UDim2.fromOffset(viewport.X / scale, viewport.Y / scale)
+	root.Size = UDim2.fromOffset(width, height)
 	root.HUD.Dashboard.Visible = not mobile
-	root.HUD.Controls.Visible = self.help
 	root.HUD.Toggle.Visible = not mobile
 	root.Mobile.Visible = mobile
 
 	local controls = root.HUD.Controls
 	local recovery = root.Recovery.Recovery
-	if mobile then
-		local dashboard = root.Mobile.DashboardMobile
-		local pedals = root.Mobile.TouchPedals
-		local sideWidth = math.max(root.Mobile.TouchLeft.Size.X.Offset, pedals.Size.X.Offset)
-		local needsLift = viewport.X / scale < dashboard.Size.X.Offset + 2 * (sideWidth + 20)
-		local lift = if needsLift then pedals.Size.Y.Offset + 8 else 0
-		dashboard.Position = UDim2.new(.5, 0, 1, -12 - lift)
-		local width = viewport.X / scale
-		local utility = root.Mobile.TouchUtility.Size
-		local helpTop = utility.Y.Offset + 14
-		local recoveryFitsOnTop = width >= utility.X.Offset + recovery.Size.X.Offset + 36
-		if recoveryFitsOnTop then
-			recovery.AnchorPoint = Vector2.new(1, 0)
-			recovery.Position = UDim2.new(1, -12, 0, 8)
-		else
-			recovery.AnchorPoint = Vector2.new(.5, 0)
-			recovery.Position = UDim2.new(.5, 0, 0, helpTop)
-			if recovering then helpTop += recovery.Size.Y.Offset + 6 end
-		end
-		if viewport.X > viewport.Y then
-			-- Keep optional help on the steering side, above the two driving buttons.
-			local availableWidth = (width - dashboard.Size.X.Offset) / 2 - 22
-			local availableHeight = viewport.Y / scale - root.Mobile.TouchLeft.Size.Y.Offset - helpTop - 20
-			self.helpScale.Scale = math.clamp(math.min(availableWidth / controls.Size.X.Offset,
-				availableHeight / controls.Size.Y.Offset), .65, 1)
-			controls.AnchorPoint = Vector2.zero
-			controls.Position = UDim2.fromOffset(12, helpTop)
-		else
-			self.helpScale.Scale = 1
-			controls.AnchorPoint = Vector2.new(.5, 0)
-			controls.Position = UDim2.new(.5, 0, 0, helpTop)
-		end
-	else
+	local dashboard = (if mobile then self.mobileMeter else self.desktopMeter).group
+	dashboard.AnchorPoint = Vector2.new(.5, .5)
+	dashboard.Position = UDim2.fromScale(if mobile then .5 else 1, 1)
+	if not mobile then
 		self.helpScale.Scale = 1
 		controls.AnchorPoint = Vector2.new(0, 1)
-		controls.Position = UDim2.new(0, 20, 1, -62)
+		controls.Position = UDim2.new(0, 12, 1, -69)
 		recovery.AnchorPoint = Vector2.new(.5, 0)
 		recovery.Position = UDim2.new(.5, 0, 0, 8)
+		return
+	end
+
+	local steering = root.Mobile.TouchLeft
+	local pedals = root.Mobile.TouchPedals
+	local handbrake = root.Mobile.TouchHandbrake
+	local dialWidth = dashboard.Size.X.Offset
+	local sideWidth = math.max(steering.Size.X.Offset, pedals.Size.X.Offset)
+	local lift = if width < dialWidth + 2 * (sideWidth + 18) then dialWidth / 2 + 8 else 0
+	steering.Position = UDim2.new(0, 12, 1, -12 - lift)
+	pedals.Position = UDim2.new(1, -12, 1, -12 - lift)
+	handbrake.Position = UDim2.new(1, -12, 1, -72 - lift)
+
+	local helpTop = 59
+	local utilityWidth = root.Mobile.TouchUtility.Size.X.Offset
+	if width >= utilityWidth + recovery.Size.X.Offset + 36 then
+		recovery.AnchorPoint = Vector2.new(1, 0)
+		recovery.Position = UDim2.new(1, -12, 0, 8)
+	else
+		recovery.AnchorPoint = Vector2.new(.5, 0)
+		recovery.Position = UDim2.new(.5, 0, 0, helpTop)
+		if recovering then helpTop += recovery.Size.Y.Offset + 6 end
+	end
+	if width > height then
+		local availableWidth = (width - dialWidth) / 2 - 18
+		local availableHeight = height - steering.Size.Y.Offset - lift - helpTop - 18
+		self.helpScale.Scale = math.clamp(math.min(availableWidth / controls.Size.X.Offset,
+			availableHeight / controls.Size.Y.Offset), .55, 1)
+		controls.AnchorPoint = Vector2.zero
+		controls.Position = UDim2.fromOffset(12, helpTop)
+	else
+		self.helpScale.Scale = 1
+		controls.AnchorPoint = Vector2.new(.5, 0)
+		controls.Position = UDim2.new(.5, 0, 0, helpTop)
 	end
 end
+
 function Cockpit:update()
-	if not self.vehicle then return end
-	local m=self.vehicle
-	local recovery = m:GetAttribute("AXZF_recovery")
-	local recovering = recovery == "Waiting for space"
+	local model = self.vehicle
+	if not model then return end
+	local recovering = model:GetAttribute("AXZF_recovery") == "Waiting for space"
 	self:layout(recovering)
-	local dashboard=if self.mobile then self.root.Mobile.DashboardMobile else self.root.HUD.Dashboard
-	local speed=(m:GetAttribute("AXZF_speed") or 0)*(m:GetAttribute("AXZF_ConfigSpeedScale") or 1)
-	local rpm=m:GetAttribute("AXZF_rpm") or 0 local redline=m:GetAttribute("AXZF_ConfigRedlineRPM") or 7000
-	set(dashboard,"Speed",math.floor(speed+.5))
-	set(dashboard,"Unit",m:GetAttribute("AXZF_ConfigSpeedUnit") or "STUD/S")
-	local gear=m:GetAttribute("AXZF_gear") or 1
-	local park=m:GetAttribute("AXZF_parkRequested")==true
-	set(dashboard,"Gear",if park then "P" elseif gear==-1 then "R" else gear)
-	set(dashboard, "RPM", math.floor(rpm / 50) * 50)
-	set(dashboard, "ParkStatus", if m:GetAttribute("AXZF_parkState") == "Stopping" then "STOPPING" else "PARKED")
-	dashboard.Cockpit.ParkStatusSlot.ParkStatus.Visible = park
-	local handbrake = m:GetAttribute("AXZF_handbrake") == true
-	dashboard.Cockpit.HandbrakeStatusSlot.HandbrakeStatus.Visible = handbrake
+	local current = if self.mobile then self.mobileMeter else self.desktopMeter
+	local speed = (model:GetAttribute("AXZF_speed") or 0) * (model:GetAttribute("AXZF_ConfigSpeedScale") or 1)
+	local rpm = model:GetAttribute("AXZF_rpm") or 0
+	local redline = model:GetAttribute("AXZF_ConfigRedlineRPM") or 7000
+	local gear = model:GetAttribute("AXZF_gear") or 1
+	local parked = model:GetAttribute("AXZF_parkRequested") == true
+	local handbrake = model:GetAttribute("AXZF_handbrake") == true
+	local unit = model:GetAttribute("AXZF_ConfigSpeedUnit")
+	current.speed.Text = tostring(math.floor(speed + .5))
+	current.unit.Text = if unit == nil or unit == "STUD/S" then "stud/sn" else unit
+	current.gear.Text = if parked then "P" elseif gear == -1 then "R" else tostring(gear)
+	current.rpm.Text = rpmText(rpm)
+	current.park.Text = if model:GetAttribute("AXZF_parkState") == "Stopping" then "Duruyor" else "Parkta"
+	current.park.Visible = parked
+	current.handbrake.Visible = handbrake
+	self.root.Recovery.Visible = recovering
 
 	if self.mobile then
-		local held = {Park=park, Handbrake=handbrake, HideControls=self.help}
+		local held = {Park = parked, Handbrake = handbrake, HideControls = self.help}
 		for _, id in pairs(self.pressed) do held[id] = true end
-		for id, appearance in pairs(self.touchAppearance) do
-			physicalState(appearance, held[id] == true)
-		end
+		for id, button in pairs(self.touch) do setPressed(button, held[id] == true) end
+	else
+		setPressed(self.desktopHelp, self.help)
 	end
-	for i=0,20 do
-		local tick=dashboard:FindFirstChild("RPM"..i,true)
-		if tick and tick:IsA("Frame") then
-			tick.BackgroundColor3 = if i/20 <= rpm/redline then (if i >= 18 then REDLINE_RIM else AMBER) else IDLE_RIM
-		end
+	local reduced = GuiService.ReducedMotionEnabled
+	for i, tick in ipairs(current.ticks) do
+		local opacity = if (i - 1) / (#current.ticks - 1) <= rpm / redline then 0 else .74
+		tick.BackgroundColor3 = WHITE
+		tick.BackgroundTransparency = if reduced then opacity
+			else tick.BackgroundTransparency + (opacity - tick.BackgroundTransparency) * .38
 	end
-	self.root.Recovery.Visible = recovering
 end
+
 function Cockpit:destroy()
-	if self.preload and coroutine.status(self.preload)~="dead" then task.cancel(self.preload) end
-	for _,c in ipairs(self.connections) do c:Disconnect() end self.gui:Destroy()
+	if self.preload and coroutine.status(self.preload) ~= "dead" then task.cancel(self.preload) end
+	if self.introTween then self.introTween:Cancel() end
+	if self.helpTween then self.helpTween:Cancel() end
+	for _, connection in ipairs(self.connections) do connection:Disconnect() end
+	self.gui:Destroy()
 end
+
 return Cockpit

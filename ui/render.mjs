@@ -15,6 +15,7 @@ const pages=[
   ['states','states',1280,720],
   ['mobile_states','mobile-parked',844,390],
   ['mobile_help','mobile-help',844,390],
+  ['mobile_portrait','mobile-portrait',390,750],
 ];
 try {
   for(const [page,name,width,height] of pages) {

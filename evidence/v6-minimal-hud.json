@@ -1,0 +1,931 @@
+{
+  "placeId": 72435697524161,
+  "assetUpdate": {
+    "AssetIds": true,
+    "Data_Mobile": true,
+    "Cockpit": true
+  },
+  "phone13": {
+    "buttonArea": 21528,
+    "topLeftInset": {
+      "y": 58,
+      "x": 0
+    },
+    "textOverflow": [],
+    "help": false,
+    "recovery": false,
+    "unloaded": [],
+    "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+    "enabled": true,
+    "cameraViewport": "749, 389",
+    "buttons": [
+      {
+        "y": 271,
+        "x": 12,
+        "name": "SteerLeft",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 271,
+        "x": 66,
+        "name": "SteerRight",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 271,
+        "x": 631,
+        "name": "Brake",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 265,
+        "x": 685,
+        "name": "Throttle",
+        "w": 52,
+        "h": 54
+      },
+      {
+        "y": 211,
+        "x": 689,
+        "name": "Handbrake",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 12,
+        "name": "Park",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 62,
+        "name": "Reverse",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 112,
+        "name": "ToggleControls",
+        "w": 54,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 168,
+        "name": "Exit",
+        "w": 48,
+        "h": 48
+      }
+    ],
+    "gear": "1",
+    "outside": [],
+    "imageCount": 5,
+    "visibleFraction": 0.5,
+    "dialBounds": {
+      "y": 221,
+      "x": 264.5,
+      "w": 220,
+      "h": 220
+    },
+    "mobile": true,
+    "dashboard": {
+      "y": 221,
+      "x": 264.5,
+      "w": 220,
+      "h": 110
+    },
+    "bottomRightInset": {
+      "y": 0,
+      "x": 0
+    },
+    "viewport": "749, 331",
+    "guiCount": 1,
+    "safePosition": {
+      "y": 0,
+      "x": 0
+    },
+    "overlap": []
+  },
+  "phone13Help": {
+    "buttonArea": 21528,
+    "topLeftInset": {
+      "y": 58,
+      "x": 0
+    },
+    "textOverflow": [],
+    "help": true,
+    "recovery": false,
+    "unloaded": [],
+    "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+    "enabled": true,
+    "cameraViewport": "749, 389",
+    "buttons": [
+      {
+        "y": 271,
+        "x": 12,
+        "name": "SteerLeft",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 271,
+        "x": 66,
+        "name": "SteerRight",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 271,
+        "x": 631,
+        "name": "Brake",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 265,
+        "x": 685,
+        "name": "Throttle",
+        "w": 52,
+        "h": 54
+      },
+      {
+        "y": 211,
+        "x": 689,
+        "name": "Handbrake",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 12,
+        "name": "Park",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 62,
+        "name": "Reverse",
+        "w": 48,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 112,
+        "name": "ToggleControls",
+        "w": 54,
+        "h": 48
+      },
+      {
+        "y": 6,
+        "x": 168,
+        "name": "Exit",
+        "w": 48,
+        "h": 48
+      }
+    ],
+    "gear": "P",
+    "outside": [],
+    "imageCount": 5,
+    "visibleFraction": 0.5,
+    "dialBounds": {
+      "y": 221,
+      "x": 264.5,
+      "w": 220,
+      "h": 220
+    },
+    "mobile": true,
+    "dashboard": {
+      "y": 221,
+      "x": 264.5,
+      "w": 220,
+      "h": 110
+    },
+    "bottomRightInset": {
+      "y": 0,
+      "x": 0
+    },
+    "viewport": "749, 331",
+    "guiCount": 1,
+    "safePosition": {
+      "y": 0,
+      "x": 0
+    },
+    "overlap": []
+  },
+  "profiles": {
+    "iphone17": {
+      "buttonArea": 21528,
+      "topLeftInset": {
+        "y": 58,
+        "x": 0
+      },
+      "textOverflow": [],
+      "help": false,
+      "recovery": false,
+      "unloaded": [],
+      "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+      "enabled": true,
+      "cameraViewport": "749, 381",
+      "buttons": [
+        {
+          "y": 263,
+          "x": 12,
+          "name": "SteerLeft",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 263,
+          "x": 66,
+          "name": "SteerRight",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 263,
+          "x": 631,
+          "name": "Brake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 257,
+          "x": 685,
+          "name": "Throttle",
+          "w": 52,
+          "h": 54
+        },
+        {
+          "y": 203,
+          "x": 689,
+          "name": "Handbrake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 12,
+          "name": "Park",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 62,
+          "name": "Reverse",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 112,
+          "name": "ToggleControls",
+          "w": 54,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 168,
+          "name": "Exit",
+          "w": 48,
+          "h": 48
+        }
+      ],
+      "gear": "1",
+      "outside": [],
+      "imageCount": 5,
+      "visibleFraction": 0.5,
+      "dialBounds": {
+        "y": 213,
+        "x": 264.5,
+        "w": 220,
+        "h": 220
+      },
+      "mobile": true,
+      "dashboard": {
+        "y": 213,
+        "x": 264.5,
+        "w": 220,
+        "h": 110
+      },
+      "bottomRightInset": {
+        "y": 0,
+        "x": 0
+      },
+      "viewport": "749, 323",
+      "guiCount": 1,
+      "safePosition": {
+        "y": 0,
+        "x": 0
+      },
+      "overlap": []
+    },
+    "iphone7": {
+      "buttonArea": 21528,
+      "topLeftInset": {
+        "y": 58,
+        "x": 0
+      },
+      "textOverflow": [],
+      "help": false,
+      "recovery": false,
+      "unloaded": [],
+      "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+      "enabled": true,
+      "cameraViewport": "666, 374",
+      "buttons": [
+        {
+          "y": 256,
+          "x": 12,
+          "name": "SteerLeft",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 256,
+          "x": 66,
+          "name": "SteerRight",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 256,
+          "x": 548,
+          "name": "Brake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 250,
+          "x": 602,
+          "name": "Throttle",
+          "w": 52,
+          "h": 54
+        },
+        {
+          "y": 196,
+          "x": 606,
+          "name": "Handbrake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 12,
+          "name": "Park",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 62,
+          "name": "Reverse",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 112,
+          "name": "ToggleControls",
+          "w": 54,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 168,
+          "name": "Exit",
+          "w": 48,
+          "h": 48
+        }
+      ],
+      "gear": "1",
+      "outside": [],
+      "imageCount": 5,
+      "visibleFraction": 0.5,
+      "dialBounds": {
+        "y": 206,
+        "x": 223,
+        "w": 220,
+        "h": 220
+      },
+      "mobile": true,
+      "dashboard": {
+        "y": 206,
+        "x": 223,
+        "w": 220,
+        "h": 110
+      },
+      "bottomRightInset": {
+        "y": 0,
+        "x": 0
+      },
+      "viewport": "666, 316",
+      "guiCount": 1,
+      "safePosition": {
+        "y": 0,
+        "x": 0
+      },
+      "overlap": []
+    },
+    "galaxyA16": {
+      "buttonArea": 21528,
+      "topLeftInset": {
+        "y": 58,
+        "x": 0
+      },
+      "textOverflow": [],
+      "help": false,
+      "recovery": false,
+      "unloaded": [],
+      "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+      "enabled": true,
+      "cameraViewport": "685, 338",
+      "buttons": [
+        {
+          "y": 220,
+          "x": 12,
+          "name": "SteerLeft",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 220,
+          "x": 66,
+          "name": "SteerRight",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 220,
+          "x": 567,
+          "name": "Brake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 214,
+          "x": 621,
+          "name": "Throttle",
+          "w": 52,
+          "h": 54
+        },
+        {
+          "y": 160,
+          "x": 625,
+          "name": "Handbrake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 12,
+          "name": "Park",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 62,
+          "name": "Reverse",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 112,
+          "name": "ToggleControls",
+          "w": 54,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 168,
+          "name": "Exit",
+          "w": 48,
+          "h": 48
+        }
+      ],
+      "gear": "1",
+      "outside": [],
+      "imageCount": 5,
+      "visibleFraction": 0.5,
+      "dialBounds": {
+        "y": 170,
+        "x": 232.5,
+        "w": 220,
+        "h": 220
+      },
+      "mobile": true,
+      "dashboard": {
+        "y": 170,
+        "x": 232.5,
+        "w": 220,
+        "h": 110
+      },
+      "bottomRightInset": {
+        "y": 0,
+        "x": 0
+      },
+      "viewport": "685, 280",
+      "guiCount": 1,
+      "safePosition": {
+        "y": 0,
+        "x": 0
+      },
+      "overlap": []
+    },
+    "ipadA16": {
+      "buttonArea": 26048.882650299143,
+      "topLeftInset": {
+        "y": 58,
+        "x": 0
+      },
+      "textOverflow": [],
+      "help": false,
+      "recovery": false,
+      "unloaded": [],
+      "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+      "enabled": true,
+      "cameraViewport": "1178, 819",
+      "buttons": [
+        {
+          "y": 694.1000366210938,
+          "x": 13.200000762939453,
+          "name": "SteerLeft",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 694.1000366210938,
+          "x": 72.60000610351562,
+          "name": "SteerRight",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 694.0999755859375,
+          "x": 1047.2000732421875,
+          "name": "Brake",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 687.5,
+          "x": 1106.60009765625,
+          "name": "Throttle",
+          "w": 57.20000076293945,
+          "h": 59.400001525878906
+        },
+        {
+          "y": 628.1000366210938,
+          "x": 1111,
+          "name": "Handbrake",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 6.599998474121094,
+          "x": 13.200004577636719,
+          "name": "Park",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 6.599998474121094,
+          "x": 68.20000457763672,
+          "name": "Reverse",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 6.599998474121094,
+          "x": 123.20001220703125,
+          "name": "ToggleControls",
+          "w": 59.400001525878906,
+          "h": 52.80000305175781
+        },
+        {
+          "y": 6.599998474121094,
+          "x": 184.80001831054688,
+          "name": "Exit",
+          "w": 52.80000305175781,
+          "h": 52.80000305175781
+        }
+      ],
+      "gear": "1",
+      "outside": [],
+      "imageCount": 5,
+      "visibleFraction": 0.5,
+      "dialBounds": {
+        "y": 639.1000366210938,
+        "x": 467.5,
+        "w": 242,
+        "h": 242
+      },
+      "mobile": true,
+      "dashboard": {
+        "y": 639.1000366210938,
+        "x": 467.5,
+        "w": 242,
+        "h": 121
+      },
+      "bottomRightInset": {
+        "y": 0,
+        "x": 0
+      },
+      "viewport": "1178, 761",
+      "guiCount": 1,
+      "safePosition": {
+        "y": 0,
+        "x": 0
+      },
+      "overlap": []
+    },
+    "iphone13portrait": {
+      "buttonArea": 21528,
+      "topLeftInset": {
+        "y": 58,
+        "x": 0
+      },
+      "textOverflow": [],
+      "help": false,
+      "recovery": false,
+      "unloaded": [],
+      "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+      "enabled": true,
+      "cameraViewport": "389, 762",
+      "buttons": [
+        {
+          "y": 526,
+          "x": 12,
+          "name": "SteerLeft",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 526,
+          "x": 66,
+          "name": "SteerRight",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 526,
+          "x": 271,
+          "name": "Brake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 520,
+          "x": 325,
+          "name": "Throttle",
+          "w": 52,
+          "h": 54
+        },
+        {
+          "y": 466,
+          "x": 329,
+          "name": "Handbrake",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 12,
+          "name": "Park",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 62,
+          "name": "Reverse",
+          "w": 48,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 112,
+          "name": "ToggleControls",
+          "w": 54,
+          "h": 48
+        },
+        {
+          "y": 6,
+          "x": 168,
+          "name": "Exit",
+          "w": 48,
+          "h": 48
+        }
+      ],
+      "gear": "1",
+      "outside": [],
+      "imageCount": 5,
+      "visibleFraction": 0.5,
+      "dialBounds": {
+        "y": 594,
+        "x": 84.5,
+        "w": 220,
+        "h": 220
+      },
+      "mobile": true,
+      "dashboard": {
+        "y": 594,
+        "x": 84.5,
+        "w": 220,
+        "h": 110
+      },
+      "bottomRightInset": {
+        "y": 0,
+        "x": 0
+      },
+      "viewport": "389, 704",
+      "guiCount": 1,
+      "safePosition": {
+        "y": 0,
+        "x": 0
+      },
+      "overlap": []
+    }
+  },
+  "input": {
+    "SteerLeft": {
+      "held": -1,
+      "released": 0,
+      "pass": true
+    },
+    "SteerRight": {
+      "held": 1,
+      "released": 0,
+      "pass": true
+    },
+    "animation": {
+      "scale": 0.9399999976158142,
+      "motionReduced": false
+    },
+    "Throttle": {
+      "held": 1,
+      "released": 0,
+      "pass": true
+    },
+    "Brake": {
+      "held": 1,
+      "released": 0,
+      "pass": true
+    },
+    "Reverse": {
+      "held": -1,
+      "released": 0,
+      "pass": true
+    },
+    "independent": true,
+    "helpOpen": true,
+    "fallback": {
+      "shown": true,
+      "restored": true
+    },
+    "helpClosed": true,
+    "exit": {
+      "seated": false,
+      "visible": false,
+      "touchGui": true
+    }
+  },
+  "desktop": {
+    "buttonArea": 3933.3488139333786,
+    "topLeftInset": {
+      "y": 58,
+      "x": 0
+    },
+    "textOverflow": [],
+    "help": false,
+    "recovery": false,
+    "unloaded": [],
+    "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+    "enabled": true,
+    "cameraViewport": "1284, 801",
+    "buttons": [
+      {
+        "y": 689.1324462890625,
+        "x": 11.145000457763672,
+        "name": "ShowControls",
+        "w": 88.23124694824219,
+        "h": 44.57999801635742
+      }
+    ],
+    "gear": "1",
+    "outside": [],
+    "imageCount": 0,
+    "visibleFraction": 0.24999991946381586,
+    "dialBounds": {
+      "y": 553.5350341796875,
+      "x": 1094.0675048828125,
+      "w": 378.92999267578125,
+      "h": 378.92999267578125
+    },
+    "mobile": false,
+    "dashboard": {
+      "y": 553.5350341796875,
+      "x": 1094.0675048828125,
+      "w": 189.4649658203125,
+      "h": 189.4649658203125
+    },
+    "bottomRightInset": {
+      "y": 0,
+      "x": 0
+    },
+    "viewport": "1284, 743",
+    "guiCount": 1,
+    "safePosition": {
+      "y": 0,
+      "x": 0
+    },
+    "overlap": []
+  },
+  "desktopControls": {
+    "buttonArea": 3933.3488139333786,
+    "topLeftInset": {
+      "y": 58,
+      "x": 0
+    },
+    "textOverflow": [],
+    "help": true,
+    "recovery": false,
+    "unloaded": [],
+    "insets": "Enum.ScreenInsets.CoreUISafeInsets",
+    "enabled": true,
+    "cameraViewport": "1284, 801",
+    "buttons": [
+      {
+        "y": 689.1324462890625,
+        "x": 11.145000457763672,
+        "name": "ShowControls",
+        "w": 88.23124694824219,
+        "h": 44.57999801635742
+      }
+    ],
+    "gear": "P",
+    "outside": [],
+    "imageCount": 0,
+    "visibleFraction": 0.24999991946381586,
+    "dialBounds": {
+      "y": 553.5350341796875,
+      "x": 1094.0675048828125,
+      "w": 378.92999267578125,
+      "h": 378.92999267578125
+    },
+    "mobile": false,
+    "dashboard": {
+      "y": 553.5350341796875,
+      "x": 1094.0675048828125,
+      "w": 189.4649658203125,
+      "h": 189.4649658203125
+    },
+    "bottomRightInset": {
+      "y": 0,
+      "x": 0
+    },
+    "viewport": "1284, 743",
+    "guiCount": 1,
+    "safePosition": {
+      "y": 0,
+      "x": 0
+    },
+    "overlap": []
+  },
+  "units": {
+    "failed": 0,
+    "run": 100,
+    "passed": 100
+  },
+  "figma": {
+    "fileKey": "dIEDDaIjSQVsDgpiKiu0y1",
+    "nodes": {
+      "mobile": "2:4",
+      "desktop": "2:88",
+      "help": "2:125"
+    },
+    "imageLayers": 10
+  },
+  "simulatorRestored": {
+    "isSimulating": true,
+    "activeDeviceId": "iphone_17_pro",
+    "orientation": "LandscapeLeft",
+    "scalingMode": "FitToWindow",
+    "pixelDensity": 153.3333282470703,
+    "resolution": {
+      "y": 402,
+      "x": 874,
+      "height": 402,
+      "width": 874
+    }
+  }
+}

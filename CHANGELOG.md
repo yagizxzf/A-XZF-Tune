@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Turkish monochrome HUD with translucent faces, hidden-by-default key help and entry/press/RPM motion. The dial appears as a half-circle on mobile and a quarter-circle on desktop.
+- Five minimalist ImageGen control sprites with an editable SVG fallback and 48×48 px minimum hit areas.
+
 - Compact round dashboard with fewer RPM marks, a clear gear badge and contextual park/handbrake indicators.
 - Smaller mobile pedal and steering controls, a single utility row and 48×48 px minimum touch targets. Help fits beside the dial in landscape.
 - iPhone 13 landscape touch-target area reduced by 70.1%. Verified in the original Studio place on phone, tablet and desktop profiles.

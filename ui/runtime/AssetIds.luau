@@ -24,8 +24,13 @@ return {
 		["a83c4cefba7"] = "rbxassetid://100668449590705",
 		["a8f8f2684ef"] = "rbxassetid://123584403619529",
 		["a930620bbf2"] = "rbxassetid://118096181524058",
+		["a9714bef0b9"] = "rbxassetid://126983464171757",
 		["a9dde49b417"] = "rbxassetid://100668449590705",
+		["aa7553435bf"] = "rbxassetid://130277474178254",
 		["aacdddb6e1a"] = "rbxassetid://123399833903709",
+		["ab2ebae50cc"] = "rbxassetid://110553314471352",
+		["ae8fb14e7da"] = "rbxassetid://95670570230040",
+		["aef1866e7f2"] = "rbxassetid://98796750942508",
 		["af8a2bffa96"] = "rbxassetid://118096181524058",
 	},
 }

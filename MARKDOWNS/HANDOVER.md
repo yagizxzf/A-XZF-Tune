@@ -1,8 +1,16 @@
 # Güncel devir
 
-Son güncelleme: 2026-11-25T20:40:14+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
+Son güncelleme: 2026-11-25T21:22:38+03:00. Başlangıç okuma sırası: MARKDOWNS/AGENTS.md, HANDOVER.md, ROADMAP.md, ardından PROGRESSION.md son kayıtları.
 
-## 2026-11-25 güncel durum
+## Güncel saydam HUD
+
+Üç konsept `ui/hud_proposals.py` ile karşılaştırıldı. Kullanıcı A'yı seçtikten sonra düz saydam minimalist stili ve sonrasında ImageGen simgelerini istedi. Son HUD tek renkli, tamamen Türkçe, mobil yarım ve masaüstü çeyrek göstergelidir. Mobilde 220×110 px görünür kesit ve 48×48 px minimum hit alanı vardır. Tuş yardımı varsayılan kapalıdır. Kısa yerleşim/devir/basma animasyonları hareket azaltma ayarına uyar. Hız/fizik ve yetki yolu aynı.
+
+Ana Studio 72435697524161'de aktif GUI kaynakları ve otomatik oluşturulan Tune örneği eşitlendi. Prototip ve ithal araçtaki eski yardım varsayılanı güncellendi. Asıl sahne Play dışında, çalışmaya başlarken seçili olan iPhone 17 Pro LandscapeLeft profili geri getirildi. Figma sayfasında `2:4` mobil, `2:88` masaüstü, `2:125` açık yardım. [Figma](https://www.figma.com/design/dIEDDaIjSQVsDgpiKiu0y1?node-id=2-4)
+
+Beş ImageGen varlığı yüklenip canlı istemcide denendi. PNG atlas ve kaynak prompt `ui/art/minimal-controls/` altında, `ui/assets.json` yeni Roblox ID'lerini içerir. `ui/art/hud-icons.svg` çizgileri yerel düzenlenebilir yedek. Kanıt `evidence/v6-minimal-hud.json`, `evidence/v6-html-checks.json`, Studio fotoğrafları `ui/shots/v6-studio-*.jpg`. 100 Studio/93 headless/61 compile, paket denetimi, profiller ve gaz bırakma dahil giriş geçti. Fiziksel çoklu dokunuş denenmedi. Son GitHub CI kaydı PROGRESSION.md'de tutulur.
+
+## Önceki kompakt HUD teslimi
 
 Kullanıcı HUD'un özellikle mobilde küçültülüp iyileştirilmesini istedi. Mevcut dairesel gösterge 21 devir çizgisi, daha belirgin hız ve vites ile sadeleştirildi. Mobil alt köşelerde özgün pedal ve sol/sağ resimleri, el freni sağ üst pedal komşuluğunda ve tek satır P/R/TUŞ/ÇIK var. Yardım varsayılan kapalı, açıkken yatayda direksiyon üstüne yerleşir. Dar portrede gösterge pedalların üstüne çıkar. CoreUISafeInsets üst bar ve ekran çentikleri için boşluk sağlar. Aktif olan beş Roblox görsel ID'si korunur. ui/assets.json yeniden boyutlandırılmış crop alias'larını içerir.
 

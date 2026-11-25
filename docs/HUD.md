@@ -42,7 +42,7 @@ Source art: ui/art/v4/control-atlas.png and steering-buttons.png, generated with
 
 Current landscape checks: iPhone7/13 and iPadA16, nine working controls, five images loaded, one cockpit, no button/help/dial overlap. Smallest auxiliary targets58.5×50.7logical px; steering94.25×130, gas97.5×185.25, brake123.5×143 and handbrake117×117 on the tested phone. Physical multitouch/portrait0.4 remain unverified. The actual original Studio has the same sources, and its desktop entry/P/E were checked.
 
-## Compact cockpit (current)
+## Compact cockpit
 
 The circular gauge has 21 RPM marks, an unpadded speed readout, a gear badge and separate indicators for parking and the handbrake. The two indicators appear when active. The desktop help stays in the lower-left corner. On mobile, the steer keys and pedal images sit on compact translucent faces, the handbrake sits directly above the pedals, and P, R, TUŞ and ÇIK share a single row below Roblox's top bar.
 
@@ -51,3 +51,11 @@ Mobile touch targets start at 48×48 logical pixels and scale up slightly on tab
 Comparing the original Studio place on iPhone 13 landscape, the nine touch targets cover **70.1% less combined rectangle area**. The dashboard bounds occupy **43.6% less area**, and the gas target is 58×74 px versus 97.5×185.25 px. See [runtime measurements](../evidence/v5-compact-hud-studio.json) and [Studio capture](../ui/shots/v5-studio-phone13.png).
 
 To refresh the authoring preview, run `python -X utf8 ui/build.py` in the repository root and serve `ui/` on port 8870. Native screens come from the same HTML authoring pages. From `ui/`, run export.mjs and gen.py from the installed UI authoring tools, pipe `assets.json` into ledger.py with `--check`, then run assets.py. The smaller crops reuse the five original Roblox image IDs through aliases in the ledger.
+
+## Saydam HUD (current)
+
+Turkish text, a translucent monochrome dial and low-profile controls. The phone dial shows its upper half at the bottom of the safe viewport (220 × 110 logical px at 1×). The desktop shows its upper-left quarter in the bottom-right corner. On narrow portrait screens the buttons move above the dial. The keyboard help starts hidden and opens with H or Tuşlar. `Tune.ShowControls = true` opts a vehicle into opening help on entry. The help setting leaves the nine mobile driving controls available.
+
+Speed and gear stay legible inside the visible dial. The default speed unit `STUD/S` displays as `stud/sn`. Custom Tune unit labels are displayed as configured. The RPM rim eases with changes in engine speed. The meter slides in on vehicle entry, the help pane slides open and shut, and a pressed control briefly contracts its face while the hit rectangle retains its size. Reduced motion uses immediate states.
+
+Five small original ImageGen sprites are used for steering, gas, brake and handbrake. The editable SVG fallback draws as native Roblox line segments while a sprite loads or when it is unavailable. The dial, text, state and button hit targets are native GUI objects. The source atlas, extracted PNG files and exact prompt are in [minimal-controls](../ui/art/minimal-controls/PROMPT.md). The matching editable design is available in [Figma](https://www.figma.com/design/dIEDDaIjSQVsDgpiKiu0y1?node-id=2-4).

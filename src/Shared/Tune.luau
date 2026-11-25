@@ -16,7 +16,7 @@ local defaults = {
 	RollInfluence=0.2, AntiRoll=0.5, RollDamping=4,
 	ParkBrakeAcceleration=140, ParkEngageSpeed=1.5, ParkOnSpawn=false, AutoParkOnExit=false,
 	Power=1, MaxSpeed=180, Mass=0, VFX=true, VFXIntensity=1,
-	SpeedUnit="STUD/S", SpeedScale=1, ShowControls=true,
+	SpeedUnit="STUD/S", SpeedScale=1, ShowControls=false,
 	Controls={Forward="W",Reverse="S",Left="A",Right="D",Brake="B",Handbrake="Space",Park="P",Exit="E",HideControls="H"},
 }
 local ranges = {

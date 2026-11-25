@@ -1,198 +1,235 @@
-"""Generate the compact cockpit previews and Studio export pages."""
+"""Build the monochrome HUD previews and the native GUI export pages."""
 
-from pathlib import Path
-import html
+from html import escape
 import math
+from pathlib import Path
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent
-AMBER = "#ffbc63"
-INK = "#f5f7f8"
-MUTED = "#b7c7cd"
-TICK_COUNT = 21
+ICONS = ET.parse(ROOT / "art/hud-icons.svg").getroot()
+SVG_NS = "{http://www.w3.org/2000/svg}"
+TICK_COUNT = 15
+MOBILE_RADIUS = 110
+DESKTOP_RADIUS = 204
 
 CSS = """
 *{box-sizing:border-box}
-html,body{margin:0;background:#131c21;color:#f5f7f8;font-family:Arial,sans-serif}
-#stage{position:relative;overflow:hidden;background:linear-gradient(#42677b,#8faab4)}
-.world{position:absolute;inset:0;background:linear-gradient(167deg,transparent 42%,#434b4e 42%,#1e272c)}
-.road{position:absolute;left:63%;top:47%;height:78%;width:2px;background:#a8a697;transform:rotate(-33deg)}
+html,body{margin:0;background:#17232a;color:#f7f7f7;font-family:Arial,sans-serif}
+#stage{position:relative;overflow:hidden;isolation:isolate;background:#4d606c
+ url(rbx/out/hud-review/scene.jpg) center/cover no-repeat}
 .abs{position:absolute}.fill{inset:0}
-.grp{pointer-events:none}.grp [data-btn]{pointer-events:auto;cursor:pointer}
-.dial,.panel,.gear{background:rgba(14,22,27,.88);border:1px solid #455960}
-.dial{border-radius:50%}.panel{border-radius:9px}
-.gear{border-radius:5px;background:#3b3024;border-color:#755535}
-.face{background:rgba(27,42,48,.6);border:1px solid rgba(163,186,192,.38);border-radius:12px}
-.utility{background:rgba(14,22,27,.78);border:1px solid rgba(163,186,192,.38);border-radius:7px}
-.down>.face,.down>.utility,[data-btn]:active>.face,[data-btn]:active>.utility{
- background:rgba(110,75,33,.88);border-color:#ffbc63
-}
-.down [data-n$=Art],[data-btn]:active [data-n$=Art]{filter:brightness(1.18)}
+.grp{pointer-events:none}.grp [data-btn]{pointer-events:auto;cursor:pointer;touch-action:none}
+.dial{border:1px solid rgba(255,255,255,.42);border-radius:50%;background:rgba(8,10,12,.29)}
+.tick{stroke:rgba(255,255,255,.26);transition:stroke 110ms}.tick.live{stroke:#f7f7f7}
+.face{background:rgba(8,10,12,.25);border:1px solid rgba(255,255,255,.39);border-radius:9px;
+ transition:transform 110ms,background-color 110ms}
+.panel{background:rgba(8,10,12,.74);border:1px solid rgba(255,255,255,.34);border-radius:9px}
+.gear{border:1px solid rgba(255,255,255,.56);border-radius:5px;background:rgba(8,10,12,.24)}
+[data-btn]:active .face{transform:scale(.94)}
+[data-btn]:active .face,.engaged .face{background:rgba(255,255,255,.23);border-color:#fff}
 .ot{display:flex;align-items:center;white-space:nowrap;line-height:1}
 .ot::after{content:attr(data-t);color:inherit}
 .center{justify-content:center}.hid{opacity:0}
-main{max-width:58rem;margin:auto;padding:2rem}a{color:#ffbc63;margin-right:1rem}
+.label-muted{color:#d5d5d5}
+.dial-text{font-variant-numeric:tabular-nums;-webkit-text-stroke:.53px rgba(0,0,0,.75)}
+.dial-text.label-muted{color:#eeeeee;-webkit-text-stroke:.3px rgba(0,0,0,.75)}
+.help{transition:opacity 160ms}.help.hidden-preview{opacity:0}
+.entering{animation:appear 235ms cubic-bezier(.22,.65,.27,1)}
+@keyframes appear{from{transform:translateY(13px);opacity:.45}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+main{max-width:58rem;margin:auto;padding:2rem}a{color:#f0f0f0;margin-right:1rem}
 """
 
 
-def box(name, x, y, w, h, cls="", inner="", button=False):
-    attr = "data-btn=1" if button else ""
-    return (f"<div class='abs {cls}' data-n='{name}' {attr} "
-            f"style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'>{inner}</div>")
+def box(name, x, y, w, h, cls="", content="", button=None):
+    marker = f"data-btn='1' role='button' aria-label='{escape(button)}'" if button else ""
+    return (f"<div class='abs {cls}' data-n='{name}' {marker} "
+            f"style='left:{x}px;top:{y}px;width:{w}px;height:{h}px'>{content}</div>")
 
 
-def text(name, value, x, y, w, h, size, color=INK, weight=400, center=False, hidden=False):
-    cls = "abs ot" + (" center" if center else "") + (" hid" if hidden else "")
-    label = (f"<span class='{cls}' data-n='{name}' data-t='{html.escape(value, quote=True)}' "
-             f"style='inset:0;font-size:{size}px;color:{color};font-weight:{weight}'></span>")
+def text(name, value, x, y, w, h, size, cls="", weight=700, center=True):
+    label = (f"<span class='abs ot {'center' if center else ''} {cls}' data-n='{name}' "
+             f"data-t='{escape(value, quote=True)}' style='inset:0;font-size:{size}px;"
+             f"font-weight:{weight}'></span>")
     align = "center" if center else "left"
     return (f"<div class='abs' data-n='{name}Slot' style='text-align:{align};left:{x}px;top:{y}px;"
             f"width:{w}px;height:{h}px'>{label}</div>")
 
 
-def group(name, anchor, content):
-    return f"<div class='abs fill grp' data-g='{name}' data-a='{anchor}'>{content}</div>"
+def group(name, anchor, content, cls=""):
+    return f"<div class='abs fill grp {cls}' data-g='{name}' data-a='{anchor}'>{content}</div>"
 
 
-def dashboard(mobile=False, parked=False):
-    diameter = 116 if mobile else 198
-    mid = diameter / 2
-    rim = diameter / 2 - (9 if mobile else 14)
-    inner = box("DialRing", 0, 0, diameter, diameter, "dial")
-    for i in range(TICK_COUNT):
-        degrees = 145 + 250 * i / (TICK_COUNT - 1)
-        angle = math.radians(degrees)
-        major = i % 5 == 0
-        w = (3 if major else 2) * (1 if mobile else 1.5)
-        h = (6 if major else 4) * (1 if mobile else 1.5)
-        x, y = mid + rim * math.cos(angle) - w / 2, mid + rim * math.sin(angle) - h / 2
-        color = (("#ff786a" if i >= 18 else AMBER) if i <= (5 if parked else 13) else "#394a51")
-        inner += (f"<div class='abs' data-n='RPM{i}' style='left:{x:.3f}px;top:{y:.3f}px;"
-                  f"width:{w}px;height:{h}px;background:{color};border-radius:1px;"
-                  f"transform:rotate({degrees + 90}deg)'></div>")
-
-    zoom = diameter / 116
-
-    def line(name, value, x, y, w, h, size, color=INK, weight=400, hidden=False):
-        return text(name, value, x * zoom, y * zoom, w * zoom, h * zoom, size * zoom,
-                    color, weight, center=True, hidden=hidden)
-
-    inner += line("Speed", "84", 20, 25, 76, 37, 34, weight=700)
-    inner += line("Unit", "STUD/S", 20, 62, 76, 13, 9, MUTED, 700)
-    inner += box("GearFace", 33 * zoom, 80 * zoom, 22 * zoom, 19 * zoom, "gear")
-    inner += line("Gear", "P" if parked else "3", 33, 80, 22, 19, 13, AMBER, 700)
-    inner += line("RPM", "4850", 59, 79, 34, 12, 9, INK, 700)
-    inner += line("RPMUnit", "RPM", 59, 91, 34, 11, 8, MUTED)
-    inner += line("ParkStatus", "PARKED", 3, 114, 72, 14, 10, AMBER, 700, hidden=not parked)
-    inner += line("HandbrakeStatus", "HB", 80, 114, 30, 14, 10, AMBER, 700, hidden=not parked)
-    if mobile:
-        return group("DashboardMobile", "B", box("Cockpit", 902, 938, diameter, 130, inner=inner))
-    return group("Dashboard", "BR", box("Cockpit", 1702, 838, diameter, 222, inner=inner))
+def svg(w, h, lines):
+    return (f"<svg class='abs' aria-hidden='true' style='inset:0' xmlns='http://www.w3.org/2000/svg' "
+            f"width='{w}' height='{h}' viewBox='0 0 {w} {h}' fill='none' "
+            f"stroke-linecap='round'>{lines}</svg>")
 
 
-def controls(mobile=False):
-    inner = text("ControlsTitle", "Driving controls", 12, 8, 211, 18, 13, AMBER, 700)
-    rows = [("W / S", "Drive / reverse"), ("A / D", "Steer"), ("B", "Brake"),
-            ("Space", "Toggle handbrake"), ("P", "Park / drive"),
-            ("E", "Exit vehicle"), ("H", "Hide controls")]
-    for i, (key, name) in enumerate(rows):
-        y = 30 + 19 * i
-        inner += text(f"Key{i}", key, 12, y, 78, 17, 12, INK, 700)
-        inner += text(f"Control{i}", name, 96, y, 124, 17, 12, MUTED)
-    x, y = (12, 62) if mobile else (20, 848)
-    panel = box("ControlPanel", x, y, 232, 170, "panel", inner)
-    return group("Controls", "TL" if mobile else "BL", panel)
+def icon(name, icon_id, x, y):
+    source = next(node for node in ICONS if node.get("id") == icon_id)
+    lines = []
+    for polyline in source.findall(SVG_NS + "polyline"):
+        points = [pair.split(",") for pair in polyline.attrib["points"].split()]
+        for (x1, y1), (x2, y2) in zip(points, points[1:]):
+            lines.append(f"<line data-n='{name}Line{len(lines)}' x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' "
+                         f"stroke='{ICONS.get('stroke')}' stroke-width='{ICONS.get('stroke-width')}'/>")
+    return box(name, x, y, 24, 24, "hid", svg(24, 24, "".join(lines)))
 
 
-def utility(name, label, x, y, w=48, h=48, face_w=38, face_h=30, active=False):
-    inner = box(name + "Face", (w - face_w) / 2, (h - face_h) / 2,
-                face_w, face_h, "utility")
-    inner += text(name + "Label", label, 4, 0, w - 8, h, 11, INK, 700, center=True)
-    return box(name, x, y, w, h, "down" if active else "", inner, button=True)
-
-
-def physical(name, title, x, y, w, h, art_w, art_h, col, row=None, active=False):
-    frame = box(name + "Face", 3, 3, w - 6, h - 6, "face")
-    if row is None:
-        art = f"url(art/v4/steering-buttons.png);background-size:200% auto;background-position:{col * 100}% 50%"
+def dashboard(width, height, mobile, raw=False, parked=False):
+    radius = MOBILE_RADIUS if mobile else DESKTOP_RADIUS
+    diameter = radius * 2
+    if raw:
+        x = (width - diameter) // 2 if mobile else width - diameter - 24
+        y = height - diameter - 24
     else:
-        art = f"url(art/v4/control-atlas.png);background-size:200% 200%;background-position:{col * 100}% {row * 100}%"
-    frame += (f"<div class='abs' data-n='{name}Art' style='left:{(w-art_w)/2}px;top:{(h-art_h)/2}px;"
-              f"width:{art_w}px;height:{art_h}px;background-image:{art}'></div>")
-    frame += text(name + "Fallback", title, 4, 0, w - 8, h, 10, INK, 700,
-                  center=True, hidden=True)
-    return box(name, x, y, w, h, "down" if active else "", frame, button=True)
+        x = width // 2 - radius if mobile else width - radius
+        y = height - radius
+    inner = box("DialRing", 0, 0, diameter, diameter, "dial")
+    lines = []
+    for i in range(TICK_COUNT):
+        angle = math.radians(183 + (174 if mobile else 84) * i / (TICK_COUNT - 1))
+        length = 7 if i in (0, 7, 14) else 4
+        endpoints = tuple(round(radius + offset * fn(angle), 2)
+                          for offset in (radius - 8 - length, radius - 8) for fn in (math.cos, math.sin))
+        lit = " live" if i / (TICK_COUNT - 1) <= (.12 if parked else .61) else ""
+        lines.append(f"<line data-n='RPM{i}' class='tick{lit}' stroke-width='1.5' "
+                     f"x1='{endpoints[0]}' y1='{endpoints[1]}' x2='{endpoints[2]}' y2='{endpoints[3]}'/>")
+    inner += svg(diameter, diameter, "".join(lines))
+    if mobile:
+        speed, unit = (61, 27, 98, 39, 36), (57, 65, 106, 12, 10)
+        gear, rpm, status = (68, 80, 29, 20), (106, 80, 69, 20), (50, 19, 120, 10)
+    else:
+        speed, unit = (76, 51, 115, 69, 58), (71, 116, 125, 15, 13)
+        gear, rpm, status = (72, 145, 36, 29), (114, 145, 78, 29), (72, 178, 125, 13)
+    gx, gy, gw, gh = gear
+    rx, ry, rw, rh = rpm
+    sx, sy, sw, sh = status
+    inner += text("Speed", "0" if parked else "84", *speed, "dial-text")
+    inner += text("Unit", "stud/sn", *unit, "dial-text label-muted", weight=600)
+    inner += box("GearFace", gx, gy, gw, gh, "gear")
+    inner += text("Gear", "P" if parked else "3", gx, gy, gw, gh, 13 if mobile else 20)
+    inner += text("RPMValue", "850 dev/dk" if parked else "4.850 dev/dk", rx, ry, rw, rh,
+                  10 if mobile else 12, "dial-text label-muted")
+    state = "dial-text" if parked else "dial-text hid"
+    inner += text("ParkStatus", "Parkta", sx, sy, sw / 2, sh, 8 if mobile else 10, state)
+    inner += text("HandbrakeStatus", "El freni", sx + sw / 2, sy, sw / 2, sh, 8 if mobile else 10, state)
+    return group("DashboardMobile" if mobile else "Dashboard", "B" if mobile else "BR",
+                 box("Cockpit", x, y, diameter, diameter, "" if raw else "entering", inner))
 
 
-def touch(parked=False):
-    steering = physical("SteerLeft", "SOL", 12, 1012, 54, 56, 48, 66, 0)
-    steering += physical("SteerRight", "SAĞ", 72, 1012, 54, 56, 48, 66, 1)
-    pedals = physical("Brake", "FREN", 1784, 1008, 60, 60, 48, 48, 1, 0)
-    pedals += physical("Throttle", "GAZ", 1850, 994, 58, 74, 66, 66, 0, 0)
-    hand = physical("Handbrake", "EL FRENİ", 1856, 938, 52, 48, 42, 42, 0, 1, active=parked)
-    actions = "".join(utility(name, value, 12 + 50 * i, 6, active=parked and i == 0)
-                      for i, (name, value) in enumerate([
-                          ("Park", "P"), ("Reverse", "R"), ("ToggleControls", "TUŞ"), ("Exit", "ÇIK")
-                      ]))
-    return (group("TouchLeft", "BL", steering) + group("TouchPedals", "BR", pedals)
-            + group("TouchHandbrake", "BR", hand) + group("TouchUtility", "TL", actions))
+def button(name, title, x, y, w, h, glyph=None, engaged=False):
+    # The inner face is only visual; the rectangle around it receives touches.
+    inset_x, inset_y = (5, 5) if glyph else (3, 9)
+    inner = box(name + "Face", inset_x, inset_y, w - 2 * inset_x, h - 2 * inset_y, "face")
+    if glyph:
+        inner += (f"<img class='abs' data-n='{name}Art' alt='' src='art/minimal-controls/{glyph}.png' "
+                  f"style='left:{(w - 28) / 2}px;top:{(h - 28) / 2}px;width:28px;height:28px'>")
+        inner += icon(name + "Icon", glyph, (w - 24) / 2, (h - 24) / 2)
+    else:
+        inner += text(name + "Label", title, 3, 0, w - 6, h, 11, weight=600)
+    return box(name, x, y, w, h, "engaged" if engaged else "", inner, button=title)
 
 
-TOGGLE = group("Toggle", "BL", utility("ShowControls", "H · CONTROLS", 20, 1022,
-                                      116, 38, 116, 32))
-RECOVERY = group("Recovery", "T", box("RecoveryPanel", 830, 8, 260, 34, "panel",
-                 text("RecoveryText", "Waiting for space", 8, 0, 244, 34, 13, AMBER, 700, center=True)))
+def touch(width, height, parked=False):
+    bottom = height - 12 - (MOBILE_RADIUS + 8 if width < 468 else 0)
+    steer = button("SteerLeft", "Sol", 12, bottom - 48, 48, 48, "left")
+    steer += button("SteerRight", "Sağ", 66, bottom - 48, 48, 48, "right")
+    pedals = button("Brake", "Fren", width - 118, bottom - 48, 48, 48, "brake")
+    pedals += button("Throttle", "Gaz", width - 64, bottom - 54, 52, 54, "gas")
+    hand = button("Handbrake", "El freni", width - 60, bottom - 108, 48, 48, "handbrake", parked)
+    actions = [
+        ("Park", "Park", 12, 48), ("Reverse", "Geri", 62, 48),
+        ("ToggleControls", "Tuşlar", 112, 54), ("Exit", "Çık", 168, 48),
+    ]
+    utility = "".join(button(name, title, x, 6, w, 48, engaged=parked and name == "Park")
+                      for name, title, x, w in actions)
+    return (group("TouchLeft", "BL", steer) + group("TouchPedals", "BR", pedals)
+            + group("TouchHandbrake", "BR", hand) + group("TouchUtility", "TL", utility))
 
 
-def page(name, body, mobile=False):
-    # Exports use the canonical stage. Browser preview re-anchors the same named groups
-    # at a phone or desktop viewport size while retaining their logical-pixel dimensions.
-    width, height = (844, 390) if mobile else (1280, 720)
-    script = f"""
-const stage = document.getElementById('stage');
-const raw = new URLSearchParams(location.search).has('raw');
-const width = raw ? 1920 : {width};
-const height = raw ? 1080 : {height};
-stage.style.width = width + 'px';
-stage.style.height = height + 'px';
-if (!raw) {{
-  for (const group of stage.querySelectorAll('[data-g]')) {{
-    const anchor = group.dataset.a;
-    const x = anchor.includes('R') ? width - 1920 : anchor.includes('L') ? 0 : (width - 1920) / 2;
-    const y = anchor.includes('B') ? height - 1080 : 0;
-    group.style.translate = x + 'px ' + y + 'px';
-  }}
-  const fit = () => {{
-    stage.style.transformOrigin = 'top left';
-    stage.style.transform = 'scale(' + Math.min(1, innerWidth / width, innerHeight / height) + ')';
-  }};
-  fit();
-  addEventListener('resize', fit);
-}}
-window.checkOverflow = () => ({{
-  overflow: [...document.querySelectorAll('span[data-n]')]
-    .filter(e => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 1)
-    .map(e => e.dataset.n),
-  broken: [...document.images].filter(e => !e.complete || !e.naturalWidth).map(e => e.src)
-}});
+def controls(height, mobile, visible):
+    rows = [("W / S", "Gaz / geri"), ("A / D", "Sol / sağ"), ("B", "Fren"), ("Boşluk", "El freni"),
+            ("P", "Park / sürüş"), ("E", "Araçtan in"), ("H", "Tuş yardımını aç / kapat")]
+    inner = text("ControlsTitle", "Sürüş tuşları", 10, 7, 206, 18, 13, center=False)
+    for i, (key, action) in enumerate(rows):
+        y = 29 + 17 * i
+        inner += text(f"Key{i}", key, 10, y, 70, 15, 11, center=False)
+        inner += text(f"Control{i}", action, 89, y, 132, 15, 11, "label-muted", 400, False)
+    return group("Controls", "TL" if mobile else "BL",
+                 box("ControlPanel", 12, 59 if mobile else height - 223, 232, 154, "panel", inner),
+                 "help" + ("" if visible else " hidden-preview"))
+
+
+def recovery(width):
+    label = text("RecoveryText", "Düzeltme için alan bekleniyor", 8, 0, 210, 32, 11)
+    return group("Recovery", "T", box("RecoveryPanel", width // 2 - 113, 8, 226, 32, "panel", label))
+
+
+def layout(width, height, mobile, raw, parked, help_open, recovering):
+    content = dashboard(width, height, mobile, raw, parked)
+    content += controls(height, mobile, raw or help_open)
+    if mobile:
+        content += touch(width, height, parked)
+    else:
+        content += group("Toggle", "BL", button("ShowControls", "H · Tuşlar", 12, height - 58, 95, 48))
+    if recovering:
+        content += recovery(width)
+    return f"<div id='stage' style='width:{width}px;height:{height}px'>{content}</div>"
+
+
+SCRIPT = """
+const stage=document.getElementById('stage');
+const panel=stage.querySelector('.help');
+const toggle=stage.querySelector('[data-n=ShowControls],[data-n=ToggleControls]');
+function toggleHelp(){
+  const hidden=panel.classList.toggle('hidden-preview');
+  toggle.classList.toggle('engaged',!hidden);
+}
+toggle.addEventListener('click',toggleHelp);
+addEventListener('keydown',event=>{if(event.key.toLowerCase()==='h')toggleHelp();});
+function fit() {
+  stage.style.transformOrigin='top left';
+  stage.style.transform='scale('+Math.min(1,innerWidth/stage.offsetWidth,innerHeight/stage.offsetHeight)+')';
+}
+fit();
+addEventListener('resize',fit);
+window.checkOverflow=()=>({
+  overflow:[...stage.querySelectorAll('span[data-n]:not(.hid)')]
+    .filter(e=>e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1).map(e=>e.dataset.n),
+  broken:[...document.images].filter(e=>!e.complete||!e.naturalWidth).map(e=>e.src)
+});
 """
-    markup = (f"<!doctype html><meta charset='utf-8'><title>A-XZF-Tune · {name}</title>"
-              f"<style>{CSS}</style><div id='stage'><div class='world'><div class='road'></div></div>"
-              f"{body}</div><script>{script}</script>")
+
+
+def page(name, mobile=False, parked=False, help_open=False, recovering=False, portrait=False):
+    width, height = (390, 750) if portrait else (844, 390) if mobile else (1280, 720)
+    preview = layout(width, height, mobile, False, parked, help_open, recovering)
+    export = layout(1920, 1080, mobile, True, parked, help_open, recovering)
+    markup = (f"<!doctype html><html lang='tr'><meta charset='utf-8'>"
+              "<meta name='viewport' content='width=device-width, initial-scale=1'>"
+              f"<title>A-XZF-Tune · Sürüş göstergesi</title><style>{CSS}</style><body>"
+              f"<template id='preview'>{preview}</template><template id='native'>{export}</template>"
+              "<script>const raw=new URLSearchParams(location.search).has('raw');"
+              "document.body.append(document.getElementById(raw?'native':'preview').content.cloneNode(true));"
+              f"if(!raw){{{SCRIPT}}}</script>")
     (ROOT / (name + ".html")).write_text(markup, encoding="utf-8")
 
 
-page("hud", dashboard() + controls() + TOGGLE)
-page("hud_phone", dashboard(mobile=True) + touch(), mobile=True)
-page("states", dashboard(parked=True) + controls() + TOGGLE + RECOVERY)
-page("templates", touch() + RECOVERY)
-page("mobile_states", dashboard(mobile=True, parked=True) + touch(parked=True), mobile=True)
-page("mobile_help", dashboard(mobile=True) + touch() + controls(mobile=True), mobile=True)
-
-LINKS = ("<a href='hud_phone.html'>Phone</a><a href='mobile_states.html'>Parked phone</a>"
-         "<a href='mobile_help.html'>Phone help</a><a href='hud.html'>Desktop</a>"
-         "<a href='states.html'>Desktop help and recovery</a>")
-for name in ("style", "index"):
-    (ROOT / (name + ".html")).write_text(
-        f"<!doctype html><meta charset='utf-8'><title>A-XZF-Tune HUD</title><style>{CSS}</style>"
-        f"<main><h1>A-XZF-Tune driving HUD</h1>{LINKS}</main>", encoding="utf-8")
-print("Built compact cockpit previews")
+if __name__ == "__main__":
+    page("hud")
+    page("hud_phone", mobile=True)
+    page("states", parked=True, help_open=True, recovering=True)
+    page("templates", mobile=True, recovering=True)
+    page("mobile_states", mobile=True, parked=True)
+    page("mobile_help", mobile=True, help_open=True)
+    page("mobile_portrait", mobile=True, portrait=True)
+    for name in ("index", "style"):
+        (ROOT / (name + ".html")).write_text(
+            f"<!doctype html><html lang='tr'><meta charset='utf-8'><title>A-XZF-Tune HUD</title>"
+            f"<style>{CSS}</style><main><h1>Sürüş göstergesi</h1>"
+            "<a href='hud_phone.html'>Mobil</a><a href='mobile_portrait.html'>Dikey mobil</a>"
+            "<a href='hud.html'>Bilgisayar</a><a href='mobile_states.html'>Park</a>"
+            "<a href='mobile_help.html'>Tuş yardımı</a></main>", encoding="utf-8")
+    print("HUD önizlemeleri hazır")

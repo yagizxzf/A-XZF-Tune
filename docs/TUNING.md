@@ -68,7 +68,7 @@ All dynamics use **Roblox mass/stud/second units**, not SI kilograms/meters. Mea
 | VFXIntensity | 1 | 0..2 particle count multiplier |
 | SpeedScale | 1 | 0.01..10 display multiplier only |
 | SpeedUnit | STUD/S | 1..12-character display label |
-| ShowControls | true | initial help visibility; H/KEYS toggles it |
+| ShowControls | false | opt in to showing driving-key help on entry. H or Tuşlar toggles it |
 | Controls | below | unique keyboard key-name strings; partial maps inherit defaults |
 
 ```lua

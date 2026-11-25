@@ -190,4 +190,12 @@ Simulator input covered left/right, throttle/brake, reverse, release outside the
 
 HTML checks: five pages passed text-overflow and broken-image checks. 61 Luau files compiled, 93 headless checks and 100 Studio unit cases passed, and both public packages were checked for deterministic output. The optional local compatibility file was rebuilt. Evidence: [Studio metrics](../evidence/v5-compact-hud-studio.json), [browser checks](../evidence/v5-html-checks.json), [landscape](../ui/shots/v5-studio-phone13.png), [portrait with help](../ui/shots/v5-studio-portrait.png).
 
+## Saydam HUD ve ImageGen simgeleri
+
+Main Studio place 72435697524161 measured the visible bounds at 0.50 of the full dial on iPhone 7/13/17 Pro, Galaxy A16 and iPad A16 in landscape and iPhone 13 in portrait. The desktop measure was 0.25. The phone dial is 220×110 logical px at normal size. Nine mobile controls meet the 48×48 px input floor. Final captures showed five loaded images, zero control overlaps and zero text overflow.
+
+Mobile inputs were tested in the prototype for gas, brake, reverse, steering, independent park and handbrake, help and exit. Gas reset on release outside the button. Exit restored the native TouchGui. The pressed face reached 0.94× without shrinking the hit target. Removing the gas Image value during Play showed its SVG fallback, then restoring the value loaded the generated sprite. The imported car displayed the same HUD and responded to desktop H and P. Existing reduced-motion handling is read from Roblox; the simulator session used its normal-motion setting.
+
+The three editable Figma frames were checked after the generated image fills were added. The 61-file compile, 93 headless checks, 100 Studio cases, six HTML previews and deterministic package check passed. Evidence: [runtime data](../evidence/v6-minimal-hud.json), [browser checks](../evidence/v6-html-checks.json), [mobile](../ui/shots/v6-studio-mobile.jpg), [desktop](../ui/shots/v6-studio-desktop.jpg).
+
 Standalone client analyzer was also run on Driver, VehicleEffects, WheelVisuals and Cockpit:0 syntax errors,0 unexpected own globals,287 diagnostic lines from missing Roblox types/globals. This is not a Roblox-aware type-check pass (evidence/v4-client-analysis.json).

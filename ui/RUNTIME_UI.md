@@ -5,6 +5,7 @@ Approved by the developer after switching the preview to a circular dial. HTML i
 - Cockpit.lua clones the server-built approved template; runtime code creates no new visual objects.
 - Speed/gear/RPM/parking/recovery labels use actual vehicle attributes; sample numbers are replaced before enabling the GUI.
 - Key help reflects validated Tune.Controls. H or the mobile KEYS button hides help; mobile drive/park/exit buttons remain accessible.
-- Compact layout respects CoreUISafeInsets. The scale stays at least 1× on touch so the 48×48 minimum targets remain reachable. Narrow portrait lifts the dial; landscape help scales into the space above steering.
+- The dial is centered on the bottom of the safe viewport on mobile and on the bottom-right corner on desktop. It is clipped to a half or a quarter respectively. Narrow portrait moves touch buttons up while the dial stays in place. Touch targets stay at least 48×48 logical px.
+- Help starts hidden. Motion covers gauge entry, help slide, RPM intensity and pressed faces. `GuiService.ReducedMotionEnabled` selects the immediate states. Five generated sprites preload and the original SVG line geometry is the fallback.
 - Mobile TextButtons drive the same intent state as keyboard/gamepad; releases, focus loss, death and seat exit clear held input. PARK toggles, EXIT unseats.
 - Default VehicleSeat.HeadsUpDisplay is disabled during AXZF binding and restored on destroy. Roblox character touch controls are hidden only while driving, then restored.

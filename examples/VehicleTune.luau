@@ -75,7 +75,7 @@ return {
 	VFXIntensity = 1, -- 0..2; efekt yoğunluğu; 0 üretimi durdurur
 	SpeedScale = 1, -- 0.01..10; görünen hız = stud/s * bu çarpan
 	SpeedUnit = "STUD/S", -- 1..12 karakter; oyun ölçeğinize uygun etiket
-	ShowControls = true, -- klavye yardımının ilk durumu; H ile gizlenebilir
+	ShowControls = false, -- tuş yardımı gizli başlar; H veya mobil Tuşlar ile açılır
 
 	-- 6 / AĞ VE GÜNCELLEME
 	InputTimeout = 0.35, -- 0.1..2 saniye; girdi kesilince gaz bırakılır ve fren uygulanır
